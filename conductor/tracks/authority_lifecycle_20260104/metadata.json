@@ -1,0 +1,8 @@
+{
+  "track_id": "authority_lifecycle_20260104",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-04T12:30:00Z",
+  "updated_at": "2026-01-04T12:30:00Z",
+  "description": "Complete the engine lifecycle with explicit authority barriers, halt states, and clean pause/resume semantics for HITL and SMB workflows."
+}

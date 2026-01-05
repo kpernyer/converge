@@ -1,0 +1,522 @@
+# Converge — Cursor AI Rules & Guidelines
+
+This file provides comprehensive guidelines for AI-assisted development in the Converge project.
+These rules enforce architectural principles, coding standards, and design constraints.
+
+---
+
+## Project Identity
+
+**Converge** is a pure Rust Agent Operating System for building correctness-first, context-driven, multi-agent systems that provably converge.
+
+### Core Principles (Non-Negotiable)
+
+1. **Context is the API** — Agents collaborate through data, not calls
+2. **Agents never call each other** — All communication via shared context
+3. **Convergence is mandatory** — Execution proceeds until fixed point
+4. **LLMs are tools, never authorities** — LLM outputs are suggestions, not facts
+5. **Gherkin constrains behavior** — It does not control execution
+6. **Correctness over availability** — Wrong answers are worse than no answers
+
+---
+
+## Architecture Constraints
+
+### System Layers (Must Respect)
+
+```
+┌──────────────────────────────────────────┐
+│ Specification Layer (Gherkin)            │
+│ Behavioral invariants & success criteria │
+└──────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ Orchestration Layer                      │
+│ Execution graph & convergence engine     │
+└──────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ Agent Layer                              │
+│ Deterministic • LLM • Solver • IO        │
+└──────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ Context Layer                            │
+│ Typed, shared, monotonic job state       │
+└──────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ Tool Layer                               │
+│ LLMs • Search • Solvers • APIs           │
+└──────────────────────────────────────────┘
+```
+
+### Execution Model (Critical)
+
+- **Parallel compute, serialized commit**: Agents execute in parallel, but effects merge serially
+- **Eligibility is data-driven**: Agents declare dependencies on context keys, not blind polling
+- **Context is monotonic**: Facts are only added, never retracted (invalidations are explicit facts)
+- **Fixed-point convergence**: Execution halts when `Contextₙ₊₁ == Contextₙ`
+- **Budgets guarantee termination**: Max cycles, max facts, max time limits
+
+### Implementation Decisions (Authoritative - v1)
+
+These decisions are **locked in** for the initial implementation. They favor correctness and simplicity over premature optimization.
+
+#### 1. Effect Merge Ordering
+
+**Decision**: Deterministic merge order = agent registration order (stable AgentId)
+
+```rust
+type AgentId = u32; // Monotonic assignment at registration
+
+// Merge effects in ascending AgentId order
+// Within one agent, preserve effect emission order
+```
+
+**Rationale**:
+- Simple, fully deterministic, easy to reason about
+- No hidden coupling or priority systems
+- Can add priorities later as optional field without breaking semantics
+
+**Rule**: Determinism first, sophistication later.
+
+#### 2. Dependency Index Maintenance
+
+**Decision**: Incremental maintenance with dirty-key tracking
+
+```rust
+// Build once at registration
+on_register(agent):
+  for key in agent.dependencies():
+    index[key].push(agent_id)
+
+// Track changes during merge
+on_merge(effect):
+  dirty_keys = effect.affected_keys()
+  eligible_agents = union(index[key] for key in dirty_keys)
+```
+
+**Rationale**:
+- O(changes), not O(agents) — scales with data changes
+- No rebuild cost per cycle
+- Matches incremental computation / rule engine patterns
+- Enforces invariant: agent only runs if something it depends on changed
+
+**Invariant**: An agent only runs if something it depends on changed.
+
+#### 3. ProposedFact Type Boundary
+
+**Decision**: Compile-time separation with distinct types (NOT enum variants)
+
+```rust
+struct ProposedFact { ... }
+struct Fact { ... }
+
+impl TryFrom<ProposedFact> for Fact {
+    type Error = ValidationError;
+    // Explicit conversion required
+}
+```
+
+**Rationale**:
+- Rust makes illegal states unrepresentable
+- Cannot accidentally treat suggestion as truth
+- LLM containment enforced by type system
+- Enum variants too easy to misuse (forget to check, miss branches)
+
+**Rule**: If something is dangerous, make it impossible to misuse.
+
+#### 4. Context Equality / Convergence Detection
+
+**Decision**: Dirty-key tracking (NOT hashing, NOT deep comparison)
+
+```rust
+struct MergeResult {
+    dirty_keys: SmallVec<[ContextKey; 4]>
+}
+
+// Convergence condition
+converged = dirty_keys.is_empty()
+```
+
+**Rationale**:
+- O(changes), not O(context size)
+- No hashing pitfalls or deep comparison cost
+- Matches dependency-index logic
+- You already know what changed — use that
+
+**Principle**: You already know what changed. Use that.
+
+**Summary Table**:
+
+| Concern | Decision |
+|---------|----------|
+| Effect merge order | Stable AgentId registration order |
+| Eligibility | Dependency index + dirty keys |
+| ProposedFact boundary | Separate types, compile-time enforced |
+| Convergence check | Dirty-key tracking |
+
+All four decisions:
+- Are Rust-idiomatic
+- Favor correctness over cleverness
+- Are easy to optimize later
+- Require no redesign to evolve
+
+### Agent Model (Strict)
+
+```rust
+trait Agent {
+    fn accepts(&self, ctx: &Context) -> bool;
+    fn dependencies(&self) -> &'static [ContextKey];
+    fn execute(&self, ctx: &Context) -> AgentEffect;
+}
+```
+
+**Agents MUST:**
+- Never call other agents
+- Never control flow
+- Never decide termination
+- Never mutate context directly (only emit effects)
+- Declare context dependencies for efficient indexing
+
+**Agents MUST NOT:**
+- Use message passing
+- Maintain internal state across executions
+- Make decisions about convergence
+- Bypass the engine
+
+---
+
+## Rust Standards
+
+### Edition & Toolchain
+
+- **Rust Edition 2024** for all new code
+- **Minimum Rust 1.76+**
+- Never downgrade toolchain for stale dependencies
+- Prefer actively maintained crates or fork/replace
+
+### Error Handling (Strict)
+
+- **NO `unwrap()`, `expect()`, or `panic!`** in production paths
+- Use `thiserror` for domain errors
+- One error enum per bounded context/module
+- Prefer `Result<T, DomainError>` internally
+- Map to transport errors (HTTP/gRPC) only at boundaries
+- **NO `anyhow` in libraries or domain layers** — only at bin boundaries
+
+### Code Quality
+
+- Always enable clippy & fmt:
+  ```bash
+  cargo clippy --all-targets --all-features -- -D warnings
+  cargo fmt --all -- --check
+  ```
+- Immutable by default: use `let`, not `let mut`, unless required
+- Prefer iterator transforms over mutating loops
+- Avoid unnecessary `clone()` — justify at ownership boundaries
+- Use `Arc` only for cross-task/thread shared ownership
+- Avoid global state/singletons — use explicit dependency injection
+
+### Data Modeling
+
+- Use newtypes for IDs: `struct IntentId(String);` not `String`
+- Prefer enums over boolean flags or magic strings
+- Keep structs focused — avoid "god structs"
+- Derive traits intentionally (don't cargo-cult `Clone`, `Debug`)
+- Use `#[non_exhaustive]` for public enums expected to grow
+
+### Async & Concurrency
+
+- Never hold locks across `.await`
+- Use `tokio::sync` primitives in async code
+- Spawn tasks only when concurrency is required
+- Add timeouts around external calls (`tokio::time::timeout`)
+
+---
+
+## Technology Stack (Mandatory)
+
+### Core Framework
+
+- **Axum** — Default API framework (internal & external)
+- **Tokio** — Only async runtime allowed (no mixed runtimes)
+- **Tonic** — gRPC for internal service-to-service communication
+
+### Data Layer
+
+- **SurrealDB** — Primary system-of-record (multi-model: relational + document + graph)
+- **Qdrant** — Production vector search
+- **LanceDB** — Local/embedded vector workflows
+- **Apache Arrow + DataFusion** — Analytics workloads
+
+### Messaging & Workflows
+
+- **NATS** — Default message bus (with JetStream for durability)
+- **Temporal** — Long-running workflows, retries, distributed coordination
+
+### Secrets & Config
+
+- **config crate** — Layered config (base.yaml → env-specific → env vars → secrets)
+- **Google Secret Manager** (GCP) or **Vault** (self-host) — No plain `.env` in production
+- **OpenRouter** — Default LLM API aggregator
+
+### Observability (Mandatory)
+
+- **OpenTelemetry** — Traces
+- **Prometheus** — Metrics
+- **tracing** — Structured logging
+- Every request creates a root span in handler
+- Every public service/repository method must run inside a span
+- Add structured fields for domain identifiers
+
+---
+
+## Context Model
+
+### Structure
+
+```
+Context
+├─ Job (RootIntent)
+├─ Facts (typed, append-only in meaning)
+├─ State
+├─ Constraints
+├─ Evidence
+└─ Trace
+```
+
+### Rules
+
+- Context is append-only in meaning
+- Facts are typed
+- Provenance is mandatory
+- Nothing outside Root Intent scope may exist
+- Context evolution is monotonic
+
+### Root Intent Schema
+
+```rust
+struct RootIntent {
+    id: IntentId,
+    kind: IntentKind,
+    objective: Objective,
+    scope: Scope,
+    constraints: Constraints,
+    success_criteria: SuccessCriteria,
+    budgets: Budgets,
+}
+```
+
+The Root Intent is the **constitution** of a Converge job. Nothing may override it.
+
+---
+
+## LLM Integration (Critical)
+
+### Principles
+
+- **LLMs may suggest. The engine decides.**
+- LLM outputs are **ProposedFacts**, not Facts
+- Promotion from ProposedFact → Fact requires deterministic validation
+- LLM outputs are isolated/quarantined by default
+- Multi-layer validation: structural → constraint → cross-signal → invariant
+- Blast radius is explicitly bounded — LLM outputs cannot:
+  - Create new domains
+  - Override constraints
+  - Trigger convergence
+  - Block execution
+
+### Implementation
+
+- All LLM integrations go through a single `llm_client` crate
+- Maintain keys in secrets manager, never in code
+- Use OpenRouter as default LLM API aggregator
+- Every LLM contribution includes: model identifier, prompt hash, timestamp, validation outcome
+
+---
+
+## Gherkin Model
+
+### Role
+
+- Gherkin expresses **semantic invariants**, not workflows
+- It does **not** drive execution — it constrains execution
+- Specs are **compiled** into Rust predicates at build/startup time
+- No runtime string interpretation
+
+### Invariant Classes
+
+1. **Structural invariants** (continuous) — Checked on every merge
+2. **Semantic invariants** (per-cycle) — Checked at end of each cycle
+3. **Acceptance invariants** (convergence gates) — Checked when convergence is claimed
+
+### Violation Handling
+
+- Structural: Immediate halt, job marked failed
+- Semantic: Recorded as governance fact, convergence blocked, remediation attempted
+- Acceptance: Convergence rejected, results not emitted
+
+---
+
+## Testing Requirements
+
+### Unit Tests
+
+- Required for every module
+- Use `proptest` for generative property tests
+
+### Integration Tests
+
+- Use `cargo test -- --ignored` for tests with external services
+- Standup ephemeral SurrealDB + Qdrant
+
+### API Contract Tests
+
+- Auto-verify OpenAPI definitions
+- Every service must publish auto-generated OpenAPI spec
+
+---
+
+## Code Organization
+
+### Layering (Strict)
+
+- **Handlers** — Extract/validate/map only (Axum/Tonic)
+- **Services** — Business logic, domain operations
+- **Repositories** — Data access, own all DB queries
+- **Domain** — Types, errors, invariants
+
+**NO business logic in handlers. NO scattered DB queries.**
+
+### Module Structure
+
+- Clear bounded contexts
+- Traits for testability
+- Explicit dependency injection
+- Avoid `cfg!(test)` branches — use traits/mocks
+
+---
+
+## Deployment & Operations
+
+### Infrastructure
+
+- **Terraform** — Default for all infra
+- Every service must have: `main.tf`, `variables.tf`, `outputs.tf`
+
+### Justfile
+
+Every repo **must** have a `Justfile` with:
+- `fmt`, `lint`, `test`, `run`, `build`, `deploy`
+
+### Microservice Checklist
+
+- Clear bounded context
+- gRPC internally, REST externally
+- Shared proto repo
+- SurrealDB schemas well-defined
+- Versioned APIs
+- Health/ready endpoints
+- Automated load tests before deploy
+
+---
+
+## What Converge Is NOT
+
+Converge is **not**:
+- A chatbot framework
+- A workflow engine
+- A prompt orchestration system
+- An actor system (no message passing, no mailboxes)
+- A long-lived service runtime (jobs start, reason, converge, stop)
+
+**Do NOT use Converge for:**
+- Long-lived durable workflows (use Temporal)
+- Highly available reactive services (use Erlang/OTP, Akka, Orleans)
+- Simple linear orchestration (use plain code or workflow engine)
+- Emergent agent behavior (Converge explicitly rejects this)
+
+---
+
+## Development Workflow
+
+### When Writing Code
+
+1. **Always request production-grade output** — no unwrap/panic, structured errors, tracing
+2. **Prefer refactoring over greenfield** — improve existing code
+3. **Let AI propose architecture, then review** — treat as draft, adjust
+4. **Promote good patterns** — copy successful patterns into this document
+
+### When Reviewing Code
+
+- Verify no `unwrap()`/`expect()`/`panic!` in production paths
+- Check error types use `thiserror`, not `anyhow` (except bin boundaries)
+- Ensure agents never call other agents
+- Verify context mutations only happen in merge phase
+- Check that LLM outputs are ProposedFacts, not Facts
+- Verify invariants are checked at appropriate times
+- Ensure tracing spans are present
+
+---
+
+## Project Milestones
+
+Current focus: **M1 — Minimal Runtime Kernel**
+
+Milestones:
+- M1 — Minimal Runtime Kernel
+- M2 — Deterministic Agents & Pruning
+- M3 — Growth Strategy v1
+- M4 — LLM as Tool
+- M5 — Relationship Capital
+- M6 — Progressive Convergence
+- M7 — MCP Boundary
+- M8 — Refined Growth Strategy v2
+
+---
+
+## Key Documents Reference
+
+- `MANIFESTO.md` — Core principles
+- `ARCHITECTURE.md` — System design
+- `ENGINE_EXECUTION_MODEL.md` — Execution semantics
+- `CONVERGENCE_SEMANTICS.md` — Convergence guarantees
+- `LLM_INTEGRATION.md` — LLM handling
+- `GHERKIN_MODEL.md` — Invariant semantics
+- `Rust-Best-Practices-v2.md` — Detailed Rust standards
+- `TERMINOLOGY.md` — Normative terms
+
+---
+
+## One-Sentence Rule
+
+> If you can't clearly state what convergence means, don't use Converge.
+
+---
+
+## AI Assistant Instructions
+
+When generating code:
+
+1. **Always** follow Rust 2024 edition, Axum/Tokio stack
+2. **Never** use `unwrap()`, `expect()`, or `panic!` in production code
+3. **Always** use `thiserror` for domain errors
+4. **Always** add `tracing` spans for observability
+5. **Always** respect the agent model (no agent-to-agent calls)
+6. **Always** ensure context mutations only in merge phase
+7. **Always** treat LLM outputs as ProposedFacts requiring validation
+8. **Always** compile Gherkin specs into Rust predicates
+9. **Always** enforce convergence via fixed-point detection
+10. **Always** respect Root Intent as the constitution
+
+### Implementation-Specific Requirements
+
+When implementing the engine:
+
+- **Effect merging**: Use stable AgentId registration order (ascending u32)
+- **Eligibility**: Implement dependency index with dirty-key tracking (incremental, not rebuild)
+- **Fact types**: Use separate `ProposedFact` and `Fact` types (NOT enum variants) with explicit `TryFrom`
+- **Convergence**: Use dirty-key tracking (empty dirty_keys = converged), NOT hashing or deep comparison
+
+**Core principle**: Conservative — correctness over cleverness. Favor clarity over optimization.
+
+When in doubt, refer to the architecture documents and prioritize **correctness over convenience**.
+
