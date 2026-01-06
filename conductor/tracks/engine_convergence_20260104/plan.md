@@ -6,11 +6,11 @@
 - [x] Task: Refactor `count_facts` to use an iterator over `ContextKey` variants instead of a hardcoded list. 93afd00
 - [x] Task: Conductor - User Manual Verification 'Readiness' (Protocol in workflow.md)
 
-## Phase 2: Execution (Parallel Compute)
-- [ ] Task: Parallelize `Engine::execute_agents` using `rayon` (preferred for CPU-bound agent logic) or scoped threads.
-- [ ] Task: Implement validation and promotion for `AgentEffect` containing `ProposedFact`s in the merge phase.
-- [ ] Task: Ensure that `ProposedFact` failures are handled without crashing the engine (Transparent Determinism).
-- [ ] Task: Conductor - User Manual Verification 'Execution' (Protocol in workflow.md)
+## Phase 2: Execution (Parallel Compute) [checkpoint: 05670c5]
+- [x] Task: Parallelize `Engine::execute_agents` using `rayon` (preferred for CPU-bound agent logic) or scoped threads. 9fcfdc7
+- [x] Task: Implement validation and promotion for `AgentEffect` containing `ProposedFact`s in the merge phase. 359fd5a
+- [x] Task: Ensure that `ProposedFact` failures are handled without crashing the engine (Transparent Determinism). 359fd5a
+- [x] Task: Conductor - User Manual Verification 'Execution' (Protocol in workflow.md)
 
 ## Phase 3: Convergence (System Integrity)
 - [ ] Task: Implement conflict detection in `Context::add_fact` (e.g., same ID but different content).
