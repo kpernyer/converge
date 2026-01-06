@@ -1,10 +1,10 @@
 # Plan: Engine Execution Loop & Convergence Detection
 
-## Phase 1: Readiness (Observability & Safety)
-- [~] Task: Integrate `tracing` spans into `Engine::run` to record cycle starts, agent eligibility, and merge events.
-- [ ] Task: Refactor `Engine::run` to treat initial facts in the provided `Context` as "dirty" for Cycle 1.
-- [ ] Task: Refactor `count_facts` to use an iterator over `ContextKey` variants instead of a hardcoded list.
-- [ ] Task: Conductor - User Manual Verification 'Readiness' (Protocol in workflow.md)
+## Phase 1: Readiness (Observability & Safety) [checkpoint: 55983ce]
+- [x] Task: Integrate `tracing` spans into `Engine::run` to record cycle starts, agent eligibility, and merge events. c8edc17
+- [x] Task: Refactor `Engine::run` to treat initial facts in the provided `Context` as "dirty" for Cycle 1. e8d34f1
+- [x] Task: Refactor `count_facts` to use an iterator over `ContextKey` variants instead of a hardcoded list. 93afd00
+- [x] Task: Conductor - User Manual Verification 'Readiness' (Protocol in workflow.md)
 
 ## Phase 2: Execution (Parallel Compute)
 - [ ] Task: Parallelize `Engine::execute_agents` using `rayon` (preferred for CPU-bound agent logic) or scoped threads.
