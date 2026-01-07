@@ -52,6 +52,32 @@ Patterns for human validation and approval in Converge.
 ### [GHERKIN_HITL_EXAMPLES.md](./GHERKIN_HITL_EXAMPLES.md)
 Gherkin examples showing human-in-the-loop patterns.
 
+## Deployment & Operations
+
+### [DEPLOYMENT.md](./DEPLOYMENT.md)
+**Comprehensive guide for deploying and operating Converge in production.**
+
+Covers:
+- System characteristics and guarantees
+- Testing, code quality, and robustness
+- First deployment setup (Cloud Run recommended)
+- Session isolation and concurrency model
+- Scaling strategy (horizontal, regional)
+- Single-user vs multi-user architecture
+- Deployment models (short-lived, long-running, hybrid)
+- Infrastructure requirements
+- Operational considerations (monitoring, health checks, security)
+
+### [RAYON_TOKIO_INTEGRATION.md](./RAYON_TOKIO_INTEGRATION.md)
+**How Rayon (CPU parallelism) and Tokio (async I/O) work together.**
+
+Explains:
+- Current parallel agent execution with Rayon
+- Future HTTP server with Tokio/Axum
+- How they complement each other (no conflicts)
+- Recommended architecture: separate `converge-runtime` crate
+- Implementation patterns for bridging async and blocking code
+
 ---
 
 ## Reading Order
@@ -69,6 +95,9 @@ Gherkin examples showing human-in-the-loop patterns.
 **For human interaction:**
 1. HUMAN_IN_THE_LOOP.md
 2. GHERKIN_HITL_EXAMPLES.md
+
+**For deployment:**
+1. DEPLOYMENT.md (comprehensive operations guide)
 
 ---
 

@@ -1,0 +1,22 @@
+[package]
+name = "converge-tool"
+description = "Development tools for Converge including Gherkin spec validation"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+converge-core = { workspace = true }
+converge-provider = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+
+# Gherkin parsing
+gherkin = "0.14"
+
+[lints]
+workspace = true

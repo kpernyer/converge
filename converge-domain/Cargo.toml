@@ -1,0 +1,18 @@
+[package]
+name = "converge-domain"
+description = "Domain-specific agents and examples for Converge"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+converge-core = { workspace = true }
+converge-provider = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tracing-test = "0.2"
+
+[lints]
+workspace = true

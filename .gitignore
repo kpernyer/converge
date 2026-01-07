@@ -1,0 +1,31 @@
+# Rust
+target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables (never commit API keys!)
+.env
+.env.local
+.env.*.local
+
+# Documentation builds
+/book/
+/site/
+
+# Internal specs (if you want to keep them out of public repos)
+# Uncomment if you want to exclude internal docs from public visibility
+# /docs/internal/
+# /docs/02-architecture/
+# /docs/05-development/
+

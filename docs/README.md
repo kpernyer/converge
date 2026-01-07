@@ -4,6 +4,26 @@ This directory contains all documentation for the Converge project, organized fo
 
 ## 📚 Documentation Structure
 
+### [public/](./public/)
+**Public API documentation** for the `converge-core` library.
+
+- High-level API overview
+- Core concepts (without implementation details)
+- Usage guide
+- Public guarantees
+
+**Note:** The `converge-core` library is distributed as a compiled crate. Source code and internal implementation details are private.
+
+### [internal/](./internal/)
+**Internal documentation** for core maintainers.
+
+- Implementation details
+- Design specifications
+- Architecture decisions
+- Execution model specifics
+
+**Note:** These documents are for maintaining `converge-core` itself, not for using the library.
+
 ### [01-core-philosophy/](./01-core-philosophy/)
 **Start here** to understand what Converge is and why it exists.
 
@@ -12,7 +32,7 @@ This directory contains all documentation for the Converge project, organized fo
 - When to use (and not use) Converge
 
 ### [02-architecture/](./02-architecture/)
-**Deep dive** into system design, execution model, and core concepts.
+**Internal architecture** documentation (for core maintainers).
 
 - System architecture and layers
 - Execution model and convergence semantics
@@ -21,6 +41,8 @@ This directory contains all documentation for the Converge project, organized fo
 - Agent model and lifecycle
 - Gherkin invariant system
 - LLM integration model
+
+**Note:** These documents expose implementation details. For public API documentation, see [public/](./public/).
 
 ### [03-use-cases/](./03-use-cases/)
 **Concrete examples** showing how Converge solves real problems.
@@ -48,6 +70,7 @@ This directory contains all documentation for the Converge project, organized fo
 - Task lists
 - Authoritative implementation decisions
 - Human-in-the-loop patterns
+- Deployment and operations guide
 
 ### [06-assistant-guides/](./06-assistant-guides/)
 **Guidelines** for AI assistants working on Converge.
@@ -133,6 +156,7 @@ Use Case Doc → Context Schema → Root Intent → Gherkin Invariants
 - `05-development/DECISIONS.md` (authoritative choices)
 - `05-development/STATUS.md` (what's built)
 - `05-development/TASKS.md` (what's next)
+- `05-development/DEPLOYMENT.md` (deployment and operations)
 
 ---
 

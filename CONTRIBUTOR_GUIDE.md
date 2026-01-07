@@ -10,16 +10,63 @@ This guide explains how to contribute *productively*.
 
 ---
 
+## 0. Project Structure
+
+### converge-core (Private)
+The `converge-core` library is **maintained privately**. It is:
+- Published as a compiled library crate
+- Source code is not publicly available
+- Internal architecture and implementation specs are private
+- Public API documentation is available in `docs/public/`
+
+**Contributions to `converge-core` are not accepted.** If you need changes to the core API, please open an issue for discussion.
+
+### Other Modules (Open for Contribution)
+The following modules are open for contributions:
+- **converge-domain** — Domain-specific agents and capabilities
+- **converge-provider** — LLM provider integrations
+- **converge-runtime** — Runtime services and APIs
+- **converge-tool** — Tooling and utilities
+
+These modules use `converge-core` as a dependency and build on top of its public API.
+
+### Setup for Contributors
+
+The `converge-core` directory is a git submodule pointing to a private repository.
+When you clone, the submodule will fail to initialize (expected):
+
+```bash
+git clone https://github.com/your-org/converge.git
+cd converge
+git submodule update --init  # Will fail - private repo
+
+# Remove the empty submodule directory
+rm -rf converge-core
+
+# Remove converge-core from workspace members in Cargo.toml
+# (or cargo will complain about missing path)
+
+# Build - Cargo fetches converge-core from crates.io
+cargo build
+```
+
+The workspace `Cargo.toml` specifies both `path` and `version` for internal crates.
+When the path doesn't exist, Cargo uses the crates.io version automatically.
+
+---
+
 ## 1. Before You Contribute
 
 You should understand these documents first:
 
-- ARCHITECTURE.md
-- DESIGN_TENETS.md
-- TECHNOLOGY_STACK.md
-- FAQ_CONVERGE_DESIGN.md
+- `docs/public/` — Public API documentation for using `converge-core`
+- `docs/01-core-philosophy/MANIFESTO.md` — Core principles
+- `docs/01-core-philosophy/TERMINOLOGY.md` — Key terms
+- `DESIGN_TENETS.md` — Design principles
 
-If a proposed change conflicts with these, it will not be merged.
+**Note:** Internal architecture documents (`docs/02-architecture/`) are for core maintainers only and expose implementation details. Use the public documentation instead.
+
+If a proposed change conflicts with these principles, it will not be merged.
 
 ---
 
