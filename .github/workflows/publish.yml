@@ -1,0 +1,66 @@
+name: Publish to crates.io
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on v0.1.0, v1.0.0, etc.
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # converge-core is private - remove from workspace, use crates.io version
+      - name: Remove submodule (use crates.io version)
+        run: |
+          rm -rf converge-core
+          sed -i 's/"converge-core",//' Cargo.toml
+
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-publish-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build (verify)
+        run: cargo build --workspace --release
+
+      - name: Test (verify)
+        run: cargo test --workspace
+
+      # Publish in dependency order
+      # converge-core is published separately from private repo
+
+      - name: Publish converge-provider
+        run: cargo publish -p converge-provider --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        continue-on-error: true  # Skip if version already published
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
+      - name: Publish converge-domain
+        run: cargo publish -p converge-domain --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        continue-on-error: true
+
+      - name: Publish converge-tool
+        run: cargo publish -p converge-tool --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        continue-on-error: true
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
+      - name: Publish converge-runtime
+        run: cargo publish -p converge-runtime --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        continue-on-error: true
