@@ -1,0 +1,3 @@
+[submodule "converge-core"]
+	path = converge-core
+	url = https://github.com/kpernyer/converge-core.git
