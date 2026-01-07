@@ -192,7 +192,28 @@ It never drives execution.
 
 ---
 
-## 12. Summary
+## 12. Crate Structure
+
+Converge is organized into layered crates with strict dependency discipline:
+
+```
+converge-core      Traits, engine, context (no external deps)
+      ↓
+converge-provider  LLM implementations (Anthropic, OpenAI, etc.)
+      ↓
+converge-domain    Domain agents (GrowthStrategy, Scheduling)
+converge-tool      Dev tools (Gherkin validator)
+      ↓
+converge-runtime   HTTP/gRPC servers, TUI
+```
+
+**Key rule:** Dependencies flow downward only. Core never imports from provider.
+
+See `docs/05-development/DECISIONS.md` §6 for full layering rules.
+
+---
+
+## 13. Summary
 
 Converge is a Rust-based Agent OS where context is the API,
 agents collaborate through a data-driven execution graph,

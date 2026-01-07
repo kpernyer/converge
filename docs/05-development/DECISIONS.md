@@ -164,6 +164,88 @@ struct Context {
 
 ---
 
+## 6. Crate Layering & Dependency Discipline
+
+**Decision:** Strict layered architecture with unidirectional dependencies
+
+**Implementation:**
+```
+                        ┌─────────────────┐
+                        │ converge-runtime│ (HTTP, gRPC, TUI)
+                        └────────┬────────┘
+                                 │
+         ┌───────────────────────┼───────────────────────┐
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+│ converge-domain │   │  converge-tool  │   │    (future)     │
+│  (GrowthStrategy,   │  (Gherkin, CLI) │   │                 │
+│   Scheduling...)│   │                 │   │                 │
+└────────┬────────┘   └────────┬────────┘   └─────────────────┘
+         │                     │
+         └──────────┬──────────┘
+                    ▼
+         ┌─────────────────┐
+         │converge-provider│ (Anthropic, OpenAI, Gemini...)
+         └────────┬────────┘
+                  │
+                  ▼
+         ┌─────────────────┐
+         │  converge-core  │ (Engine, Context, Agent, traits)
+         └─────────────────┘
+```
+
+**Layer Responsibilities:**
+
+| Crate | Contains | Does NOT Contain |
+|-------|----------|------------------|
+| `converge-core` | Traits, abstractions, engine, context, agent model | Provider implementations, API keys, HTTP clients |
+| `converge-provider` | LLM implementations, model metadata, provider factory | Domain logic, business rules |
+| `converge-domain` | Domain agents, invariants, use-case pipelines | Provider selection, raw LLM calls |
+| `converge-tool` | Dev tools, validators, CLI utilities | Runtime servers |
+| `converge-runtime` | HTTP/gRPC servers, TUI | Business logic, agent implementations |
+
+**Rules:**
+
+1. **Dependencies flow downward only** — Never `core → provider` or `core → domain`
+2. **Core is provider-agnostic** — Traits in core, implementations in provider
+3. **No vendor lock-in in core** — No `anthropic`, `openai`, `reqwest` in core
+4. **Domain doesn't know providers** — Domain uses traits, not concrete types
+5. **Runtime is a thin shell** — Just wiring, no business logic
+
+**Rationale:**
+- Prevents circular dependencies
+- Enables testing core without network
+- Allows swapping providers without touching core
+- Keeps compile times manageable
+- Makes the architecture legible
+
+**Why this matters:**
+
+```rust
+// WRONG — Core depending on provider specifics
+// converge-core/src/llm.rs
+use reqwest;  // ❌ HTTP client in core
+pub struct AnthropicProvider { ... }  // ❌ Concrete provider in core
+
+// RIGHT — Abstract in core, concrete in provider
+// converge-core/src/llm.rs
+pub trait LlmProvider { ... }  // ✅ Trait only
+
+// converge-provider/src/anthropic.rs
+pub struct AnthropicProvider { ... }  // ✅ Implementation here
+```
+
+**Anti-patterns to avoid:**
+- Adding `reqwest`, `tokio`, or HTTP types to core
+- Putting provider-specific model lists in core
+- Making domain depend directly on provider implementations
+- Circular imports between crates
+
+**Evolution path:** If core grows too large, extract `converge-context` and `converge-engine`.
+
+---
+
 ## Summary Table
 
 | Concern | Decision |
@@ -173,6 +255,7 @@ struct Context {
 | ProposedFact boundary | Separate types, compile-time enforced |
 | Convergence check | Dirty-key tracking |
 | Fact storage | `HashMap<ContextKey, Vec<Fact>>` |
+| Crate layering | Strict downward-only dependencies |
 
 ---
 
