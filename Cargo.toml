@@ -1,0 +1,39 @@
+[workspace]
+resolver = "2"
+members = [
+    "converge-core",
+    "converge-provider",
+    "converge-domain",
+    "converge-tool",
+    "converge-runtime",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+
+[workspace.dependencies]
+# Internal crates
+# Both path (local dev) and version (crates.io) specified
+# Cargo uses path when in workspace, version when published
+converge-core = { path = "converge-core", version = "0.2" }
+converge-provider = { path = "converge-provider", version = "0.1" }
+converge-domain = { path = "converge-domain", version = "0.1" }
+converge-tool = { path = "converge-tool", version = "0.1" }
+
+# Shared dependencies
+thiserror = "2"
+tracing = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", features = ["blocking", "json"] }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"
