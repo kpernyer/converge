@@ -152,7 +152,7 @@ impl LlmProvider for GeminiProvider {
             parts.insert(
                 0,
                 GeminiPart {
-                    text: format!("System: {}\n\n", system),
+                    text: format!("System: {system}\n\n"),
                 },
             );
         }

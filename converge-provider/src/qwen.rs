@@ -10,7 +10,7 @@ use converge_core::llm::{
 };
 use serde::{Deserialize, Serialize};
 
-/// Qwen API provider (Alibaba Cloud DashScope).
+/// Qwen API provider (Alibaba Cloud `DashScope`).
 ///
 /// # Example
 ///

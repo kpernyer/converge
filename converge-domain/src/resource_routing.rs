@@ -103,7 +103,7 @@ impl Agent for TaskRetrievalAgent {
 
         if let Some(seed) = tasks_seed {
             // Parse tasks from content (simplified: comma-separated)
-            let tasks: Vec<&str> = seed.content.split(',').map(|s| s.trim()).collect();
+            let tasks: Vec<&str> = seed.content.split(',').map(str::trim).collect();
 
             for (i, task) in tasks.iter().enumerate() {
                 facts.push(Fact {
@@ -176,7 +176,7 @@ impl Agent for ResourceRetrievalAgent {
 
         if let Some(seed) = resources_seed {
             // Parse resources from content (simplified: comma-separated)
-            let resources: Vec<&str> = seed.content.split(',').map(|s| s.trim()).collect();
+            let resources: Vec<&str> = seed.content.split(',').map(str::trim).collect();
 
             for (i, resource) in resources.iter().enumerate() {
                 facts.push(Fact {
@@ -255,8 +255,7 @@ impl Agent for ConstraintValidationAgent {
             key: ContextKey::Constraints,
             id: "constraint:capacity".into(),
             content: format!(
-                "Capacity constraint: {} tasks must be assigned to {} resources",
-                task_count, resource_count
+                "Capacity constraint: {task_count} tasks must be assigned to {resource_count} resources"
             ),
         });
 
@@ -320,7 +319,7 @@ impl Agent for SolverAgent {
         let mut resource_loads = vec![0; resources.len()];
         let mut assignment_id = 1;
 
-        for (_task_idx, task) in tasks.iter().enumerate() {
+        for task in &tasks {
             // Find resource with lowest load that has capacity
             let mut best_resource = None;
             let mut best_load = usize::MAX;
@@ -350,7 +349,7 @@ impl Agent for SolverAgent {
 
                 facts.push(Fact {
                     key: ContextKey::Strategies,
-                    id: format!("assignment:{}", assignment_id),
+                    id: format!("assignment:{assignment_id}"),
                     content: format!(
                         "Assignment {}: {} → {} | Load: {}/{}",
                         assignment_id,
@@ -421,16 +420,7 @@ impl Agent for FeasibilityAgent {
         let is_feasible = assignment_count >= task_count;
         let all_tasks_assigned = assignment_count == task_count;
 
-        if !is_feasible {
-            facts.push(Fact {
-                key: ContextKey::Evaluations,
-                id: "eval:infeasible".into(),
-                content: format!(
-                    "Score: 0/100 | INFEASIBLE | Rationale: Only {}/{} tasks assigned",
-                    assignment_count, task_count
-                ),
-            });
-        } else {
+        if is_feasible {
             // Evaluate each assignment
             for (i, assignment) in strategies.iter().enumerate() {
                 if assignment.content.contains("INFEASIBLE") {
@@ -460,6 +450,14 @@ impl Agent for FeasibilityAgent {
                     ),
                 });
             }
+        } else {
+            facts.push(Fact {
+                key: ContextKey::Evaluations,
+                id: "eval:infeasible".into(),
+                content: format!(
+                    "Score: 0/100 | INFEASIBLE | Rationale: Only {assignment_count}/{task_count} tasks assigned"
+                ),
+            });
         }
 
         // Ensure at least one evaluation
@@ -531,8 +529,7 @@ impl Invariant for RequireAllTasksAssigned {
 
         if assignment_count < task_count {
             return InvariantResult::Violated(Violation::new(format!(
-                "only {}/{} tasks assigned",
-                assignment_count, task_count
+                "only {assignment_count}/{task_count} tasks assigned"
             )));
         }
         InvariantResult::Ok
@@ -599,8 +596,7 @@ impl Invariant for RequireCapacityRespected {
             if load > capacity {
                 return InvariantResult::Violated(Violation::with_facts(
                     format!(
-                        "resource {} exceeds capacity: {}/{}",
-                        resource_id, load, capacity
+                        "resource {resource_id} exceeds capacity: {load}/{capacity}"
                     ),
                     vec![resource.id.clone()],
                 ));

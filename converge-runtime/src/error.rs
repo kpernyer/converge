@@ -63,23 +63,23 @@ impl axum::response::IntoResponse for RuntimeError {
                     }
                     ConvergeError::Conflict { .. } => axum::http::StatusCode::CONFLICT,
                 };
-                (status, format!("Converge error: {}", e))
+                (status, format!("Converge error: {e}"))
             }
             RuntimeError::Serialization(e) => (
                 axum::http::StatusCode::BAD_REQUEST,
-                format!("Invalid JSON: {}", e),
+                format!("Invalid JSON: {e}"),
             ),
             RuntimeError::Http(e) => (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("HTTP error: {}", e),
+                format!("HTTP error: {e}"),
             ),
             RuntimeError::Io(e) => (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("I/O error: {}", e),
+                format!("I/O error: {e}"),
             ),
             RuntimeError::Config(msg) => (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Configuration error: {}", msg),
+                format!("Configuration error: {msg}"),
             ),
         };
 

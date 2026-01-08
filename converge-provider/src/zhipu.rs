@@ -62,7 +62,7 @@ impl OpenAiCompatibleProvider for ZhipuProvider {
         &self.config
     }
 
-    fn endpoint(&self) -> &str {
+    fn endpoint(&self) -> &'static str {
         "/api/paas/v4/chat/completions"
     }
 }

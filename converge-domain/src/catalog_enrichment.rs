@@ -61,7 +61,7 @@ impl Agent for FeedIngestionAgent {
             feed_seed
                 .content
                 .split('|')
-                .map(|s| s.trim())
+                .map(str::trim)
                 .collect::<Vec<_>>()
         } else {
             vec![
@@ -73,7 +73,7 @@ impl Agent for FeedIngestionAgent {
 
         for (i, product_str) in products.iter().enumerate() {
             let parts: Vec<&str> = product_str.split(':').collect();
-            let name = parts.get(0).unwrap_or(&"Unknown");
+            let name = parts.first().unwrap_or(&"Unknown");
             let category = parts.get(1).unwrap_or(&"Uncategorized");
             let price = parts.get(2).unwrap_or(&"0.00");
 
@@ -214,7 +214,7 @@ impl Agent for AttributeNormalizationAgent {
             let product_id = dedup.id.strip_prefix("dedup:").unwrap_or("unknown");
             let original = signals
                 .iter()
-                .find(|s| s.id == format!("product:{}", product_id));
+                .find(|s| s.id == format!("product:{product_id}"));
 
             if let Some(orig) = original {
                 let name = orig
@@ -258,10 +258,9 @@ impl Agent for AttributeNormalizationAgent {
 
                 facts.push(Fact {
                     key: ContextKey::Signals,
-                    id: format!("normalized:{}", product_id),
+                    id: format!("normalized:{product_id}"),
                     content: format!(
-                        "Normalized: {} | Name: {} | Category: {} | Price: ${}",
-                        product_id, normalized_name, normalized_category, price
+                        "Normalized: {product_id} | Name: {normalized_name} | Category: {normalized_category} | Price: ${price}"
                     ),
                 });
             }
@@ -319,10 +318,9 @@ impl Agent for CategoryInferenceAgent {
 
             facts.push(Fact {
                 key: ContextKey::Signals,
-                id: format!("category:{}", product_id),
+                id: format!("category:{product_id}"),
                 content: format!(
-                    "Category {}: {} | Inferred: {} | Confidence: 90%",
-                    product_id, category, inferred
+                    "Category {product_id}: {category} | Inferred: {inferred} | Confidence: 90%"
                 ),
             });
         }
@@ -383,10 +381,9 @@ impl Agent for PricingValidationAgent {
 
             facts.push(Fact {
                 key: ContextKey::Signals,
-                id: format!("price-valid:{}", product_id),
+                id: format!("price-valid:{product_id}"),
                 content: format!(
-                    "Price validation {}: ${} | Status: {} | Reason: {}",
-                    product_id, price_str, status, reason
+                    "Price validation {product_id}: ${price_str} | Status: {status} | Reason: {reason}"
                 ),
             });
         }
@@ -471,19 +468,19 @@ impl Agent for ProductReadyAgent {
             let product_id = norm.id.strip_prefix("normalized:").unwrap_or("unknown");
             let category = signals
                 .iter()
-                .find(|s| s.id == format!("category:{}", product_id));
+                .find(|s| s.id == format!("category:{product_id}"));
             let price_valid = signals
                 .iter()
-                .find(|s| s.id == format!("price-valid:{}", product_id));
+                .find(|s| s.id == format!("price-valid:{product_id}"));
 
             let has_category = category.is_some();
-            let price_ok = price_valid.map_or(false, |p| p.content.contains("VALID"));
+            let price_ok = price_valid.is_some_and(|p| p.content.contains("VALID"));
 
             let is_ready = has_category && price_ok;
 
             facts.push(Fact {
                 key: ContextKey::Evaluations,
-                id: format!("eval:{}", product_id),
+                id: format!("eval:{product_id}"),
                 content: format!(
                     "Product {}: {} | Category: {} | Price: {} | Status: {}",
                     product_id,
@@ -557,14 +554,13 @@ impl Invariant for RequireNoDuplicates {
                 .and_then(|s| s.split('|').next())
                 .unwrap_or("")
                 .trim();
-            if !name.is_empty() {
-                if !seen_names.insert(name.to_string()) {
+            if !name.is_empty()
+                && !seen_names.insert(name.to_string()) {
                     return InvariantResult::Violated(Violation::with_facts(
-                        format!("duplicate product name found: {}", name),
+                        format!("duplicate product name found: {name}"),
                         vec![normalized.id.clone()],
                     ));
                 }
-            }
         }
 
         InvariantResult::Ok

@@ -17,12 +17,9 @@
 
 use converge_core::{
     ContextKey, Engine,
-    agents::SeedAgent,
-    llm::{LlmAgent, LlmAgentConfig, MockProvider, MockResponse, ResponseParser, SimpleParser},
-    model_selection::AgentRequirements,
-    prompt::PromptFormat,
+    llm::{MockProvider, MockResponse},
 };
-use converge_provider::{ProviderRegistry, create_provider};
+use converge_provider::ProviderRegistry;
 use std::sync::Arc;
 
 use crate::llm_utils::{create_llm_agent, create_mock_llm_agent, requirements};

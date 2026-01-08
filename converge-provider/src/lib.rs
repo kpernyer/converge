@@ -12,15 +12,15 @@
 //! # Available Providers
 //!
 //! - [`AnthropicProvider`]: Claude API (Anthropic)
-//! - [`OpenAiProvider`]: GPT-4, GPT-3.5 (OpenAI)
+//! - [`OpenAiProvider`]: GPT-4, GPT-3.5 (`OpenAI`)
 //! - [`GeminiProvider`]: Gemini Pro (Google)
 //! - [`PerplexityProvider`]: Perplexity AI
 //! - [`QwenProvider`]: Qwen models (Alibaba Cloud)
 //! - [`OpenRouterProvider`]: Multi-provider aggregator
-//! - [`MinMaxProvider`]: MinMax AI
+//! - [`MinMaxProvider`]: `MinMax` AI
 //! - [`GrokProvider`]: Grok (xAI)
 //! - [`MistralProvider`]: Mistral AI
-//! - [`DeepSeekProvider`]: DeepSeek AI
+//! - [`DeepSeekProvider`]: `DeepSeek` AI
 //! - [`BaiduProvider`]: Baidu ERNIE
 //! - [`ZhipuProvider`]: Zhipu GLM
 //! - [`KimiProvider`]: Kimi (Moonshot AI)
@@ -65,7 +65,7 @@
 //! );
 //! ```
 //!
-//! ## Using OpenAI
+//! ## Using `OpenAI`
 //!
 //! ```ignore
 //! use converge_provider::OpenAiProvider;
@@ -75,7 +75,7 @@
 //! let response = provider.complete(&LlmRequest::new("Hello!"))?;
 //! ```
 //!
-//! ## Using OpenRouter (Multi-Provider)
+//! ## Using `OpenRouter` (Multi-Provider)
 //!
 //! ```ignore
 //! use converge_provider::OpenRouterProvider;

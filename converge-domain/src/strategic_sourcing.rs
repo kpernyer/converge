@@ -60,7 +60,7 @@ impl Agent for SupplierDiscoveryAgent {
             suppliers_seed
                 .content
                 .split(',')
-                .map(|s| s.trim())
+                .map(str::trim)
                 .collect::<Vec<_>>()
         } else {
             vec!["VendorA", "VendorB", "VendorC", "VendorD", "VendorE"]
@@ -131,7 +131,7 @@ impl Agent for ComplianceAgent {
 
             facts.push(Fact {
                 key: ContextKey::Signals,
-                id: format!("compliance:{}", supplier),
+                id: format!("compliance:{supplier}"),
                 content: format!(
                     "Compliance {}: {} | Certifications: {} | Status: {}",
                     supplier,
@@ -193,7 +193,7 @@ impl Agent for ESGScoringAgent {
 
             facts.push(Fact {
                 key: ContextKey::Signals,
-                id: format!("esg:{}", supplier),
+                id: format!("esg:{supplier}"),
                 content: format!(
                     "ESG {}: Score {}/100 | Environmental: {} | Social: {} | Governance: {}",
                     supplier,
@@ -270,10 +270,9 @@ impl Agent for PriceBenchmarkAgent {
 
             facts.push(Fact {
                 key: ContextKey::Signals,
-                id: format!("price:{}", supplier),
+                id: format!("price:{supplier}"),
                 content: format!(
-                    "Price {}: ${}/unit | {} | Payment terms: Net 30",
-                    supplier, price, vs_market
+                    "Price {supplier}: ${price}/unit | {vs_market} | Payment terms: Net 30"
                 ),
             });
         }
@@ -321,7 +320,7 @@ impl Agent for RiskModelAgent {
 
             facts.push(Fact {
                 key: ContextKey::Signals,
-                id: format!("risk:{}", supplier),
+                id: format!("risk:{supplier}"),
                 content: format!(
                     "Risk {}: Score {}/100 | Level: {} | Factors: {} | Mitigation: Required",
                     supplier,
@@ -377,16 +376,16 @@ impl Agent for SourcingStrategyAgent {
 
             let compliance = signals
                 .iter()
-                .find(|s| s.id == format!("compliance:{}", supplier));
-            let esg = signals.iter().find(|s| s.id == format!("esg:{}", supplier));
+                .find(|s| s.id == format!("compliance:{supplier}"));
+            let esg = signals.iter().find(|s| s.id == format!("esg:{supplier}"));
             let price = signals
                 .iter()
-                .find(|s| s.id == format!("price:{}", supplier));
+                .find(|s| s.id == format!("price:{supplier}"));
             let _risk = signals
                 .iter()
-                .find(|s| s.id == format!("risk:{}", supplier));
+                .find(|s| s.id == format!("risk:{supplier}"));
 
-            let is_compliant = compliance.map_or(false, |c| c.content.contains("COMPLIANT"));
+            let is_compliant = compliance.is_some_and(|c| c.content.contains("COMPLIANT"));
             let esg_score = esg
                 .and_then(|e| {
                     e.content
@@ -399,7 +398,7 @@ impl Agent for SourcingStrategyAgent {
             let price_val = price
                 .and_then(|p| {
                     p.content
-                        .split("$")
+                        .split('$')
                         .nth(1)
                         .and_then(|s| s.split('/').next())
                         .and_then(|s| s.parse::<u32>().ok())
@@ -578,7 +577,7 @@ impl Invariant for RequireShortlistCompliance {
             if let Some(comp) = compliance {
                 if comp.content.contains("NON-COMPLIANT") || comp.content.contains("FAIL") {
                     return InvariantResult::Violated(Violation::with_facts(
-                        format!("shortlisted vendor {} is non-compliant", supplier),
+                        format!("shortlisted vendor {supplier} is non-compliant"),
                         vec![shortlist.id.clone()],
                     ));
                 }
@@ -627,7 +626,7 @@ impl Invariant for RequireCompleteAssessments {
             for prefix in &required {
                 let has_assessment = signals
                     .iter()
-                    .any(|s| s.id == format!("{}{}", prefix, supplier));
+                    .any(|s| s.id == format!("{prefix}{supplier}"));
                 if !has_assessment {
                     return InvariantResult::Violated(Violation::with_facts(
                         format!(

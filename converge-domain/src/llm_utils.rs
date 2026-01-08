@@ -111,7 +111,7 @@ pub fn create_mock_llm_agent(
 
 /// Common requirement presets for different agent types.
 pub mod requirements {
-    use super::*;
+    use super::{AgentRequirements, CostClass};
 
     /// Requirements for fast, high-volume agents (e.g., data extraction).
     #[must_use]

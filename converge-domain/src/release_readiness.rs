@@ -386,8 +386,7 @@ impl Agent for ReleaseReadyAgent {
         let risk_summary = strategies
             .iter()
             .find(|s| s.id.starts_with("risk:"))
-            .map(|s| s.content.as_str())
-            .unwrap_or("");
+            .map_or("", |s| s.content.as_str());
 
         let is_ready = !risk_summary.contains("BLOCKED") && !risk_summary.contains("HIGH");
 
@@ -406,7 +405,7 @@ impl Agent for ReleaseReadyAgent {
         facts.push(Fact {
             key: ContextKey::Evaluations,
             id: "eval:release-readiness".into(),
-            content: format!("Status: {} | Rationale: {}", status, rationale),
+            content: format!("Status: {status} | Rationale: {rationale}"),
         });
 
         AgentEffect::with_facts(facts)
@@ -476,14 +475,13 @@ impl Invariant for RequireNoCriticalVulnerabilities {
         let signals = ctx.get(ContextKey::Signals);
 
         for signal in signals {
-            if signal.id.starts_with("security:") {
-                if signal.content.contains("critical") && !signal.content.contains("0 critical") {
+            if signal.id.starts_with("security:")
+                && signal.content.contains("critical") && !signal.content.contains("0 critical") {
                     return InvariantResult::Violated(Violation::with_facts(
                         "critical security vulnerabilities detected",
                         vec![signal.id.clone()],
                     ));
                 }
-            }
         }
 
         InvariantResult::Ok
@@ -519,8 +517,7 @@ impl Invariant for RequireMinimumCoverage {
                         if coverage < MIN_COVERAGE {
                             return InvariantResult::Violated(Violation::with_facts(
                                 format!(
-                                    "coverage {}% below minimum threshold of {}%",
-                                    coverage, MIN_COVERAGE
+                                    "coverage {coverage}% below minimum threshold of {MIN_COVERAGE}%"
                                 ),
                                 vec![signal.id.clone()],
                             ));

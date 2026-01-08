@@ -86,8 +86,7 @@ pub fn create_provider(
             Ok(Arc::new(provider))
         }
         _ => Err(LlmError::provider(format!(
-            "Unknown provider: {}",
-            provider_name
+            "Unknown provider: {provider_name}"
         ))),
     }
 }

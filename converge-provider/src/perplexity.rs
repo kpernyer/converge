@@ -66,7 +66,7 @@ impl OpenAiCompatibleProvider for PerplexityProvider {
         &self.config
     }
 
-    fn endpoint(&self) -> &str {
+    fn endpoint(&self) -> &'static str {
         "/chat/completions"
     }
 }
@@ -97,7 +97,7 @@ impl LlmProvider for PerplexityProvider {
             .header("Content-Type", "application/json")
             .json(&chat_request)
             .send()
-            .map_err(|e| LlmError::network(format!("Request failed: {}", e)))?;
+            .map_err(|e| LlmError::network(format!("Request failed: {e}")))?;
 
         let status = http_response.status();
 
@@ -115,7 +115,7 @@ impl LlmProvider for PerplexityProvider {
 
             let error_body: PerplexityError = http_response
                 .json()
-                .map_err(|e| LlmError::parse(format!("Failed to parse error: {}", e)))?;
+                .map_err(|e| LlmError::parse(format!("Failed to parse error: {e}")))?;
 
             let error_type = error_body.error.error_type.as_deref().unwrap_or("unknown");
             return match error_type {
@@ -129,7 +129,7 @@ impl LlmProvider for PerplexityProvider {
 
         let api_response: ChatCompletionResponse = http_response
             .json()
-            .map_err(|e| LlmError::parse(format!("Failed to parse response: {}", e)))?;
+            .map_err(|e| LlmError::parse(format!("Failed to parse response: {e}")))?;
 
         chat_response_to_llm_response(api_response)
     }

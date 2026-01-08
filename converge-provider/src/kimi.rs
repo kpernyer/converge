@@ -62,7 +62,7 @@ impl OpenAiCompatibleProvider for KimiProvider {
         &self.config
     }
 
-    fn endpoint(&self) -> &str {
+    fn endpoint(&self) -> &'static str {
         "/v1/chat/completions"
     }
 }

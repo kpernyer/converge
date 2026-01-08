@@ -284,7 +284,7 @@ impl GherkinValidator {
         scenario: &gherkin::Scenario,
     ) -> Result<Option<ValidationIssue>, ValidationError> {
         let prompt = format!(
-            r#"You are a business analyst validating Gherkin specifications for a multi-agent AI system called Converge.
+            r"You are a business analyst validating Gherkin specifications for a multi-agent AI system called Converge.
 
 Feature: {}
 Scenario: {}
@@ -300,7 +300,7 @@ Evaluate if this scenario makes business sense:
 Respond with ONLY one of:
 - VALID: if the scenario makes business sense
 - INVALID: <reason> if it doesn't make sense
-- UNCLEAR: <question> if more context is needed"#,
+- UNCLEAR: <question> if more context is needed",
             feature.name,
             scenario.name,
             format_steps(&scenario.steps)
@@ -348,7 +348,7 @@ Respond with ONLY one of:
         scenario: &gherkin::Scenario,
     ) -> Result<Option<ValidationIssue>, ValidationError> {
         let prompt = format!(
-            r#"You are a Rust developer checking if a Gherkin scenario can be compiled to a runtime invariant.
+            r"You are a Rust developer checking if a Gherkin scenario can be compiled to a runtime invariant.
 
 In Converge, invariants are Rust structs implementing:
 ```rust
@@ -371,7 +371,7 @@ Can this scenario be implemented as a Converge Invariant?
 Respond with ONLY one of:
 - COMPILABLE: <invariant_class> - brief description of implementation
 - NOT_COMPILABLE: <reason why it cannot be a runtime check>
-- NEEDS_REFACTOR: <suggestion to make it compilable>"#,
+- NEEDS_REFACTOR: <suggestion to make it compilable>",
             feature.name,
             scenario.name,
             format_steps(&scenario.steps)

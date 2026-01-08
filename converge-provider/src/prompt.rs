@@ -43,7 +43,7 @@ impl ProviderPromptBuilder {
     /// Sets the output format hint for the provider.
     ///
     /// For Claude, use "xml" to request XML-tagged responses.
-    /// For OpenAI, use "json" to enable JSON mode.
+    /// For `OpenAI`, use "json" to enable JSON mode.
     #[must_use]
     pub fn with_output_format(mut self, format: impl Into<String>) -> Self {
         self.output_format_hint = Some(format.into());
@@ -58,6 +58,7 @@ impl ProviderPromptBuilder {
     ///
     /// For other providers:
     /// - Returns EDN as-is
+    #[must_use] 
     pub fn build_for_claude(&self) -> String {
         let edn_prompt = self.base.serialize(PromptFormat::Edn);
 
@@ -68,25 +69,22 @@ impl ProviderPromptBuilder {
 
         // Add output format instructions
         if let Some(ref format) = self.output_format_hint {
-            match format.as_str() {
-                "xml" => {
-                    prompt.push_str("<instructions>\n");
-                    prompt.push_str("Respond in XML format with the following structure:\n");
-                    prompt.push_str("<response>\n");
-                    prompt.push_str("  <proposals>\n");
-                    prompt.push_str(
-                        "    <proposal id=\"...\" confidence=\"0.0-1.0\">content</proposal>\n",
-                    );
-                    prompt.push_str("  </proposals>\n");
-                    prompt.push_str("</response>\n");
-                    prompt.push_str("</instructions>");
-                }
-                _ => {
-                    // For other formats, just note the expected format
-                    prompt.push_str("<instructions>Respond in ");
-                    prompt.push_str(format);
-                    prompt.push_str(" format.</instructions>");
-                }
+            if format.as_str() == "xml" {
+                prompt.push_str("<instructions>\n");
+                prompt.push_str("Respond in XML format with the following structure:\n");
+                prompt.push_str("<response>\n");
+                prompt.push_str("  <proposals>\n");
+                prompt.push_str(
+                    "    <proposal id=\"...\" confidence=\"0.0-1.0\">content</proposal>\n",
+                );
+                prompt.push_str("  </proposals>\n");
+                prompt.push_str("</response>\n");
+                prompt.push_str("</instructions>");
+            } else {
+                // For other formats, just note the expected format
+                prompt.push_str("<instructions>Respond in ");
+                prompt.push_str(format);
+                prompt.push_str(" format.</instructions>");
             }
         } else {
             // Default: request structured output
@@ -105,15 +103,17 @@ impl ProviderPromptBuilder {
     /// - Testing token efficiency without XML overhead
     /// - Providers that don't benefit from XML tags
     /// - When you want maximum token savings
+    #[must_use] 
     pub fn build_edn_only(&self) -> String {
         self.base.serialize(PromptFormat::Edn)
     }
 
-    /// Builds the final prompt string for OpenAI.
+    /// Builds the final prompt string for `OpenAI`.
     ///
-    /// OpenAI benefits from JSON mode, so we:
+    /// `OpenAI` benefits from JSON mode, so we:
     /// - Keep EDN for input (it's compact)
     /// - Request JSON output format
+    #[must_use] 
     pub fn build_for_openai(&self) -> String {
         let edn_prompt = self.base.serialize(PromptFormat::Edn);
 
@@ -133,6 +133,7 @@ impl ProviderPromptBuilder {
     }
 
     /// Builds the prompt for a generic provider (EDN as-is).
+    #[must_use] 
     pub fn build_generic(&self) -> String {
         self.base.serialize(PromptFormat::Edn)
     }
@@ -140,11 +141,11 @@ impl ProviderPromptBuilder {
 
 /// Parser for structured LLM responses.
 ///
-/// Handles provider-specific response formats (XML for Claude, JSON for OpenAI).
+/// Handles provider-specific response formats (XML for Claude, JSON for `OpenAI`).
 pub struct StructuredResponseParser;
 
 impl StructuredResponseParser {
-    /// Parses a Claude XML response into ProposedFacts.
+    /// Parses a Claude XML response into `ProposedFacts`.
     ///
     /// Expected XML format:
     /// ```xml
@@ -154,6 +155,7 @@ impl StructuredResponseParser {
     ///   </proposals>
     /// </response>
     /// ```
+    #[must_use] 
     pub fn parse_claude_xml(
         response: &LlmResponse,
         target_key: ContextKey,
@@ -225,7 +227,7 @@ impl StructuredResponseParser {
         proposals
     }
 
-    /// Parses an OpenAI JSON response into ProposedFacts.
+    /// Parses an `OpenAI` JSON response into `ProposedFacts`.
     ///
     /// Expected JSON format:
     /// ```json
@@ -263,7 +265,7 @@ impl StructuredResponseParser {
 
                 let confidence = proposal
                     .get("confidence")
-                    .and_then(|v| v.as_f64())
+                    .and_then(serde_json::Value::as_f64)
                     .unwrap_or(0.7);
 
                 proposals.push(ProposedFact {
@@ -282,7 +284,7 @@ impl StructuredResponseParser {
             ) {
                 let confidence = json
                     .get("confidence")
-                    .and_then(|v| v.as_f64())
+                    .and_then(serde_json::Value::as_f64)
                     .unwrap_or(0.7);
                 proposals.push(ProposedFact {
                     key: target_key,
@@ -300,6 +302,7 @@ impl StructuredResponseParser {
     }
 
     /// Parses a generic response (fallback to simple parsing).
+    #[must_use] 
     pub fn parse_generic(
         response: &LlmResponse,
         target_key: ContextKey,
@@ -309,9 +312,7 @@ impl StructuredResponseParser {
 
         // Generate a simple ID from timestamp
         let id = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| format!("proposal-{:x}", d.as_nanos() % 0xFFFF_FFFF))
-            .unwrap_or_else(|_| "proposal-0".to_string());
+            .duration_since(UNIX_EPOCH).map_or_else(|_| "proposal-0".to_string(), |d| format!("proposal-{:x}", d.as_nanos() % 0xFFFF_FFFF));
 
         // Fallback: treat entire response as a single proposal
         vec![ProposedFact {
@@ -340,7 +341,7 @@ pub fn build_claude_prompt(
         .build_for_claude()
 }
 
-/// Helper function to build a prompt for OpenAI with JSON optimization.
+/// Helper function to build a prompt for `OpenAI` with JSON optimization.
 pub fn build_openai_prompt(
     role: AgentRole,
     objective: impl Into<String>,

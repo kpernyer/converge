@@ -168,7 +168,7 @@ pub struct ChatCompletionResponse {
 pub fn parse_finish_reason(reason: Option<&str>) -> FinishReason {
     match reason {
         Some("stop") => FinishReason::Stop,
-        Some("length") | Some("max_tokens") => FinishReason::MaxTokens,
+        Some("length" | "max_tokens") => FinishReason::MaxTokens,
         Some("content_filter") => FinishReason::ContentFilter,
         Some("stop_sequence") => FinishReason::StopSequence,
         _ => FinishReason::Stop,
@@ -219,7 +219,7 @@ pub fn make_chat_completion_request(
         .header("Content-Type", "application/json")
         .json(&request)
         .send()
-        .map_err(|e| LlmError::network(format!("Request failed: {}", e)))?;
+        .map_err(|e| LlmError::network(format!("Request failed: {e}")))?;
 
     let status = http_response.status();
 
@@ -229,7 +229,7 @@ pub fn make_chat_completion_request(
 
     let api_response: ChatCompletionResponse = http_response
         .json()
-        .map_err(|e| LlmError::parse(format!("Failed to parse response: {}", e)))?;
+        .map_err(|e| LlmError::parse(format!("Failed to parse response: {e}")))?;
 
     chat_response_to_llm_response(api_response)
 }
@@ -246,7 +246,7 @@ pub struct OpenAiStyleError {
 pub struct OpenAiStyleErrorDetail {
     /// Error message.
     pub message: String,
-    /// Error type (e.g., "authentication_error", "rate_limit_error").
+    /// Error type (e.g., "`authentication_error`", "`rate_limit_error`").
     #[serde(rename = "type")]
     pub error_type: Option<String>,
 }
@@ -267,7 +267,7 @@ pub fn handle_openai_style_error(
 ) -> Result<LlmResponse, LlmError> {
     let error_body: OpenAiStyleError = http_response
         .json()
-        .map_err(|e| LlmError::parse(format!("Failed to parse error: {}", e)))?;
+        .map_err(|e| LlmError::parse(format!("Failed to parse error: {e}")))?;
 
     let error_type = error_body.error.error_type.as_deref().unwrap_or("unknown");
     let message = error_body.error.message;

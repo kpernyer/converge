@@ -23,7 +23,7 @@ use crate::error::RuntimeError;
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct JobRequest {
     /// Optional initial context data (for now, simplified).
-    /// TODO: Replace with proper RootIntent when implemented.
+    /// TODO: Replace with proper `RootIntent` when implemented.
     #[schema(example = json!({}))]
     pub context: Option<serde_json::Value>,
 }
@@ -148,7 +148,7 @@ pub async fn handle_job(
         engine.run(context)
     })
     .await
-    .map_err(|e| RuntimeError::Config(format!("Task join error: {}", e)))?
+    .map_err(|e| RuntimeError::Config(format!("Task join error: {e}")))?
     .map_err(RuntimeError::Converge)?;
 
     let duration = start.elapsed();
@@ -157,7 +157,7 @@ pub async fn handle_job(
     let fact_counts: std::collections::HashMap<String, usize> = ContextKey::iter()
         .map(|key| {
             let count = result.context.get(key).len();
-            (format!("{:?}", key), count)
+            (format!("{key:?}"), count)
         })
         .collect();
 

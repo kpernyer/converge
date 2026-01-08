@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: MIT
 // See LICENSE file in the project root for full license information.
 
-//! OpenAPI schema definitions for Converge Runtime.
+//! `OpenAPI` schema definitions for Converge Runtime.
 
 use utoipa::OpenApi;
 
 use crate::error::RuntimeErrorResponse;
 use crate::handlers::{ContextSummary, JobMetadata, JobRequest, JobResponse};
 
-/// OpenAPI schema for Converge Runtime API.
+/// `OpenAPI` schema for Converge Runtime API.
 #[derive(OpenApi)]
 #[openapi(
     paths(

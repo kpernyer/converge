@@ -59,7 +59,7 @@ impl Agent for SalesVelocityAgent {
             regions_seed
                 .content
                 .split(',')
-                .map(|s| s.trim())
+                .map(str::trim)
                 .collect::<Vec<_>>()
         } else {
             vec!["North", "South", "East", "West"]
@@ -116,14 +116,14 @@ impl Agent for InventoryAgent {
             regions_seed
                 .content
                 .split(',')
-                .map(|s| s.trim())
+                .map(str::trim)
                 .collect::<Vec<_>>()
         } else {
             vec!["North", "South", "East", "West"]
         };
 
         // Simulate stock levels: some regions low, some high
-        let stock_levels = vec![30, 120, 45, 90]; // North low, South high, East low, West medium
+        let stock_levels = [30, 120, 45, 90]; // North low, South high, East low, West medium
 
         for (i, region) in regions.iter().enumerate() {
             let stock = stock_levels.get(i).copied().unwrap_or(50);
@@ -138,8 +138,7 @@ impl Agent for InventoryAgent {
                 key: ContextKey::Signals,
                 id: format!("stock:{}", region.to_lowercase()),
                 content: format!(
-                    "Region {}: {} units | Status: {} | Safety stock: 50",
-                    region, stock, status
+                    "Region {region}: {stock} units | Status: {status} | Safety stock: 50"
                 ),
             });
         }
@@ -188,8 +187,8 @@ impl Agent for ForecastAgent {
             // Forecast based on velocity and stock
             let velocity_signal = signals
                 .iter()
-                .find(|s| s.id == format!("velocity:{}", region));
-            let stock_signal = signals.iter().find(|s| s.id == format!("stock:{}", region));
+                .find(|s| s.id == format!("velocity:{region}"));
+            let stock_signal = signals.iter().find(|s| s.id == format!("stock:{region}"));
 
             let velocity = velocity_signal
                 .and_then(|s| s.content.split_whitespace().nth(1))
@@ -207,9 +206,8 @@ impl Agent for ForecastAgent {
 
             facts.push(Fact {
                 key: ContextKey::Signals,
-                id: format!("forecast:{}", region),
-                content: format!("Region {}: 30-day forecast {} units | Days until stockout: {} | Confidence: 85%", 
-                    region, forecast_demand, days_until_stockout),
+                id: format!("forecast:{region}"),
+                content: format!("Region {region}: 30-day forecast {forecast_demand} units | Days until stockout: {days_until_stockout} | Confidence: 85%"),
             });
         }
 
@@ -269,7 +267,7 @@ impl Agent for TransferOptimizationAgent {
                 if transfer_amount > 0 {
                     facts.push(Fact {
                         key: ContextKey::Strategies,
-                        id: format!("transfer:{}", transfer_id),
+                        id: format!("transfer:{transfer_id}"),
                         content: format!(
                             "Transfer {} units: {} → {} | Distance: {}km | Cost: ${}",
                             transfer_amount,
@@ -375,7 +373,7 @@ impl Agent for FinancialImpactAgent {
 
             facts.push(Fact {
                 key: ContextKey::Strategies,
-                id: format!("financial:{}", transfer_id),
+                id: format!("financial:{transfer_id}"),
                 content: format!(
                     "Financial impact: Transfer {} | Cost: ${} | Total impact: ${} | ROI: {} days",
                     transfer_id,
@@ -543,7 +541,7 @@ impl Invariant for RequireSafetyStock {
 
                 if !has_transfer_plan {
                     return InvariantResult::Violated(Violation::with_facts(
-                        format!("region below safety stock with no transfer plan"),
+                        "region below safety stock with no transfer plan".to_string(),
                         vec![signal.id.clone()],
                     ));
                 }
@@ -584,8 +582,7 @@ impl Invariant for RequireBudgetCompliance {
 
         if total_cost > MAX_BUDGET {
             return InvariantResult::Violated(Violation::new(format!(
-                "total transfer cost ${} exceeds budget ${}",
-                total_cost, MAX_BUDGET
+                "total transfer cost ${total_cost} exceeds budget ${MAX_BUDGET}"
             )));
         }
 
@@ -623,10 +620,10 @@ impl Invariant for RequireCompleteForecasts {
         for region in regions_with_stock {
             let has_forecast = signals
                 .iter()
-                .any(|s| s.id == format!("forecast:{}", region));
+                .any(|s| s.id == format!("forecast:{region}"));
             if !has_forecast {
                 return InvariantResult::Violated(Violation::with_facts(
-                    format!("region {} missing forecast", region),
+                    format!("region {region} missing forecast"),
                     vec![format!("stock:{}", region)],
                 ));
             }

@@ -7,7 +7,7 @@
 //!
 //! This module provides concrete implementations of model selection
 //! with hardcoded knowledge of all providers. The abstract interface
-//! (ModelSelectorTrait, AgentRequirements) is in converge-core.
+//! (`ModelSelectorTrait`, `AgentRequirements`) is in converge-core.
 
 use converge_core::llm::LlmError;
 use converge_core::{
@@ -174,7 +174,7 @@ impl ModelMetadata {
         };
 
         // Latency efficiency: prefer faster (inverted, normalized)
-        let latency_ratio = self.typical_latency_ms as f64 / requirements.max_latency_ms as f64;
+        let latency_ratio = f64::from(self.typical_latency_ms) / f64::from(requirements.max_latency_ms);
         let latency_score = 1.0 - latency_ratio.min(1.0);
 
         // Quality score (already 0.0-1.0)
@@ -460,7 +460,7 @@ impl ProviderRegistry {
         let available_providers: std::collections::HashSet<String> = known_providers
             .into_iter()
             .filter(|p| is_provider_available(p))
-            .map(|p| p.to_string())
+            .map(std::string::ToString::to_string)
             .collect();
 
         Self {
@@ -478,7 +478,7 @@ impl ProviderRegistry {
     pub fn with_providers(providers: &[&str]) -> Self {
         let base_selector = ModelSelector::new();
         let available_providers: std::collections::HashSet<String> =
-            providers.iter().map(|s| s.to_string()).collect();
+            providers.iter().map(std::string::ToString::to_string).collect();
 
         Self {
             base_selector,
@@ -516,7 +516,7 @@ impl ProviderRegistry {
     pub fn available_providers(&self) -> Vec<&str> {
         self.available_providers
             .iter()
-            .map(|s| s.as_str())
+            .map(std::string::String::as_str)
             .collect()
     }
 
@@ -550,7 +550,7 @@ impl ModelSelectorTrait for ProviderRegistry {
             let available = self
                 .available_providers
                 .iter()
-                .map(|s| s.as_str())
+                .map(std::string::String::as_str)
                 .collect::<Vec<_>>()
                 .join(", ");
             return Err(LlmError::provider(format!(

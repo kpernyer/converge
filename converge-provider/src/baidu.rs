@@ -95,7 +95,7 @@ impl BaiduProvider {
             .client
             .get(&url)
             .send()
-            .map_err(|e| LlmError::network(format!("Token request failed: {}", e)))?;
+            .map_err(|e| LlmError::network(format!("Token request failed: {e}")))?;
 
         if !response.status().is_success() {
             return Err(LlmError::auth("Failed to get access token"));
@@ -103,7 +103,7 @@ impl BaiduProvider {
 
         let token_response: TokenResponse = response
             .json()
-            .map_err(|e| LlmError::auth(format!("Failed to parse token response: {}", e)))?;
+            .map_err(|e| LlmError::auth(format!("Failed to parse token response: {e}")))?;
 
         self.access_token = Some(token_response.access_token.clone());
         Ok(token_response.access_token)
@@ -188,29 +188,28 @@ impl LlmProvider for BaiduProvider {
             .header("Content-Type", "application/json")
             .json(&api_request)
             .send()
-            .map_err(|e| LlmError::network(format!("Request failed: {}", e)))?;
+            .map_err(|e| LlmError::network(format!("Request failed: {e}")))?;
 
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response
                 .text()
-                .unwrap_or_else(|_| format!("HTTP {}", status));
+                .unwrap_or_else(|_| format!("HTTP {status}"));
             return Err(LlmError::provider(format!(
-                "Baidu API error ({}): {}",
-                status, error_text
+                "Baidu API error ({status}): {error_text}"
             )));
         }
 
         let baidu_response: BaiduResponse = response
             .json()
-            .map_err(|e| LlmError::provider(format!("Failed to parse response: {}", e)))?;
+            .map_err(|e| LlmError::provider(format!("Failed to parse response: {e}")))?;
 
         if let Some(error_code) = baidu_response.error_code {
             return Err(LlmError::provider(format!(
                 "Baidu API error: {}",
                 baidu_response
                     .error_msg
-                    .unwrap_or_else(|| format!("Error code: {}", error_code))
+                    .unwrap_or_else(|| format!("Error code: {error_code}"))
             )));
         }
 

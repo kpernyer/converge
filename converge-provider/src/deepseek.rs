@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: MIT
 // See LICENSE file in the project root for full license information.
 
-//! DeepSeek AI API provider.
+//! `DeepSeek` AI API provider.
 
 use crate::common::{HttpProviderConfig, OpenAiCompatibleProvider};
 use converge_core::llm::{LlmError, LlmProvider, LlmRequest, LlmResponse};
 
-/// DeepSeek AI API provider.
+/// `DeepSeek` AI API provider.
 ///
 /// # Example
 ///
@@ -30,7 +30,7 @@ pub struct DeepSeekProvider {
 }
 
 impl DeepSeekProvider {
-    /// Creates a new DeepSeek provider.
+    /// Creates a new `DeepSeek` provider.
     #[must_use]
     pub fn new(api_key: impl Into<String>, model: impl Into<String>) -> Self {
         Self {
@@ -62,7 +62,7 @@ impl OpenAiCompatibleProvider for DeepSeekProvider {
         &self.config
     }
 
-    fn endpoint(&self) -> &str {
+    fn endpoint(&self) -> &'static str {
         "/v1/chat/completions"
     }
 }

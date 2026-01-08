@@ -53,7 +53,7 @@ impl Agent for RegulationParserAgent {
             reg_seed
                 .content
                 .split(',')
-                .map(|s| s.trim())
+                .map(str::trim)
                 .collect::<Vec<_>>()
         } else {
             vec!["GDPR", "SOC2", "HIPAA"]
@@ -111,7 +111,7 @@ impl Agent for PolicyRuleAgent {
 
             facts.push(Fact {
                 key: ContextKey::Constraints,
-                id: format!("policy:{}", reg_name),
+                id: format!("policy:{reg_name}"),
                 content: format!(
                     "Policy {}: {} | Enforcement: Automatic | Severity: High",
                     reg_name,
@@ -162,7 +162,7 @@ impl Agent for EvidenceCollectorAgent {
 
             facts.push(Fact {
                 key: ContextKey::Signals,
-                id: format!("evidence:{}", reg_name),
+                id: format!("evidence:{reg_name}"),
                 content: format!(
                     "Evidence {}: {} | Status: {} | Last checked: Today | Next check: Tomorrow",
                     reg_name,
@@ -209,20 +209,20 @@ impl Agent for ViolationDetectorAgent {
             let reg_name = policy.id.strip_prefix("policy:").unwrap_or("unknown");
             let evidence = signals
                 .iter()
-                .find(|s| s.id == format!("evidence:{}", reg_name));
+                .find(|s| s.id == format!("evidence:{reg_name}"));
 
             if let Some(ev) = evidence {
                 if ev.content.contains("NON-COMPLIANT") || ev.content.contains("Missing") {
                     facts.push(Fact {
                         key: ContextKey::Strategies,
-                        id: format!("violation:{}", reg_name),
+                        id: format!("violation:{reg_name}"),
                         content: format!("Violation {}: NON-COMPLIANT | Evidence: {} | Severity: High | Action required: Immediate", 
                             reg_name, ev.content),
                     });
                 } else {
                     facts.push(Fact {
                         key: ContextKey::Strategies,
-                        id: format!("violation:{}", reg_name),
+                        id: format!("violation:{reg_name}"),
                         content: format!(
                             "Violation {}: COMPLIANT | Evidence: {} | Status: No action needed",
                             reg_name, ev.content
@@ -370,14 +370,14 @@ impl Invariant for RequireEvidenceForAllRegulations {
             .collect();
 
         for reg in regulations {
-            let has_evidence = signals.iter().any(|s| s.id == format!("evidence:{}", reg));
+            let has_evidence = signals.iter().any(|s| s.id == format!("evidence:{reg}"));
             let has_policy = constraints
                 .iter()
-                .any(|c| c.id == format!("policy:{}", reg));
+                .any(|c| c.id == format!("policy:{reg}"));
 
             if !has_evidence || !has_policy {
                 return InvariantResult::Violated(Violation::with_facts(
-                    format!("regulation {} missing evidence or policy", reg),
+                    format!("regulation {reg} missing evidence or policy"),
                     vec![format!("regulation:{}", reg)],
                 ));
             }

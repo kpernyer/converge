@@ -8,8 +8,7 @@
 use crate::llm_utils::{create_mock_llm_agent, requirements};
 use converge_core::{
     ContextKey, Engine,
-    agents::SeedAgent,
-    llm::{LlmAgent, MockProvider, MockResponse},
+    llm::{MockProvider, MockResponse},
 };
 use std::sync::Arc;
 

@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: MIT
 // See LICENSE file in the project root for full license information.
 
-//! OpenAI GPT API provider.
+//! `OpenAI` GPT API provider.
 
 use converge_core::llm::{
     FinishReason, LlmError, LlmProvider, LlmRequest, LlmResponse, TokenUsage,
 };
 use serde::{Deserialize, Serialize};
 
-/// OpenAI GPT API provider.
+/// `OpenAI` GPT API provider.
 ///
 /// # Example
 ///
@@ -35,7 +35,7 @@ pub struct OpenAiProvider {
 }
 
 impl OpenAiProvider {
-    /// Creates a new OpenAI provider.
+    /// Creates a new `OpenAI` provider.
     #[must_use]
     pub fn new(api_key: impl Into<String>, model: impl Into<String>) -> Self {
         Self {

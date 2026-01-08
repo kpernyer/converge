@@ -53,24 +53,21 @@ impl Agent for UsageSignalAgent {
         let account_id = seeds
             .iter()
             .find(|s| s.id == "account")
-            .map(|s| s.content.as_str())
-            .unwrap_or("Account123");
+            .map_or("Account123", |s| s.content.as_str());
 
         // Simulate usage metrics
         facts.push(Fact {
             key: ContextKey::Signals,
             id: "usage:active-users".into(),
             content: format!(
-                "Usage {}: Active users: 450 | Trend: +5% MoM | Engagement: High",
-                account_id
+                "Usage {account_id}: Active users: 450 | Trend: +5% MoM | Engagement: High"
             ),
         });
         facts.push(Fact {
             key: ContextKey::Signals,
             id: "usage:feature-adoption".into(),
             content: format!(
-                "Usage {}: Feature adoption: 78% | Top features: A, B, C | Underutilized: D",
-                account_id
+                "Usage {account_id}: Feature adoption: 78% | Top features: A, B, C | Underutilized: D"
             ),
         });
 
@@ -105,21 +102,19 @@ impl Agent for SupportTicketAgent {
         let account_id = seeds
             .iter()
             .find(|s| s.id == "account")
-            .map(|s| s.content.as_str())
-            .unwrap_or("Account123");
+            .map_or("Account123", |s| s.content.as_str());
 
         // Simulate support metrics
         facts.push(Fact {
             key: ContextKey::Signals,
             id: "support:tickets".into(),
-            content: format!("Support {}: Tickets last 30 days: 12 | Avg resolution: 2.5 days | Satisfaction: 4.2/5", account_id),
+            content: format!("Support {account_id}: Tickets last 30 days: 12 | Avg resolution: 2.5 days | Satisfaction: 4.2/5"),
         });
         facts.push(Fact {
             key: ContextKey::Signals,
             id: "support:escalations".into(),
             content: format!(
-                "Support {}: Escalations: 2 | Critical issues: 0 | Status: Healthy",
-                account_id
+                "Support {account_id}: Escalations: 2 | Critical issues: 0 | Status: Healthy"
             ),
         });
 
@@ -154,22 +149,20 @@ impl Agent for RevenueTrendAgent {
         let account_id = seeds
             .iter()
             .find(|s| s.id == "account")
-            .map(|s| s.content.as_str())
-            .unwrap_or("Account123");
+            .map_or("Account123", |s| s.content.as_str());
 
         // Simulate revenue metrics
         facts.push(Fact {
             key: ContextKey::Signals,
             id: "revenue:mrr".into(),
             content: format!(
-                "Revenue {}: MRR: $15,000 | Growth: +8% MoM | Contract: Annual",
-                account_id
+                "Revenue {account_id}: MRR: $15,000 | Growth: +8% MoM | Contract: Annual"
             ),
         });
         facts.push(Fact {
             key: ContextKey::Signals,
             id: "revenue:expansion".into(),
-            content: format!("Revenue {}: Expansion revenue: $2,000 | Upsell potential: $5,000 | Churn risk: Low", account_id),
+            content: format!("Revenue {account_id}: Expansion revenue: $2,000 | Upsell potential: $5,000 | Churn risk: Low"),
         });
 
         AgentEffect::with_facts(facts)
@@ -205,20 +198,17 @@ impl Agent for ChurnRiskAgent {
         let usage_trend = signals
             .iter()
             .find(|s| s.id == "usage:active-users")
-            .map(|s| if s.content.contains("+") { 1 } else { -1 })
-            .unwrap_or(0);
+            .map_or(0, |s| if s.content.contains('+') { 1 } else { -1 });
 
         let support_health = signals
             .iter()
             .find(|s| s.id == "support:escalations")
-            .map(|s| if s.content.contains("Healthy") { 1 } else { -1 })
-            .unwrap_or(0);
+            .map_or(0, |s| if s.content.contains("Healthy") { 1 } else { -1 });
 
         let revenue_growth = signals
             .iter()
             .find(|s| s.id == "revenue:mrr")
-            .map(|s| if s.content.contains("+") { 1 } else { -1 })
-            .unwrap_or(0);
+            .map_or(0, |s| if s.content.contains('+') { 1 } else { -1 });
 
         let risk_score = (3 - (usage_trend + support_health + revenue_growth)) * 20;
         let risk_level = if risk_score < 30 {
@@ -293,7 +283,7 @@ impl Agent for UpsellOpportunityAgent {
                     .split("potential: $")
                     .nth(1)
                     .and_then(|s| s.split(' ').next())
-                    .and_then(|s| s.replace(",", "").parse::<u32>().ok())
+                    .and_then(|s| s.replace(',', "").parse::<u32>().ok())
             })
             .unwrap_or(0);
 
@@ -301,15 +291,13 @@ impl Agent for UpsellOpportunityAgent {
             facts.push(Fact {
                 key: ContextKey::Strategies,
                 id: "opportunity:upsell".into(),
-                content: format!("Upsell opportunity: High | Potential: ${} | Rationale: High feature adoption ({}%) + expansion potential | Priority: HIGH", 
-                    expansion_potential, usage_adoption),
+                content: format!("Upsell opportunity: High | Potential: ${expansion_potential} | Rationale: High feature adoption ({usage_adoption}%) + expansion potential | Priority: HIGH"),
             });
         } else if expansion_potential > 0 {
             facts.push(Fact {
                 key: ContextKey::Strategies,
                 id: "opportunity:upsell".into(),
-                content: format!("Upsell opportunity: Medium | Potential: ${} | Rationale: Expansion potential identified | Priority: MEDIUM", 
-                    expansion_potential),
+                content: format!("Upsell opportunity: Medium | Potential: ${expansion_potential} | Rationale: Expansion potential identified | Priority: MEDIUM"),
             });
         }
 

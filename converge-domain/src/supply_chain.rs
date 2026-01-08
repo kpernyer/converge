@@ -483,7 +483,7 @@ impl Agent for ConsolidationAgent {
                 let cost = cost_strategy
                     .and_then(|c| {
                         c.content
-                            .split("$")
+                            .split('$')
                             .nth(1)
                             .and_then(|s| s.split_whitespace().next())
                             .and_then(|s| s.parse::<u32>().ok())
@@ -618,7 +618,7 @@ impl Invariant for RequireSLACompliance {
                 {
                     if time > max_days {
                         return InvariantResult::Violated(Violation::with_facts(
-                            format!("plan violates SLA: {} days > {} days", time, max_days),
+                            format!("plan violates SLA: {time} days > {max_days} days"),
                             vec![eval.id.clone()],
                         ));
                     }
@@ -672,7 +672,7 @@ impl Invariant for RequireCompleteAssessments {
 
             if !has_cost || !has_risk {
                 return InvariantResult::Violated(Violation::with_facts(
-                    format!("route {} missing cost or risk assessment", route_id),
+                    format!("route {route_id} missing cost or risk assessment"),
                     vec![route.id.clone()],
                 ));
             }

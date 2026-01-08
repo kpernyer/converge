@@ -83,7 +83,7 @@ async fn main() -> Result<()> {
     // Default: just wait for HTTP server
     http_handle
         .await
-        .map_err(|e| anyhow::anyhow!("HTTP server task failed: {}", e))?;
+        .map_err(|e| anyhow::anyhow!("HTTP server task failed: {e}"))?;
 
     Ok(())
 }
