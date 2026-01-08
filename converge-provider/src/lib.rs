@@ -11,20 +11,20 @@
 //!
 //! # Available Providers
 //!
-//! - [`AnthropicProvider`]: Claude API (Anthropic)
-//! - [`OpenAiProvider`]: GPT-4, GPT-3.5 (`OpenAI`)
-//! - [`GeminiProvider`]: Gemini Pro (Google)
-//! - [`PerplexityProvider`]: Perplexity AI
-//! - [`QwenProvider`]: Qwen models (Alibaba Cloud)
-//! - [`OpenRouterProvider`]: Multi-provider aggregator
-//! - [`MinMaxProvider`]: `MinMax` AI
-//! - [`GrokProvider`]: Grok (xAI)
-//! - [`MistralProvider`]: Mistral AI
-//! - [`DeepSeekProvider`]: `DeepSeek` AI
-//! - [`BaiduProvider`]: Baidu ERNIE
-//! - [`ZhipuProvider`]: Zhipu GLM
-//! - [`KimiProvider`]: Kimi (Moonshot AI)
-//! - [`ApertusProvider`]: Apertus (Switzerland, EU digital sovereignty)
+//! - [`AnthropicProvider`] - Claude API (Anthropic)
+//! - [`OpenAiProvider`] - GPT-4, GPT-3.5 (OpenAI)
+//! - [`GeminiProvider`] - Gemini Pro (Google)
+//! - [`PerplexityProvider`] - Perplexity AI
+//! - [`QwenProvider`] - Qwen models (Alibaba Cloud)
+//! - [`OpenRouterProvider`] - Multi-provider aggregator
+//! - [`MinMaxProvider`] - MinMax AI
+//! - [`GrokProvider`] - Grok (xAI)
+//! - [`MistralProvider`] - Mistral AI
+//! - [`DeepSeekProvider`] - DeepSeek AI
+//! - [`BaiduProvider`] - Baidu ERNIE
+//! - [`ZhipuProvider`] - Zhipu GLM
+//! - [`KimiProvider`] - Kimi (Moonshot AI)
+//! - [`ApertusProvider`] - Apertus (Switzerland, EU digital sovereignty)
 //!
 //! # Prompt Structuring
 //!
