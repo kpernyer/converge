@@ -16,19 +16,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # converge-core is a private submodule - skip it, use crates.io version
-      - name: Remove submodule (use crates.io version)
-        run: |
-          rm -rf converge-core
-          # Remove converge-core from workspace members array only
-          sed -i '/members = \[/,/\]/ s/"converge-core",//' Cargo.toml
-          # Remove the path from converge-core dependency (keep version only)
-          sed -i 's/converge-core = { path = "converge-core", version/converge-core = { version/' Cargo.toml
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
+
+      # converge-core is a private submodule - skip it, use crates.io version
+      - name: Remove submodule (use crates.io version)
+        run: |
+          rm -rf converge-core
+          # Remove converge-core from workspace members array
+          sed -i 's/"converge-core",//' Cargo.toml
+          # Remove the path from converge-core dependency (keep version only)
+          sed -i 's|path = "converge-core", ||' Cargo.toml
+          # Show result for debugging
+          grep -A5 "workspace.dependencies" Cargo.toml
 
       - name: Cache cargo
         uses: actions/cache@v4
@@ -59,14 +61,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Remove submodule
         run: |
           rm -rf converge-core
-          sed -i '/members = \[/,/\]/ s/"converge-core",//' Cargo.toml
-          sed -i 's/converge-core = { path = "converge-core", version/converge-core = { version/' Cargo.toml
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+          sed -i 's/"converge-core",//' Cargo.toml
+          sed -i 's|path = "converge-core", ||' Cargo.toml
 
       - name: Build docs
         run: cargo doc --workspace --no-deps
