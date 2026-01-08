@@ -58,7 +58,7 @@ impl ProviderPromptBuilder {
     ///
     /// For other providers:
     /// - Returns EDN as-is
-    #[must_use] 
+    #[must_use]
     pub fn build_for_claude(&self) -> String {
         let edn_prompt = self.base.serialize(PromptFormat::Edn);
 
@@ -103,7 +103,7 @@ impl ProviderPromptBuilder {
     /// - Testing token efficiency without XML overhead
     /// - Providers that don't benefit from XML tags
     /// - When you want maximum token savings
-    #[must_use] 
+    #[must_use]
     pub fn build_edn_only(&self) -> String {
         self.base.serialize(PromptFormat::Edn)
     }
@@ -113,7 +113,7 @@ impl ProviderPromptBuilder {
     /// `OpenAI` benefits from JSON mode, so we:
     /// - Keep EDN for input (it's compact)
     /// - Request JSON output format
-    #[must_use] 
+    #[must_use]
     pub fn build_for_openai(&self) -> String {
         let edn_prompt = self.base.serialize(PromptFormat::Edn);
 
@@ -133,7 +133,7 @@ impl ProviderPromptBuilder {
     }
 
     /// Builds the prompt for a generic provider (EDN as-is).
-    #[must_use] 
+    #[must_use]
     pub fn build_generic(&self) -> String {
         self.base.serialize(PromptFormat::Edn)
     }
@@ -155,7 +155,7 @@ impl StructuredResponseParser {
     ///   </proposals>
     /// </response>
     /// ```
-    #[must_use] 
+    #[must_use]
     pub fn parse_claude_xml(
         response: &LlmResponse,
         target_key: ContextKey,
@@ -302,7 +302,7 @@ impl StructuredResponseParser {
     }
 
     /// Parses a generic response (fallback to simple parsing).
-    #[must_use] 
+    #[must_use]
     pub fn parse_generic(
         response: &LlmResponse,
         target_key: ContextKey,
@@ -311,8 +311,10 @@ impl StructuredResponseParser {
         use std::time::{SystemTime, UNIX_EPOCH};
 
         // Generate a simple ID from timestamp
-        let id = SystemTime::now()
-            .duration_since(UNIX_EPOCH).map_or_else(|_| "proposal-0".to_string(), |d| format!("proposal-{:x}", d.as_nanos() % 0xFFFF_FFFF));
+        let id = SystemTime::now().duration_since(UNIX_EPOCH).map_or_else(
+            |_| "proposal-0".to_string(),
+            |d| format!("proposal-{:x}", d.as_nanos() % 0xFFFF_FFFF),
+        );
 
         // Fallback: treat entire response as a single proposal
         vec![ProposedFact {

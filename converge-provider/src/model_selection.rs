@@ -174,7 +174,8 @@ impl ModelMetadata {
         };
 
         // Latency efficiency: prefer faster (inverted, normalized)
-        let latency_ratio = f64::from(self.typical_latency_ms) / f64::from(requirements.max_latency_ms);
+        let latency_ratio =
+            f64::from(self.typical_latency_ms) / f64::from(requirements.max_latency_ms);
         let latency_score = 1.0 - latency_ratio.min(1.0);
 
         // Quality score (already 0.0-1.0)
@@ -477,8 +478,10 @@ impl ProviderRegistry {
     #[must_use]
     pub fn with_providers(providers: &[&str]) -> Self {
         let base_selector = ModelSelector::new();
-        let available_providers: std::collections::HashSet<String> =
-            providers.iter().map(std::string::ToString::to_string).collect();
+        let available_providers: std::collections::HashSet<String> = providers
+            .iter()
+            .map(std::string::ToString::to_string)
+            .collect();
 
         Self {
             base_selector,

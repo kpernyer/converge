@@ -476,12 +476,14 @@ impl Invariant for RequireNoCriticalVulnerabilities {
 
         for signal in signals {
             if signal.id.starts_with("security:")
-                && signal.content.contains("critical") && !signal.content.contains("0 critical") {
-                    return InvariantResult::Violated(Violation::with_facts(
-                        "critical security vulnerabilities detected",
-                        vec![signal.id.clone()],
-                    ));
-                }
+                && signal.content.contains("critical")
+                && !signal.content.contains("0 critical")
+            {
+                return InvariantResult::Violated(Violation::with_facts(
+                    "critical security vulnerabilities detected",
+                    vec![signal.id.clone()],
+                ));
+            }
         }
 
         InvariantResult::Ok

@@ -192,9 +192,7 @@ impl LlmProvider for BaiduProvider {
 
         if !response.status().is_success() {
             let status = response.status();
-            let error_text = response
-                .text()
-                .unwrap_or_else(|_| format!("HTTP {status}"));
+            let error_text = response.text().unwrap_or_else(|_| format!("HTTP {status}"));
             return Err(LlmError::provider(format!(
                 "Baidu API error ({status}): {error_text}"
             )));

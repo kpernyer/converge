@@ -250,9 +250,7 @@ impl Agent for WorkingHoursConstraintAgent {
             facts.push(Fact {
                 key: ContextKey::Constraints,
                 id: "working-hours:default".into(),
-                content: format!(
-                    "Working hours: Mon-Fri 9-17 UTC | Duration: {duration} minutes"
-                ),
+                content: format!("Working hours: Mon-Fri 9-17 UTC | Duration: {duration} minutes"),
             });
         }
 
@@ -315,9 +313,7 @@ impl Agent for SlotOptimizationAgent {
             facts.push(Fact {
                 key: ContextKey::Strategies,
                 id: format!("slot:{rank}"),
-                content: format!(
-                    "Candidate slot {rank}: {start} - {end} ({duration} minutes)"
-                ),
+                content: format!("Candidate slot {rank}: {start} - {end} ({duration} minutes)"),
             });
         }
 

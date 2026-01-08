@@ -371,9 +371,7 @@ impl Invariant for RequireEvidenceForAllRegulations {
 
         for reg in regulations {
             let has_evidence = signals.iter().any(|s| s.id == format!("evidence:{reg}"));
-            let has_policy = constraints
-                .iter()
-                .any(|c| c.id == format!("policy:{reg}"));
+            let has_policy = constraints.iter().any(|c| c.id == format!("policy:{reg}"));
 
             if !has_evidence || !has_policy {
                 return InvariantResult::Violated(Violation::with_facts(

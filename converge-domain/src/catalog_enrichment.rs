@@ -554,13 +554,12 @@ impl Invariant for RequireNoDuplicates {
                 .and_then(|s| s.split('|').next())
                 .unwrap_or("")
                 .trim();
-            if !name.is_empty()
-                && !seen_names.insert(name.to_string()) {
-                    return InvariantResult::Violated(Violation::with_facts(
-                        format!("duplicate product name found: {name}"),
-                        vec![normalized.id.clone()],
-                    ));
-                }
+            if !name.is_empty() && !seen_names.insert(name.to_string()) {
+                return InvariantResult::Violated(Violation::with_facts(
+                    format!("duplicate product name found: {name}"),
+                    vec![normalized.id.clone()],
+                ));
+            }
         }
 
         InvariantResult::Ok

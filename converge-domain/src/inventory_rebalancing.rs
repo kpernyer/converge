@@ -618,9 +618,7 @@ impl Invariant for RequireCompleteForecasts {
             .collect();
 
         for region in regions_with_stock {
-            let has_forecast = signals
-                .iter()
-                .any(|s| s.id == format!("forecast:{region}"));
+            let has_forecast = signals.iter().any(|s| s.id == format!("forecast:{region}"));
             if !has_forecast {
                 return InvariantResult::Violated(Violation::with_facts(
                     format!("region {region} missing forecast"),

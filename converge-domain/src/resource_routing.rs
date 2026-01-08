@@ -595,9 +595,7 @@ impl Invariant for RequireCapacityRespected {
 
             if load > capacity {
                 return InvariantResult::Violated(Violation::with_facts(
-                    format!(
-                        "resource {resource_id} exceeds capacity: {load}/{capacity}"
-                    ),
+                    format!("resource {resource_id} exceeds capacity: {load}/{capacity}"),
                     vec![resource.id.clone()],
                 ));
             }

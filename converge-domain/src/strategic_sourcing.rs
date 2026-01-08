@@ -378,12 +378,8 @@ impl Agent for SourcingStrategyAgent {
                 .iter()
                 .find(|s| s.id == format!("compliance:{supplier}"));
             let esg = signals.iter().find(|s| s.id == format!("esg:{supplier}"));
-            let price = signals
-                .iter()
-                .find(|s| s.id == format!("price:{supplier}"));
-            let _risk = signals
-                .iter()
-                .find(|s| s.id == format!("risk:{supplier}"));
+            let price = signals.iter().find(|s| s.id == format!("price:{supplier}"));
+            let _risk = signals.iter().find(|s| s.id == format!("risk:{supplier}"));
 
             let is_compliant = compliance.is_some_and(|c| c.content.contains("COMPLIANT"));
             let esg_score = esg
