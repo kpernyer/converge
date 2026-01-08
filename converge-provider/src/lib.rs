@@ -106,28 +106,27 @@ mod qwen;
 mod zhipu;
 
 pub use anthropic::AnthropicProvider;
-pub use common::{
-    chat_response_to_llm_response, ChatCompletionRequest, ChatCompletionResponse, ChatMessage,
-    ChatUsage, handle_openai_style_error, HttpProviderConfig, make_chat_completion_request,
-    OpenAiCompatibleProvider, OpenAiStyleError, OpenAiStyleErrorDetail, parse_finish_reason,
-};
 pub use apertus::ApertusProvider;
 pub use baidu::BaiduProvider;
+pub use common::{
+    ChatCompletionRequest, ChatCompletionResponse, ChatMessage, ChatUsage, HttpProviderConfig,
+    OpenAiCompatibleProvider, OpenAiStyleError, OpenAiStyleErrorDetail,
+    chat_response_to_llm_response, handle_openai_style_error, make_chat_completion_request,
+    parse_finish_reason,
+};
 pub use deepseek::DeepSeekProvider;
+pub use factory::{can_create_provider, create_provider};
 pub use gemini::GeminiProvider;
 pub use grok::GrokProvider;
 pub use kimi::KimiProvider;
 pub use minmax::MinMaxProvider;
 pub use mistral::MistralProvider;
+pub use model_selection::{ModelMetadata, ModelSelector, ProviderRegistry, is_provider_available};
 pub use openai::OpenAiProvider;
 pub use openrouter::OpenRouterProvider;
 pub use perplexity::PerplexityProvider;
-pub use factory::{can_create_provider, create_provider};
 pub use prompt::{
-    build_claude_prompt, build_openai_prompt, ProviderPromptBuilder, StructuredResponseParser,
+    ProviderPromptBuilder, StructuredResponseParser, build_claude_prompt, build_openai_prompt,
 };
 pub use qwen::QwenProvider;
 pub use zhipu::ZhipuProvider;
-pub use model_selection::{
-    is_provider_available, ModelMetadata, ModelSelector, ProviderRegistry,
-};

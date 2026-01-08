@@ -8,12 +8,8 @@
 use axum::Router;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
-use tower_http::{
-    compression::CompressionLayer,
-    cors::CorsLayer,
-    trace::TraceLayer,
-};
-use tracing::{info, Level};
+use tower_http::{compression::CompressionLayer, cors::CorsLayer, trace::TraceLayer};
+use tracing::{Level, info};
 
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -42,10 +38,7 @@ impl HttpServer {
         // Build router with middleware and OpenAPI docs
         let app = Router::new()
             .merge(handlers::router())
-            .merge(
-                SwaggerUi::new("/swagger-ui")
-                    .url("/api-docs/openapi.json", ApiDoc::openapi()),
-            )
+            .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
             .layer(
                 ServiceBuilder::new()
                     .layer(
@@ -58,14 +51,18 @@ impl HttpServer {
                                     uri = %_request.uri(),
                                 )
                             })
-                            .on_response(|_response: &axum::response::Response<_>, latency: std::time::Duration, _span: &tracing::Span| {
-                                tracing::event!(
-                                    Level::INFO,
-                                    latency_ms = latency.as_millis(),
-                                    status = %_response.status(),
-                                    "HTTP response"
-                                );
-                            }),
+                            .on_response(
+                                |_response: &axum::response::Response<_>,
+                                 latency: std::time::Duration,
+                                 _span: &tracing::Span| {
+                                    tracing::event!(
+                                        Level::INFO,
+                                        latency_ms = latency.as_millis(),
+                                        status = %_response.status(),
+                                        "HTTP response"
+                                    );
+                                },
+                            ),
                     )
                     .layer(CompressionLayer::new())
                     .layer(CorsLayer::permissive()),
@@ -81,4 +78,3 @@ impl HttpServer {
         Ok(())
     }
 }
-

@@ -5,7 +5,10 @@
 
 //! Perplexity AI API provider.
 
-use crate::common::{chat_response_to_llm_response, ChatCompletionRequest, ChatCompletionResponse, HttpProviderConfig, OpenAiCompatibleProvider};
+use crate::common::{
+    ChatCompletionRequest, ChatCompletionResponse, HttpProviderConfig, OpenAiCompatibleProvider,
+    chat_response_to_llm_response,
+};
 use converge_core::llm::{LlmError, LlmProvider, LlmRequest, LlmResponse};
 use serde::Deserialize;
 
@@ -79,13 +82,11 @@ impl LlmProvider for PerplexityProvider {
 
     fn complete(&self, request: &LlmRequest) -> Result<LlmResponse, LlmError> {
         // Perplexity has custom error handling and doesn't support stop sequences
-        let mut chat_request = ChatCompletionRequest::from_llm_request(
-            self.config.model.clone(),
-            request,
-        );
+        let mut chat_request =
+            ChatCompletionRequest::from_llm_request(self.config.model.clone(), request);
         // Perplexity doesn't support stop sequences
         chat_request.stop = Vec::new();
-        
+
         let url = format!("{}{}", self.config.base_url, self.endpoint());
 
         let http_response = self

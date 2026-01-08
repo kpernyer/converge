@@ -35,15 +35,15 @@ impl GrpcServer {
     /// - Add authentication/authorization
     pub async fn start(self) -> Result<(), RuntimeError> {
         tracing::info!(addr = %self.config.bind, "gRPC server not yet implemented");
-        
+
         // TODO: Implement gRPC server
         // use tonic::transport::Server;
-        // 
+        //
         // Server::builder()
         //     .add_service(ConvergeServiceServer::new(ConvergeService::new()))
         //     .serve(self.config.bind)
         //     .await?;
-        
+
         Ok(())
     }
 }
@@ -61,4 +61,3 @@ impl GrpcServer {
         Ok(())
     }
 }
-

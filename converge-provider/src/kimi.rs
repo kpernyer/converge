@@ -84,4 +84,3 @@ impl LlmProvider for KimiProvider {
         format!("kimi:{}:{}", self.config.model, request_id)
     }
 }
-

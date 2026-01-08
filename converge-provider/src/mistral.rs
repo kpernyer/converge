@@ -84,4 +84,3 @@ impl LlmProvider for MistralProvider {
         format!("mistral:{}:{}", self.config.model, request_id)
     }
 }
-

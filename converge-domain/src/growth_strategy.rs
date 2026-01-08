@@ -210,7 +210,9 @@ impl Agent for StrategyAgent {
         let mut facts = Vec::new();
 
         // Analyze competitive gaps
-        let has_smb_gap = competitors.iter().any(|c| c.content.contains("weak in SMB"));
+        let has_smb_gap = competitors
+            .iter()
+            .any(|c| c.content.contains("weak in SMB"));
         let has_linkedin_channel = signals.iter().any(|s| s.content.contains("LinkedIn"));
         let has_self_service = signals.iter().any(|s| s.content.contains("self-service"));
 
@@ -301,7 +303,10 @@ impl Agent for EvaluationAgent {
                 key: ContextKey::Evaluations,
                 id: format!(
                     "eval:{}",
-                    strategy.id.strip_prefix("strategy:").unwrap_or(&strategy.id)
+                    strategy
+                        .id
+                        .strip_prefix("strategy:")
+                        .unwrap_or(&strategy.id)
                 ),
                 content: format!(
                     "Score: {}/100 | {} | Rationale: {}",
@@ -446,7 +451,10 @@ impl Invariant for RequireStrategyEvaluations {
 
         for strategy in strategies {
             // Check if there's an evaluation for this strategy
-            let strategy_key = strategy.id.strip_prefix("strategy:").unwrap_or(&strategy.id);
+            let strategy_key = strategy
+                .id
+                .strip_prefix("strategy:")
+                .unwrap_or(&strategy.id);
             let has_eval = evaluations.iter().any(|e| e.id.contains(strategy_key));
 
             if !has_eval {
@@ -491,8 +499,8 @@ impl Invariant for RequireEvaluationRationale {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use converge_core::agents::SeedAgent;
     use converge_core::Engine;
+    use converge_core::agents::SeedAgent;
 
     #[test]
     fn market_signal_agent_emits_signals_from_seeds() {

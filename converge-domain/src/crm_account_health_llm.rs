@@ -5,12 +5,12 @@
 
 //! LLM-enabled CRM Account Health use case.
 
+use crate::llm_utils::{create_mock_llm_agent, requirements};
 use converge_core::{
+    ContextKey, Engine,
     agents::SeedAgent,
     llm::{LlmAgent, MockProvider, MockResponse},
-    ContextKey, Engine,
 };
-use crate::llm_utils::{create_mock_llm_agent, requirements};
 use std::sync::Arc;
 
 /// Sets up LLM-enabled CRM Account Health agents with mock providers.
@@ -46,9 +46,9 @@ mod tests {
     fn mock_llm_crm_account_health_converges() {
         let mut engine = Engine::new();
         engine.register(SeedAgent::new("account", "Account123"));
-        
+
         // Add deterministic agents to create Signals first
-        use crate::crm_account_health::{UsageSignalAgent, SupportTicketAgent, RevenueTrendAgent};
+        use crate::crm_account_health::{RevenueTrendAgent, SupportTicketAgent, UsageSignalAgent};
         engine.register(UsageSignalAgent);
         engine.register(SupportTicketAgent);
         engine.register(RevenueTrendAgent);
@@ -60,4 +60,3 @@ mod tests {
         assert!(result.converged);
     }
 }
-

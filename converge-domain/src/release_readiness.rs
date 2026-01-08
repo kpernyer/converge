@@ -87,12 +87,15 @@ impl Agent for DependencyGraphAgent {
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: "dependency:graph".into(),
-                content: "Dependency graph: 45 direct, 234 transitive | No circular deps | All pinned".into(),
+                content:
+                    "Dependency graph: 45 direct, 234 transitive | No circular deps | All pinned"
+                        .into(),
             });
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: "dependency:outdated".into(),
-                content: "Outdated deps: 2 minor updates available | No security patches needed".into(),
+                content: "Outdated deps: 2 minor updates available | No security patches needed"
+                    .into(),
             });
         }
 
@@ -534,8 +537,8 @@ impl Invariant for RequireMinimumCoverage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use converge_core::agents::SeedAgent;
     use converge_core::Engine;
+    use converge_core::agents::SeedAgent;
 
     #[test]
     fn all_check_agents_run_in_parallel() {
@@ -595,9 +598,11 @@ mod tests {
         assert!(result.context.has(ContextKey::Evaluations));
         let evals = result.context.get(ContextKey::Evaluations);
         assert!(evals.iter().any(|e| e.id == "eval:release-readiness"));
-        assert!(evals
-            .iter()
-            .any(|e| e.content.contains("READY") || e.content.contains("BLOCKED")));
+        assert!(
+            evals
+                .iter()
+                .any(|e| e.content.contains("READY") || e.content.contains("BLOCKED"))
+        );
     }
 
     #[test]
@@ -652,4 +657,3 @@ mod tests {
         );
     }
 }
-

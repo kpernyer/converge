@@ -86,4 +86,3 @@ impl LlmProvider for ApertusProvider {
         format!("apertus:{}:{}", self.config.model, request_id)
     }
 }
-

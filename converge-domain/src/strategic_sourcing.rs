@@ -57,7 +57,11 @@ impl Agent for SupplierDiscoveryAgent {
 
         // Extract suppliers from seeds or use defaults
         let suppliers = if let Some(suppliers_seed) = seeds.iter().find(|s| s.id == "suppliers") {
-            suppliers_seed.content.split(',').map(|s| s.trim()).collect::<Vec<_>>()
+            suppliers_seed
+                .content
+                .split(',')
+                .map(|s| s.trim())
+                .collect::<Vec<_>>()
         } else {
             vec!["VendorA", "VendorB", "VendorC", "VendorD", "VendorE"]
         };
@@ -66,11 +70,18 @@ impl Agent for SupplierDiscoveryAgent {
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: format!("supplier:{}", supplier.to_lowercase()),
-                content: format!("Supplier {}: {} | Location: {} | Capacity: {} units/month | Established: {}", 
-                    i + 1, supplier,
-                    if i % 2 == 0 { "Domestic" } else { "International" },
+                content: format!(
+                    "Supplier {}: {} | Location: {} | Capacity: {} units/month | Established: {}",
+                    i + 1,
+                    supplier,
+                    if i % 2 == 0 {
+                        "Domestic"
+                    } else {
+                        "International"
+                    },
                     (i + 1) * 100,
-                    2020 - (i * 2)),
+                    2020 - (i * 2)
+                ),
             });
         }
 
@@ -105,8 +116,11 @@ impl Agent for ComplianceAgent {
         let mut facts = Vec::new();
 
         for supplier_signal in signals.iter().filter(|s| s.id.starts_with("supplier:")) {
-            let supplier = supplier_signal.id.strip_prefix("supplier:").unwrap_or("unknown");
-            
+            let supplier = supplier_signal
+                .id
+                .strip_prefix("supplier:")
+                .unwrap_or("unknown");
+
             // Simulate compliance checks
             let is_compliant = !supplier.contains("vendorc"); // VendorC fails
             let certifications = if is_compliant {
@@ -118,9 +132,17 @@ impl Agent for ComplianceAgent {
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: format!("compliance:{}", supplier),
-                content: format!("Compliance {}: {} | Certifications: {} | Status: {}", 
-                    supplier, if is_compliant { "COMPLIANT" } else { "NON-COMPLIANT" },
-                    certifications, if is_compliant { "PASS" } else { "FAIL" }),
+                content: format!(
+                    "Compliance {}: {} | Certifications: {} | Status: {}",
+                    supplier,
+                    if is_compliant {
+                        "COMPLIANT"
+                    } else {
+                        "NON-COMPLIANT"
+                    },
+                    certifications,
+                    if is_compliant { "PASS" } else { "FAIL" }
+                ),
             });
         }
 
@@ -155,8 +177,11 @@ impl Agent for ESGScoringAgent {
         let mut facts = Vec::new();
 
         for supplier_signal in signals.iter().filter(|s| s.id.starts_with("supplier:")) {
-            let supplier = supplier_signal.id.strip_prefix("supplier:").unwrap_or("unknown");
-            
+            let supplier = supplier_signal
+                .id
+                .strip_prefix("supplier:")
+                .unwrap_or("unknown");
+
             // Simulate ESG scoring (0-100)
             let esg_score = match supplier {
                 s if s.contains("vendora") => 95,
@@ -169,9 +194,14 @@ impl Agent for ESGScoringAgent {
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: format!("esg:{}", supplier),
-                content: format!("ESG {}: Score {}/100 | Environmental: {} | Social: {} | Governance: {}", 
-                    supplier, esg_score,
-                    esg_score - 10, esg_score - 5, esg_score),
+                content: format!(
+                    "ESG {}: Score {}/100 | Environmental: {} | Social: {} | Governance: {}",
+                    supplier,
+                    esg_score,
+                    esg_score - 10,
+                    esg_score - 5,
+                    esg_score
+                ),
             });
         }
 
@@ -206,18 +236,34 @@ impl Agent for PriceBenchmarkAgent {
         let mut facts = Vec::new();
 
         // Calculate market average
-        let _supplier_count = signals.iter().filter(|s| s.id.starts_with("supplier:")).count();
+        let _supplier_count = signals
+            .iter()
+            .filter(|s| s.id.starts_with("supplier:"))
+            .count();
         let market_avg = 100; // Base price
 
-        for (i, supplier_signal) in signals.iter().filter(|s| s.id.starts_with("supplier:")).enumerate() {
-            let supplier = supplier_signal.id.strip_prefix("supplier:").unwrap_or("unknown");
-            
+        for (i, supplier_signal) in signals
+            .iter()
+            .filter(|s| s.id.starts_with("supplier:"))
+            .enumerate()
+        {
+            let supplier = supplier_signal
+                .id
+                .strip_prefix("supplier:")
+                .unwrap_or("unknown");
+
             // Simulate pricing (some below, some above market)
             let price = market_avg + ((i as i32 - 2) * 10);
             let vs_market = if price < market_avg {
-                format!("{}% below market", ((market_avg - price) * 100) / market_avg)
+                format!(
+                    "{}% below market",
+                    ((market_avg - price) * 100) / market_avg
+                )
             } else if price > market_avg {
-                format!("{}% above market", ((price - market_avg) * 100) / market_avg)
+                format!(
+                    "{}% above market",
+                    ((price - market_avg) * 100) / market_avg
+                )
             } else {
                 "at market".to_string()
             };
@@ -225,8 +271,10 @@ impl Agent for PriceBenchmarkAgent {
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: format!("price:{}", supplier),
-                content: format!("Price {}: ${}/unit | {} | Payment terms: Net 30", 
-                    supplier, price, vs_market),
+                content: format!(
+                    "Price {}: ${}/unit | {} | Payment terms: Net 30",
+                    supplier, price, vs_market
+                ),
             });
         }
 
@@ -261,8 +309,11 @@ impl Agent for RiskModelAgent {
         let mut facts = Vec::new();
 
         for supplier_signal in signals.iter().filter(|s| s.id.starts_with("supplier:")) {
-            let supplier = supplier_signal.id.strip_prefix("supplier:").unwrap_or("unknown");
-            
+            let supplier = supplier_signal
+                .id
+                .strip_prefix("supplier:")
+                .unwrap_or("unknown");
+
             // Extract location to assess risk
             let is_international = supplier_signal.content.contains("International");
             let risk_score = if is_international { 40 } else { 20 };
@@ -271,9 +322,17 @@ impl Agent for RiskModelAgent {
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: format!("risk:{}", supplier),
-                content: format!("Risk {}: Score {}/100 | Level: {} | Factors: {} | Mitigation: Required", 
-                    supplier, risk_score, risk_level,
-                    if is_international { "Currency, logistics, geopolitical" } else { "Minimal" }),
+                content: format!(
+                    "Risk {}: Score {}/100 | Level: {} | Factors: {} | Mitigation: Required",
+                    supplier,
+                    risk_score,
+                    risk_level,
+                    if is_international {
+                        "Currency, logistics, geopolitical"
+                    } else {
+                        "Minimal"
+                    }
+                ),
             });
         }
 
@@ -311,12 +370,21 @@ impl Agent for SourcingStrategyAgent {
         let mut candidates = Vec::new();
 
         for supplier_signal in signals.iter().filter(|s| s.id.starts_with("supplier:")) {
-            let supplier = supplier_signal.id.strip_prefix("supplier:").unwrap_or("unknown");
-            
-            let compliance = signals.iter().find(|s| s.id == format!("compliance:{}", supplier));
+            let supplier = supplier_signal
+                .id
+                .strip_prefix("supplier:")
+                .unwrap_or("unknown");
+
+            let compliance = signals
+                .iter()
+                .find(|s| s.id == format!("compliance:{}", supplier));
             let esg = signals.iter().find(|s| s.id == format!("esg:{}", supplier));
-            let price = signals.iter().find(|s| s.id == format!("price:{}", supplier));
-            let _risk = signals.iter().find(|s| s.id == format!("risk:{}", supplier));
+            let price = signals
+                .iter()
+                .find(|s| s.id == format!("price:{}", supplier));
+            let _risk = signals
+                .iter()
+                .find(|s| s.id == format!("risk:{}", supplier));
 
             let is_compliant = compliance.map_or(false, |c| c.content.contains("COMPLIANT"));
             let esg_score = esg
@@ -353,8 +421,14 @@ impl Agent for SourcingStrategyAgent {
             facts.push(Fact {
                 key: ContextKey::Strategies,
                 id: format!("shortlist:{}", i + 1),
-                content: format!("Shortlist {}: {} | Composite score: {} | ESG: {} | Price: ${}", 
-                    i + 1, supplier, score, esg, price),
+                content: format!(
+                    "Shortlist {}: {} | Composite score: {} | ESG: {} | Price: ${}",
+                    i + 1,
+                    supplier,
+                    score,
+                    esg,
+                    price
+                ),
             });
         }
 
@@ -392,7 +466,11 @@ impl Agent for VendorRankingAgent {
 
         let shortlisted: Vec<_> = strategies
             .iter()
-            .filter(|s| s.id.starts_with("shortlist:") && s.id != "shortlist:none" && !s.content.contains("No suppliers"))
+            .filter(|s| {
+                s.id.starts_with("shortlist:")
+                    && s.id != "shortlist:none"
+                    && !s.content.contains("No suppliers")
+            })
             .collect();
 
         if shortlisted.is_empty() {
@@ -414,14 +492,18 @@ impl Agent for VendorRankingAgent {
                 facts.push(Fact {
                     key: ContextKey::Evaluations,
                     id: format!("eval:{}", i + 1),
-                    content: format!("Rank {}: {} | {} | Rationale: {} | {}", 
-                        i + 1, supplier, shortlist.content,
+                    content: format!(
+                        "Rank {}: {} | {} | Rationale: {} | {}",
+                        i + 1,
+                        supplier,
+                        shortlist.content,
                         if i == 0 {
                             "Best overall balance of ESG, price, and compliance"
                         } else {
                             "Strong alternative option"
                         },
-                        if i == 0 { "RECOMMENDED" } else { "ALTERNATIVE" }),
+                        if i == 0 { "RECOMMENDED" } else { "ALTERNATIVE" }
+                    ),
                 });
             }
         }
@@ -451,13 +533,13 @@ impl Invariant for RequireCompliantVendor {
     fn check(&self, ctx: &Context) -> InvariantResult {
         let evaluations = ctx.get(ContextKey::Evaluations);
 
-        let has_recommended = evaluations.iter().any(|e| {
-            e.content.contains("RECOMMENDED") && !e.content.contains("NO VENDORS")
-        });
+        let has_recommended = evaluations
+            .iter()
+            .any(|e| e.content.contains("RECOMMENDED") && !e.content.contains("NO VENDORS"));
 
         if !has_recommended {
             return InvariantResult::Violated(Violation::new(
-                "no compliant vendors found in shortlist"
+                "no compliant vendors found in shortlist",
             ));
         }
 
@@ -489,7 +571,9 @@ impl Invariant for RequireShortlistCompliance {
                 .and_then(|s| s.split(' ').next())
                 .unwrap_or("unknown");
 
-            let compliance = signals.iter().find(|s| s.id == format!("compliance:{}", supplier.to_lowercase()));
+            let compliance = signals
+                .iter()
+                .find(|s| s.id == format!("compliance:{}", supplier.to_lowercase()));
 
             if let Some(comp) = compliance {
                 if comp.content.contains("NON-COMPLIANT") || comp.content.contains("FAIL") {
@@ -522,8 +606,10 @@ impl Invariant for RequireCompleteAssessments {
 
         // Only check if assessments have started
         let has_any_assessment = signals.iter().any(|s| {
-            s.id.starts_with("compliance:") || s.id.starts_with("esg:") || 
-            s.id.starts_with("price:") || s.id.starts_with("risk:")
+            s.id.starts_with("compliance:")
+                || s.id.starts_with("esg:")
+                || s.id.starts_with("price:")
+                || s.id.starts_with("risk:")
         });
 
         if !has_any_assessment {
@@ -539,10 +625,16 @@ impl Invariant for RequireCompleteAssessments {
         for supplier in suppliers {
             let required = ["compliance:", "esg:", "price:", "risk:"];
             for prefix in &required {
-                let has_assessment = signals.iter().any(|s| s.id == format!("{}{}", prefix, supplier));
+                let has_assessment = signals
+                    .iter()
+                    .any(|s| s.id == format!("{}{}", prefix, supplier));
                 if !has_assessment {
                     return InvariantResult::Violated(Violation::with_facts(
-                        format!("supplier {} missing {} assessment", supplier, prefix.strip_suffix(':').unwrap_or(prefix)),
+                        format!(
+                            "supplier {} missing {} assessment",
+                            supplier,
+                            prefix.strip_suffix(':').unwrap_or(prefix)
+                        ),
                         vec![format!("supplier:{}", supplier)],
                     ));
                 }
@@ -556,8 +648,8 @@ impl Invariant for RequireCompleteAssessments {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use converge_core::agents::SeedAgent;
     use converge_core::Engine;
+    use converge_core::agents::SeedAgent;
 
     #[test]
     fn parallel_assessment_agents_run_independently() {
@@ -616,7 +708,11 @@ mod tests {
         assert!(result.context.has(ContextKey::Evaluations));
         let evals = result.context.get(ContextKey::Evaluations);
         assert!(!evals.is_empty());
-        assert!(evals.iter().any(|e| e.content.contains("RECOMMENDED") || e.content.contains("Rationale")));
+        assert!(
+            evals
+                .iter()
+                .any(|e| e.content.contains("RECOMMENDED") || e.content.contains("Rationale"))
+        );
     }
 
     #[test]
@@ -688,4 +784,3 @@ mod tests {
         );
     }
 }
-

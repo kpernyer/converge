@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("1. Checking available providers from environment...");
     let registry = ProviderRegistry::from_env();
     let available = registry.available_providers();
-    
+
     if available.is_empty() {
         println!("   ⚠️  No providers available (no API keys set)");
         println!("\n   To test this example, set at least one API key:");
@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("   export OPENAI_API_KEY='your-key'");
         return Ok(());
     }
-    
+
     println!("   ✅ Available providers: {:?}", available);
 
     // Step 2: Define requirements
@@ -55,15 +55,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example: Explicit provider control
     println!("\n=== Explicit Provider Control ===");
     let explicit_registry = ProviderRegistry::with_providers(&["anthropic", "openai"]);
-    println!("Available providers: {:?}", explicit_registry.available_providers());
+    println!(
+        "Available providers: {:?}",
+        explicit_registry.available_providers()
+    );
 
     // Example: Dynamic metadata update
     println!("\n=== Dynamic Metadata Update ===");
     let mut registry_with_updates = ProviderRegistry::from_env();
-    
+
     // Simulate a price change
-    use converge_provider::ModelMetadata;
     use converge_core::CostClass;
+    use converge_provider::ModelMetadata;
     let updated = ModelMetadata::new(
         "anthropic",
         "claude-3-5-haiku-20241022",
@@ -76,4 +79,3 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-

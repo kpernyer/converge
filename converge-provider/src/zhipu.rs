@@ -84,4 +84,3 @@ impl LlmProvider for ZhipuProvider {
         format!("zhipu:{}:{}", self.config.model, request_id)
     }
 }
-

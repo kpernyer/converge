@@ -5,12 +5,12 @@
 
 //! LLM-enabled Compliance Monitoring use case.
 
+use crate::llm_utils::{create_mock_llm_agent, requirements};
 use converge_core::{
+    ContextKey, Engine,
     agents::SeedAgent,
     llm::{LlmAgent, MockProvider, MockResponse},
-    ContextKey, Engine,
 };
-use crate::llm_utils::{create_mock_llm_agent, requirements};
 use std::sync::Arc;
 
 /// Sets up LLM-enabled Compliance Monitoring agents with mock providers.
@@ -70,4 +70,3 @@ mod tests {
         assert!(result.converged);
     }
 }
-

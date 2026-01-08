@@ -53,7 +53,10 @@ fn verbose_growth_strategy_execution() {
     println!("         → Dependencies: [] (runs first cycle)");
     println!("         → Emits: Seeds");
 
-    let seed2_id = engine.register(SeedAgent::new("product:product-x", "Product X - SaaS platform"));
+    let seed2_id = engine.register(SeedAgent::new(
+        "product:product-x",
+        "Product X - SaaS platform",
+    ));
     println!("    [{}] SeedAgent 'product:product-x'", seed2_id);
     println!("         → Dependencies: [] (runs first cycle)");
     println!("         → Emits: Seeds");
@@ -208,10 +211,22 @@ fn verbose_growth_strategy_execution() {
     let strategies = result.context.get(ContextKey::Strategies);
     let evaluations = result.context.get(ContextKey::Evaluations);
 
-    println!("\n  ✓ BrandSafetyInvariant: No forbidden terms in {} strategies", strategies.len());
-    println!("  ✓ RequireEvaluationRationale: All {} evaluations have rationale", evaluations.len());
-    println!("  ✓ RequireMultipleStrategies: {} strategies >= 2 required", strategies.len());
-    println!("  ✓ RequireStrategyEvaluations: All {} strategies have evaluations", strategies.len());
+    println!(
+        "\n  ✓ BrandSafetyInvariant: No forbidden terms in {} strategies",
+        strategies.len()
+    );
+    println!(
+        "  ✓ RequireEvaluationRationale: All {} evaluations have rationale",
+        evaluations.len()
+    );
+    println!(
+        "  ✓ RequireMultipleStrategies: {} strategies >= 2 required",
+        strategies.len()
+    );
+    println!(
+        "  ✓ RequireStrategyEvaluations: All {} strategies have evaluations",
+        strategies.len()
+    );
 
     // =========================================================================
     // SUMMARY
@@ -221,8 +236,14 @@ fn verbose_growth_strategy_execution() {
     println!("╠══════════════════════════════════════════════════════════════════════════════╣");
     println!("║  Agents Registered:    6                                                     ║");
     println!("║  Invariants Enforced:  4                                                     ║");
-    println!("║  Cycles Executed:      {}                                                     ║", result.cycles);
-    println!("║  Facts Generated:      {}                                                   ║", result.context.version());
+    println!(
+        "║  Cycles Executed:      {}                                                     ║",
+        result.cycles
+    );
+    println!(
+        "║  Facts Generated:      {}                                                   ║",
+        result.context.version()
+    );
     println!("║  Convergence:          ✓ ACHIEVED                                            ║");
     println!("╚══════════════════════════════════════════════════════════════════════════════╝");
     println!();

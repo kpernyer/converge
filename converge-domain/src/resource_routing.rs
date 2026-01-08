@@ -109,8 +109,10 @@ impl Agent for TaskRetrievalAgent {
                 facts.push(Fact {
                     key: ContextKey::Signals,
                     id: format!("task:{}", i + 1),
-                    content: format!("Task {}: {} | Priority: {} | Duration: {} min", 
-                        i + 1, task, 
+                    content: format!(
+                        "Task {}: {} | Priority: {} | Duration: {} min",
+                        i + 1,
+                        task,
                         if i == 0 { "High" } else { "Medium" },
                         (i + 1) * 30, // Variable duration
                     ),
@@ -151,10 +153,9 @@ impl Agent for ResourceRetrievalAgent {
 
     fn accepts(&self, ctx: &Context) -> bool {
         // Run once when seeds exist but no resource signals yet
-        let has_resources_seed = ctx
-            .get(ContextKey::Seeds)
-            .iter()
-            .any(|s| s.id == "resources" || s.content.contains("resource") || s.content.contains("vehicle"));
+        let has_resources_seed = ctx.get(ContextKey::Seeds).iter().any(|s| {
+            s.id == "resources" || s.content.contains("resource") || s.content.contains("vehicle")
+        });
         let has_resource_signals = ctx
             .get(ContextKey::Signals)
             .iter()
@@ -181,8 +182,10 @@ impl Agent for ResourceRetrievalAgent {
                 facts.push(Fact {
                     key: ContextKey::Signals,
                     id: format!("resource:{}", i + 1),
-                    content: format!("Resource {}: {} | Capacity: {} tasks | Status: Available", 
-                        i + 1, resource,
+                    content: format!(
+                        "Resource {}: {} | Capacity: {} tasks | Status: Available",
+                        i + 1,
+                        resource,
                         if i == 0 { 3 } else { 2 }, // Variable capacity
                     ),
                 });
@@ -242,7 +245,10 @@ impl Agent for ConstraintValidationAgent {
 
         // Count tasks and resources
         let task_count = signals.iter().filter(|s| s.id.starts_with("task:")).count();
-        let resource_count = signals.iter().filter(|s| s.id.starts_with("resource:")).count();
+        let resource_count = signals
+            .iter()
+            .filter(|s| s.id.starts_with("resource:"))
+            .count();
 
         // Define capacity constraints
         facts.push(Fact {
@@ -337,7 +343,10 @@ impl Agent for SolverAgent {
 
             if let Some(res_idx) = best_resource {
                 resource_loads[res_idx] += 1;
-                let resource_id = resources[res_idx].id.strip_prefix("resource:").unwrap_or("unknown");
+                let resource_id = resources[res_idx]
+                    .id
+                    .strip_prefix("resource:")
+                    .unwrap_or("unknown");
 
                 facts.push(Fact {
                     key: ContextKey::Strategies,
@@ -434,7 +443,10 @@ impl Agent for FeasibilityAgent {
                     key: ContextKey::Evaluations,
                     id: format!(
                         "eval:{}",
-                        assignment.id.strip_prefix("assignment:").unwrap_or(&assignment.id)
+                        assignment
+                            .id
+                            .strip_prefix("assignment:")
+                            .unwrap_or(&assignment.id)
                     ),
                     content: format!(
                         "Score: {}/100 | {} | Rationale: {}",
@@ -455,7 +467,8 @@ impl Agent for FeasibilityAgent {
             facts.push(Fact {
                 key: ContextKey::Evaluations,
                 id: "eval:unknown".into(),
-                content: "Score: 0/100 | UNKNOWN | Rationale: Unable to evaluate assignments".into(),
+                content: "Score: 0/100 | UNKNOWN | Rationale: Unable to evaluate assignments"
+                    .into(),
             });
         }
 
@@ -559,7 +572,10 @@ impl Invariant for RequireCapacityRespected {
             std::collections::HashMap::new();
 
         // Count assignments per resource
-        for assignment in strategies.iter().filter(|s| !s.content.contains("INFEASIBLE")) {
+        for assignment in strategies
+            .iter()
+            .filter(|s| !s.content.contains("INFEASIBLE"))
+        {
             // Extract resource from assignment content
             if let Some(resource_part) = assignment.content.split("→").nth(1) {
                 let resource_id = resource_part.split('|').next().unwrap_or("").trim();
@@ -582,7 +598,10 @@ impl Invariant for RequireCapacityRespected {
 
             if load > capacity {
                 return InvariantResult::Violated(Violation::with_facts(
-                    format!("resource {} exceeds capacity: {}/{}", resource_id, load, capacity),
+                    format!(
+                        "resource {} exceeds capacity: {}/{}",
+                        resource_id, load, capacity
+                    ),
                     vec![resource.id.clone()],
                 ));
             }
@@ -615,7 +634,10 @@ impl Invariant for RequireValidDefinitions {
         let signals = ctx.get(ContextKey::Signals);
 
         let task_count = signals.iter().filter(|s| s.id.starts_with("task:")).count();
-        let resource_count = signals.iter().filter(|s| s.id.starts_with("resource:")).count();
+        let resource_count = signals
+            .iter()
+            .filter(|s| s.id.starts_with("resource:"))
+            .count();
 
         if task_count == 0 {
             return InvariantResult::Violated(Violation::new("no tasks defined"));
@@ -632,13 +654,16 @@ impl Invariant for RequireValidDefinitions {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use converge_core::agents::SeedAgent;
     use converge_core::Engine;
+    use converge_core::agents::SeedAgent;
 
     #[test]
     fn task_retrieval_agent_extracts_tasks() {
         let mut engine = Engine::new();
-        engine.register(SeedAgent::new("tasks", "Delivery A, Delivery B, Delivery C"));
+        engine.register(SeedAgent::new(
+            "tasks",
+            "Delivery A, Delivery B, Delivery C",
+        ));
         engine.register(TaskRetrievalAgent);
 
         let result = engine.run(Context::new()).expect("should converge");
@@ -721,7 +746,10 @@ mod tests {
     fn full_pipeline_converges_deterministically() {
         let run = || {
             let mut engine = Engine::new();
-            engine.register(SeedAgent::new("tasks", "Delivery A, Delivery B, Delivery C"));
+            engine.register(SeedAgent::new(
+                "tasks",
+                "Delivery A, Delivery B, Delivery C",
+            ));
             engine.register(SeedAgent::new("resources", "Vehicle 1, Vehicle 2"));
             engine.register(TaskRetrievalAgent);
             engine.register(ResourceRetrievalAgent);
@@ -750,4 +778,3 @@ mod tests {
         );
     }
 }
-

@@ -54,10 +54,21 @@ impl Agent for FeedIngestionAgent {
         let mut facts = Vec::new();
 
         // Extract products from feeds
-        let products = if let Some(feed_seed) = seeds.iter().find(|s| s.id == "feeds" || s.id.contains("product")) {
-            feed_seed.content.split('|').map(|s| s.trim()).collect::<Vec<_>>()
+        let products = if let Some(feed_seed) = seeds
+            .iter()
+            .find(|s| s.id == "feeds" || s.id.contains("product"))
+        {
+            feed_seed
+                .content
+                .split('|')
+                .map(|s| s.trim())
+                .collect::<Vec<_>>()
         } else {
-            vec!["ProductA:Widget:99.99", "ProductB:Gadget:149.99", "ProductC:Widget:89.99"]
+            vec![
+                "ProductA:Widget:99.99",
+                "ProductB:Gadget:149.99",
+                "ProductC:Widget:89.99",
+            ]
         };
 
         for (i, product_str) in products.iter().enumerate() {
@@ -69,8 +80,14 @@ impl Agent for FeedIngestionAgent {
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: format!("product:{}", i + 1),
-                content: format!("Product {}: {} | Category: {} | Price: ${} | Source: Feed{}", 
-                    i + 1, name, category, price, (i % 3) + 1),
+                content: format!(
+                    "Product {}: {} | Category: {} | Price: ${} | Source: Feed{}",
+                    i + 1,
+                    name,
+                    category,
+                    price,
+                    (i % 3) + 1
+                ),
             });
         }
 
@@ -104,25 +121,46 @@ impl Agent for DeduplicationAgent {
         let signals = ctx.get(ContextKey::Signals);
         let mut facts = Vec::new();
 
-        let products: Vec<_> = signals.iter().filter(|s| s.id.starts_with("product:")).collect();
+        let products: Vec<_> = signals
+            .iter()
+            .filter(|s| s.id.starts_with("product:"))
+            .collect();
         let mut seen_names = std::collections::HashSet::new();
         let mut dedup_count = 0;
 
         for product in products {
-            let name = product.content.split(':').nth(1).and_then(|s| s.split('|').next()).unwrap_or("unknown").trim();
-            
+            let name = product
+                .content
+                .split(':')
+                .nth(1)
+                .and_then(|s| s.split('|').next())
+                .unwrap_or("unknown")
+                .trim();
+
             if seen_names.insert(name) {
                 facts.push(Fact {
                     key: ContextKey::Signals,
-                    id: format!("dedup:{}", product.id.strip_prefix("product:").unwrap_or("unknown")),
-                    content: format!("Deduplicated: {} | Original: {} | Status: Unique", name, product.id),
+                    id: format!(
+                        "dedup:{}",
+                        product.id.strip_prefix("product:").unwrap_or("unknown")
+                    ),
+                    content: format!(
+                        "Deduplicated: {} | Original: {} | Status: Unique",
+                        name, product.id
+                    ),
                 });
             } else {
                 dedup_count += 1;
                 facts.push(Fact {
                     key: ContextKey::Signals,
-                    id: format!("dedup:{}", product.id.strip_prefix("product:").unwrap_or("unknown")),
-                    content: format!("Deduplicated: {} | Original: {} | Status: Duplicate (removed)", name, product.id),
+                    id: format!(
+                        "dedup:{}",
+                        product.id.strip_prefix("product:").unwrap_or("unknown")
+                    ),
+                    content: format!(
+                        "Deduplicated: {} | Original: {} | Status: Duplicate (removed)",
+                        name, product.id
+                    ),
                 });
             }
         }
@@ -131,7 +169,11 @@ impl Agent for DeduplicationAgent {
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: "dedup:summary".into(),
-                content: format!("Deduplication: {} duplicates removed | {} unique products", dedup_count, seen_names.len()),
+                content: format!(
+                    "Deduplication: {} duplicates removed | {} unique products",
+                    dedup_count,
+                    seen_names.len()
+                ),
             });
         }
 
@@ -165,23 +207,50 @@ impl Agent for AttributeNormalizationAgent {
         let signals = ctx.get(ContextKey::Signals);
         let mut facts = Vec::new();
 
-        for dedup in signals.iter().filter(|s| s.id.starts_with("dedup:") && s.content.contains("Unique")) {
+        for dedup in signals
+            .iter()
+            .filter(|s| s.id.starts_with("dedup:") && s.content.contains("Unique"))
+        {
             let product_id = dedup.id.strip_prefix("dedup:").unwrap_or("unknown");
-            let original = signals.iter().find(|s| s.id == format!("product:{}", product_id));
+            let original = signals
+                .iter()
+                .find(|s| s.id == format!("product:{}", product_id));
 
             if let Some(orig) = original {
-                let name = orig.content.split(':').nth(1).and_then(|s| s.split('|').next()).unwrap_or("unknown").trim();
-                let category = orig.content.split("Category: ").nth(1).and_then(|s| s.split('|').next()).unwrap_or("Uncategorized").trim();
-                let price = orig.content.split("Price: $").nth(1).and_then(|s| s.split('|').next()).unwrap_or("0.00").trim();
+                let name = orig
+                    .content
+                    .split(':')
+                    .nth(1)
+                    .and_then(|s| s.split('|').next())
+                    .unwrap_or("unknown")
+                    .trim();
+                let category = orig
+                    .content
+                    .split("Category: ")
+                    .nth(1)
+                    .and_then(|s| s.split('|').next())
+                    .unwrap_or("Uncategorized")
+                    .trim();
+                let price = orig
+                    .content
+                    .split("Price: $")
+                    .nth(1)
+                    .and_then(|s| s.split('|').next())
+                    .unwrap_or("0.00")
+                    .trim();
 
                 // Normalize: uppercase name, title case category, format price
                 let normalized_name = name.to_uppercase();
-                let normalized_category = category.split_whitespace()
+                let normalized_category = category
+                    .split_whitespace()
                     .map(|w| {
                         let mut c = w.chars();
                         match c.next() {
                             None => String::new(),
-                            Some(f) => f.to_uppercase().collect::<String>() + c.as_str().to_lowercase().as_str(),
+                            Some(f) => {
+                                f.to_uppercase().collect::<String>()
+                                    + c.as_str().to_lowercase().as_str()
+                            }
                         }
                     })
                     .collect::<Vec<_>>()
@@ -190,8 +259,10 @@ impl Agent for AttributeNormalizationAgent {
                 facts.push(Fact {
                     key: ContextKey::Signals,
                     id: format!("normalized:{}", product_id),
-                    content: format!("Normalized: {} | Name: {} | Category: {} | Price: ${}", 
-                        product_id, normalized_name, normalized_category, price),
+                    content: format!(
+                        "Normalized: {} | Name: {} | Category: {} | Price: ${}",
+                        product_id, normalized_name, normalized_category, price
+                    ),
                 });
             }
         }
@@ -227,8 +298,17 @@ impl Agent for CategoryInferenceAgent {
         let mut facts = Vec::new();
 
         for normalized in signals.iter().filter(|s| s.id.starts_with("normalized:")) {
-            let product_id = normalized.id.strip_prefix("normalized:").unwrap_or("unknown");
-            let category = normalized.content.split("Category: ").nth(1).and_then(|s| s.split('|').next()).unwrap_or("Uncategorized").trim();
+            let product_id = normalized
+                .id
+                .strip_prefix("normalized:")
+                .unwrap_or("unknown");
+            let category = normalized
+                .content
+                .split("Category: ")
+                .nth(1)
+                .and_then(|s| s.split('|').next())
+                .unwrap_or("Uncategorized")
+                .trim();
 
             // Infer category hierarchy
             let inferred = match category.to_lowercase().as_str() {
@@ -240,8 +320,10 @@ impl Agent for CategoryInferenceAgent {
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: format!("category:{}", product_id),
-                content: format!("Category {}: {} | Inferred: {} | Confidence: 90%", 
-                    product_id, category, inferred),
+                content: format!(
+                    "Category {}: {} | Inferred: {} | Confidence: 90%",
+                    product_id, category, inferred
+                ),
             });
         }
 
@@ -276,8 +358,17 @@ impl Agent for PricingValidationAgent {
         let mut facts = Vec::new();
 
         for normalized in signals.iter().filter(|s| s.id.starts_with("normalized:")) {
-            let product_id = normalized.id.strip_prefix("normalized:").unwrap_or("unknown");
-            let price_str = normalized.content.split("Price: $").nth(1).and_then(|s| s.split('|').next()).unwrap_or("0.00").trim();
+            let product_id = normalized
+                .id
+                .strip_prefix("normalized:")
+                .unwrap_or("unknown");
+            let price_str = normalized
+                .content
+                .split("Price: $")
+                .nth(1)
+                .and_then(|s| s.split('|').next())
+                .unwrap_or("0.00")
+                .trim();
             let price: f64 = price_str.parse().unwrap_or(0.0);
 
             let is_valid = price > 0.0 && price < 10000.0;
@@ -293,8 +384,10 @@ impl Agent for PricingValidationAgent {
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: format!("price-valid:{}", product_id),
-                content: format!("Price validation {}: ${} | Status: {} | Reason: {}", 
-                    product_id, price_str, status, reason),
+                content: format!(
+                    "Price validation {}: ${} | Status: {} | Reason: {}",
+                    product_id, price_str, status, reason
+                ),
             });
         }
 
@@ -358,19 +451,30 @@ impl Agent for ProductReadyAgent {
         let has_price_valid = signals.iter().any(|s| s.id.starts_with("price-valid:"));
         let has_constraints = ctx.has(ContextKey::Constraints);
 
-        has_normalized && has_category && has_price_valid && has_constraints && !ctx.has(ContextKey::Evaluations)
+        has_normalized
+            && has_category
+            && has_price_valid
+            && has_constraints
+            && !ctx.has(ContextKey::Evaluations)
     }
 
     fn execute(&self, ctx: &Context) -> AgentEffect {
         let signals = ctx.get(ContextKey::Signals);
         let mut facts = Vec::new();
 
-        let normalized: Vec<_> = signals.iter().filter(|s| s.id.starts_with("normalized:")).collect();
+        let normalized: Vec<_> = signals
+            .iter()
+            .filter(|s| s.id.starts_with("normalized:"))
+            .collect();
 
         for norm in normalized {
             let product_id = norm.id.strip_prefix("normalized:").unwrap_or("unknown");
-            let category = signals.iter().find(|s| s.id == format!("category:{}", product_id));
-            let price_valid = signals.iter().find(|s| s.id == format!("price-valid:{}", product_id));
+            let category = signals
+                .iter()
+                .find(|s| s.id == format!("category:{}", product_id));
+            let price_valid = signals
+                .iter()
+                .find(|s| s.id == format!("price-valid:{}", product_id));
 
             let has_category = category.is_some();
             let price_ok = price_valid.map_or(false, |p| p.content.contains("VALID"));
@@ -380,12 +484,14 @@ impl Agent for ProductReadyAgent {
             facts.push(Fact {
                 key: ContextKey::Evaluations,
                 id: format!("eval:{}", product_id),
-                content: format!("Product {}: {} | Category: {} | Price: {} | Status: {}", 
+                content: format!(
+                    "Product {}: {} | Category: {} | Price: {} | Status: {}",
                     product_id,
                     if is_ready { "READY" } else { "NOT READY" },
                     if has_category { "Assigned" } else { "Missing" },
                     if price_ok { "Valid" } else { "Invalid" },
-                    if is_ready { "PUBLISH" } else { "REVIEW" }),
+                    if is_ready { "PUBLISH" } else { "REVIEW" }
+                ),
             });
         }
 
@@ -444,7 +550,13 @@ impl Invariant for RequireNoDuplicates {
         let mut seen_names = std::collections::HashSet::new();
 
         for normalized in signals.iter().filter(|s| s.id.starts_with("normalized:")) {
-            let name = normalized.content.split("Name: ").nth(1).and_then(|s| s.split('|').next()).unwrap_or("").trim();
+            let name = normalized
+                .content
+                .split("Name: ")
+                .nth(1)
+                .and_then(|s| s.split('|').next())
+                .unwrap_or("")
+                .trim();
             if !name.is_empty() {
                 if !seen_names.insert(name.to_string()) {
                     return InvariantResult::Violated(Violation::with_facts(
@@ -494,13 +606,16 @@ impl Invariant for RequireRequiredAttributes {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use converge_core::agents::SeedAgent;
     use converge_core::Engine;
+    use converge_core::agents::SeedAgent;
 
     #[test]
     fn feed_ingestion_processes_multiple_feeds() {
         let mut engine = Engine::new();
-        engine.register(SeedAgent::new("feeds", "ProductA:Widget:99.99|ProductB:Gadget:149.99"));
+        engine.register(SeedAgent::new(
+            "feeds",
+            "ProductA:Widget:99.99|ProductB:Gadget:149.99",
+        ));
         engine.register(FeedIngestionAgent);
 
         let result = engine.run(Context::new()).expect("should converge");
@@ -513,7 +628,10 @@ mod tests {
     #[test]
     fn deduplication_removes_duplicates() {
         let mut engine = Engine::new();
-        engine.register(SeedAgent::new("feeds", "ProductA:Widget:99.99|ProductA:Widget:99.99"));
+        engine.register(SeedAgent::new(
+            "feeds",
+            "ProductA:Widget:99.99|ProductA:Widget:99.99",
+        ));
         engine.register(FeedIngestionAgent);
         engine.register(DeduplicationAgent);
 
@@ -521,14 +639,20 @@ mod tests {
 
         assert!(result.converged);
         let signals = result.context.get(ContextKey::Signals);
-        let dedup = signals.iter().filter(|s| s.id.starts_with("dedup:")).count();
+        let dedup = signals
+            .iter()
+            .filter(|s| s.id.starts_with("dedup:"))
+            .count();
         assert!(dedup > 0);
     }
 
     #[test]
     fn full_pipeline_enriches_products() {
         let mut engine = Engine::new();
-        engine.register(SeedAgent::new("feeds", "ProductA:Widget:99.99|ProductB:Gadget:149.99"));
+        engine.register(SeedAgent::new(
+            "feeds",
+            "ProductA:Widget:99.99|ProductB:Gadget:149.99",
+        ));
         engine.register(FeedIngestionAgent);
         engine.register(DeduplicationAgent);
         engine.register(AttributeNormalizationAgent);
@@ -571,7 +695,10 @@ mod tests {
     #[test]
     fn handles_invalid_prices() {
         let mut engine = Engine::new();
-        engine.register(SeedAgent::new("feeds", "ProductA:Widget:-10.00|ProductB:Gadget:99999.99"));
+        engine.register(SeedAgent::new(
+            "feeds",
+            "ProductA:Widget:-10.00|ProductB:Gadget:99999.99",
+        ));
         engine.register(FeedIngestionAgent);
         engine.register(DeduplicationAgent);
         engine.register(AttributeNormalizationAgent);
@@ -591,7 +718,10 @@ mod tests {
     fn full_pipeline_converges_deterministically() {
         let run = || {
             let mut engine = Engine::new();
-            engine.register(SeedAgent::new("feeds", "ProductA:Widget:99.99|ProductB:Gadget:149.99"));
+            engine.register(SeedAgent::new(
+                "feeds",
+                "ProductA:Widget:99.99|ProductB:Gadget:149.99",
+            ));
             engine.register(FeedIngestionAgent);
             engine.register(DeduplicationAgent);
             engine.register(AttributeNormalizationAgent);
@@ -612,4 +742,3 @@ mod tests {
         );
     }
 }
-

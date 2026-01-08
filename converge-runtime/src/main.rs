@@ -10,9 +10,9 @@
 mod api;
 mod config;
 mod error;
+mod grpc;
 mod handlers;
 mod http;
-mod grpc;
 mod tui;
 
 use anyhow::Result;
@@ -27,8 +27,7 @@ async fn main() -> Result<()> {
     // Initialize tracing
     tracing_subscriber::fmt()
         .with_env_filter(
-            EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("info")),
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
         )
         .with_target(false)
         .init();
@@ -82,7 +81,9 @@ async fn main() -> Result<()> {
     }
 
     // Default: just wait for HTTP server
-    http_handle.await.map_err(|e| anyhow::anyhow!("HTTP server task failed: {}", e))?;
+    http_handle
+        .await
+        .map_err(|e| anyhow::anyhow!("HTTP server task failed: {}", e))?;
 
     Ok(())
 }

@@ -117,4 +117,3 @@ pub fn can_create_provider(provider_name: &str) -> bool {
         _ => false,
     }
 }
-

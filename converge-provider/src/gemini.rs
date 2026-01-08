@@ -5,7 +5,9 @@
 
 //! Google Gemini API provider.
 
-use converge_core::llm::{FinishReason, LlmError, LlmProvider, LlmRequest, LlmResponse, TokenUsage};
+use converge_core::llm::{
+    FinishReason, LlmError, LlmProvider, LlmRequest, LlmResponse, TokenUsage,
+};
 use serde::{Deserialize, Serialize};
 
 /// Google Gemini API provider.
@@ -209,15 +211,18 @@ impl LlmProvider for GeminiProvider {
             _ => FinishReason::Stop,
         };
 
-        let usage = api_response.usage_metadata.map(|u| TokenUsage {
-            prompt_tokens: u.prompt_token_count,
-            completion_tokens: u.candidates_token_count,
-            total_tokens: u.total_token_count,
-        }).unwrap_or_else(|| TokenUsage {
-            prompt_tokens: 0,
-            completion_tokens: 0,
-            total_tokens: 0,
-        });
+        let usage = api_response
+            .usage_metadata
+            .map(|u| TokenUsage {
+                prompt_tokens: u.prompt_token_count,
+                completion_tokens: u.candidates_token_count,
+                total_tokens: u.total_token_count,
+            })
+            .unwrap_or_else(|| TokenUsage {
+                prompt_tokens: 0,
+                completion_tokens: 0,
+                total_tokens: 0,
+            });
 
         Ok(LlmResponse {
             content,
@@ -239,4 +244,3 @@ mod tests {
         assert_eq!(provider.model(), "gemini-pro");
     }
 }
-

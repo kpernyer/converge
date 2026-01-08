@@ -5,7 +5,10 @@
 
 //! MinMax AI API provider.
 
-use crate::common::{chat_response_to_llm_response, ChatCompletionRequest, ChatCompletionResponse, HttpProviderConfig, OpenAiCompatibleProvider};
+use crate::common::{
+    ChatCompletionRequest, ChatCompletionResponse, HttpProviderConfig, OpenAiCompatibleProvider,
+    chat_response_to_llm_response,
+};
 use converge_core::llm::{LlmError, LlmProvider, LlmRequest, LlmResponse};
 use serde::Deserialize;
 
@@ -79,10 +82,8 @@ impl LlmProvider for MinMaxProvider {
 
     fn complete(&self, request: &LlmRequest) -> Result<LlmResponse, LlmError> {
         // MinMax has custom error handling, so we implement it manually
-        let chat_request = ChatCompletionRequest::from_llm_request(
-            self.config.model.clone(),
-            request,
-        );
+        let chat_request =
+            ChatCompletionRequest::from_llm_request(self.config.model.clone(), request);
         let url = format!("{}{}", self.config.base_url, self.endpoint());
 
         let http_response = self

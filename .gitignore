@@ -29,3 +29,6 @@ Thumbs.db
 # /docs/02-architecture/
 # /docs/05-development/
 
+# Use-case tracker (local development only)
+converge-domain/USE_CASE_TRACKER.md
+

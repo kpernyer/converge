@@ -110,7 +110,8 @@ impl Agent for AvailabilityRetrievalAgent {
                 facts.push(Fact {
                     key: ContextKey::Signals,
                     id: "availability:bob".into(),
-                    content: "Bob: Mon 10-18, Tue 10-18, Wed 10-18, Thu 10-18, Fri 10-18 (UTC)".into(),
+                    content: "Bob: Mon 10-18, Tue 10-18, Wed 10-18, Thu 10-18, Fri 10-18 (UTC)"
+                        .into(),
                 });
             }
             if content.contains("Carol") {
@@ -233,9 +234,7 @@ impl Agent for WorkingHoursConstraintAgent {
             .unwrap_or(60);
 
         // Define working hours constraint based on normalized availability
-        let normalized = signals
-            .iter()
-            .find(|s| s.id.starts_with("normalized:"));
+        let normalized = signals.iter().find(|s| s.id.starts_with("normalized:"));
 
         if let Some(norm) = normalized {
             facts.push(Fact {
@@ -251,7 +250,10 @@ impl Agent for WorkingHoursConstraintAgent {
             facts.push(Fact {
                 key: ContextKey::Constraints,
                 id: "working-hours:default".into(),
-                content: format!("Working hours: Mon-Fri 9-17 UTC | Duration: {} minutes", duration),
+                content: format!(
+                    "Working hours: Mon-Fri 9-17 UTC | Duration: {} minutes",
+                    duration
+                ),
             });
         }
 
@@ -314,7 +316,10 @@ impl Agent for SlotOptimizationAgent {
             facts.push(Fact {
                 key: ContextKey::Strategies,
                 id: format!("slot:{}", rank),
-                content: format!("Candidate slot {}: {} - {} ({} minutes)", rank, start, end, duration),
+                content: format!(
+                    "Candidate slot {}: {} - {} ({} minutes)",
+                    rank, start, end, duration
+                ),
             });
         }
 
@@ -351,19 +356,16 @@ impl Agent for ConflictDetectionAgent {
         // Evaluate each candidate slot
         for (i, slot) in strategies.iter().enumerate() {
             // Check if slot respects working hours
-            let is_valid = constraints.iter().any(|c| {
-                c.content.contains("10-16") || c.content.contains("9-17")
-            });
+            let is_valid = constraints
+                .iter()
+                .any(|c| c.content.contains("10-16") || c.content.contains("9-17"));
 
             if is_valid {
                 let (score, rationale) = evaluate_slot(slot, i);
 
                 facts.push(Fact {
                     key: ContextKey::Evaluations,
-                    id: format!(
-                        "eval:{}",
-                        slot.id.strip_prefix("slot:").unwrap_or(&slot.id)
-                    ),
+                    id: format!("eval:{}", slot.id.strip_prefix("slot:").unwrap_or(&slot.id)),
                     content: format!(
                         "Score: {}/100 | {} | Rationale: {}",
                         score,
@@ -379,7 +381,9 @@ impl Agent for ConflictDetectionAgent {
             facts.push(Fact {
                 key: ContextKey::Evaluations,
                 id: "eval:no-slot".into(),
-                content: "Score: 0/100 | INFEASIBLE | Rationale: No valid slots found within constraints".into(),
+                content:
+                    "Score: 0/100 | INFEASIBLE | Rationale: No valid slots found within constraints"
+                        .into(),
             });
         }
 
@@ -391,7 +395,7 @@ impl Agent for ConflictDetectionAgent {
 fn evaluate_slot(slot: &Fact, _rank: usize) -> (u32, &'static str) {
     // Prefer earlier slots and morning times
     let content = &slot.content;
-    
+
     if content.contains("Mon 10:00") || content.contains("Tue 10:00") {
         (90, "Early week morning slot, minimal disruption")
     } else if content.contains("Wed 10:00") || content.contains("Thu 10:00") {
@@ -432,15 +436,15 @@ impl Invariant for RequireValidSlot {
 
     fn check(&self, ctx: &Context) -> InvariantResult {
         let evaluations = ctx.get(ContextKey::Evaluations);
-        
+
         // Check if there's at least one valid (non-INFEASIBLE) evaluation
-        let has_valid = evaluations.iter().any(|e| {
-            !e.content.contains("INFEASIBLE") && e.content.contains("Score:")
-        });
+        let has_valid = evaluations
+            .iter()
+            .any(|e| !e.content.contains("INFEASIBLE") && e.content.contains("Score:"));
 
         if !has_valid {
             return InvariantResult::Violated(Violation::new(
-                "no valid meeting slots found within constraints"
+                "no valid meeting slots found within constraints",
             ));
         }
         InvariantResult::Ok
@@ -475,13 +479,15 @@ impl Invariant for RequireParticipantAvailability {
 
         if !has_availability {
             return InvariantResult::Violated(Violation::new(
-                "participant availability data not found"
+                "participant availability data not found",
             ));
         }
 
         // Check if recommended slot respects availability
-        let recommended = evaluations.iter().find(|e| e.content.contains("RECOMMENDED"));
-        
+        let recommended = evaluations
+            .iter()
+            .find(|e| e.content.contains("RECOMMENDED"));
+
         if let Some(rec) = recommended {
             // For simplicity, assume slots in 10-16 range are valid
             // In a real system, this would cross-check with availability signals
@@ -543,7 +549,7 @@ impl Invariant for RequirePositiveDuration {
         if let Some(dur) = duration {
             if dur == 0 {
                 return InvariantResult::Violated(Violation::new(
-                    "meeting duration must be greater than zero"
+                    "meeting duration must be greater than zero",
                 ));
             }
         }
@@ -555,8 +561,8 @@ impl Invariant for RequirePositiveDuration {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use converge_core::agents::SeedAgent;
     use converge_core::Engine;
+    use converge_core::agents::SeedAgent;
 
     #[test]
     fn availability_agent_retrieves_availability() {
@@ -675,4 +681,3 @@ mod tests {
         );
     }
 }
-

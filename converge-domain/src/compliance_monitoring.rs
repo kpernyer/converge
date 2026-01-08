@@ -50,7 +50,11 @@ impl Agent for RegulationParserAgent {
         let mut facts = Vec::new();
 
         let regulations = if let Some(reg_seed) = seeds.iter().find(|s| s.id == "regulations") {
-            reg_seed.content.split(',').map(|s| s.trim()).collect::<Vec<_>>()
+            reg_seed
+                .content
+                .split(',')
+                .map(|s| s.trim())
+                .collect::<Vec<_>>()
         } else {
             vec!["GDPR", "SOC2", "HIPAA"]
         };
@@ -59,13 +63,16 @@ impl Agent for RegulationParserAgent {
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: format!("regulation:{}", reg.to_lowercase()),
-                content: format!("Regulation {}: Parsed | Requirements: {} | Applicable: Yes", 
-                    reg, match reg {
+                content: format!(
+                    "Regulation {}: Parsed | Requirements: {} | Applicable: Yes",
+                    reg,
+                    match reg {
                         "GDPR" => "Data privacy, consent, right to deletion",
                         "SOC2" => "Security controls, access management, monitoring",
                         "HIPAA" => "PHI protection, access controls, audit logs",
                         _ => "General compliance requirements",
-                    }),
+                    }
+                ),
             });
         }
 
@@ -97,18 +104,25 @@ impl Agent for PolicyRuleAgent {
         let mut facts = Vec::new();
 
         for regulation in signals.iter().filter(|s| s.id.starts_with("regulation:")) {
-            let reg_name = regulation.id.strip_prefix("regulation:").unwrap_or("unknown");
-            
+            let reg_name = regulation
+                .id
+                .strip_prefix("regulation:")
+                .unwrap_or("unknown");
+
             facts.push(Fact {
                 key: ContextKey::Constraints,
                 id: format!("policy:{}", reg_name),
-                content: format!("Policy {}: {} | Enforcement: Automatic | Severity: High", 
-                    reg_name, match reg_name {
-                        "gdpr" => "All data access must be logged | Consent required for processing",
+                content: format!(
+                    "Policy {}: {} | Enforcement: Automatic | Severity: High",
+                    reg_name,
+                    match reg_name {
+                        "gdpr" =>
+                            "All data access must be logged | Consent required for processing",
                         "soc2" => "Access controls must be enforced | All changes must be audited",
                         "hipaa" => "PHI access must be authorized | Audit trail required",
                         _ => "Compliance with regulation required",
-                    }),
+                    }
+                ),
             });
         }
 
@@ -142,17 +156,23 @@ impl Agent for EvidenceCollectorAgent {
 
         for policy in constraints.iter().filter(|c| c.id.starts_with("policy:")) {
             let reg_name = policy.id.strip_prefix("policy:").unwrap_or("unknown");
-            
+
             // Simulate evidence collection
             let has_evidence = !reg_name.contains("gdpr") || reg_name.contains("soc2"); // GDPR missing evidence
-            
+
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: format!("evidence:{}", reg_name),
-                content: format!("Evidence {}: {} | Status: {} | Last checked: Today | Next check: Tomorrow", 
+                content: format!(
+                    "Evidence {}: {} | Status: {} | Last checked: Today | Next check: Tomorrow",
                     reg_name,
                     if has_evidence { "Found" } else { "Missing" },
-                    if has_evidence { "COMPLIANT" } else { "NON-COMPLIANT" }),
+                    if has_evidence {
+                        "COMPLIANT"
+                    } else {
+                        "NON-COMPLIANT"
+                    }
+                ),
             });
         }
 
@@ -187,7 +207,9 @@ impl Agent for ViolationDetectorAgent {
 
         for policy in constraints.iter().filter(|c| c.id.starts_with("policy:")) {
             let reg_name = policy.id.strip_prefix("policy:").unwrap_or("unknown");
-            let evidence = signals.iter().find(|s| s.id == format!("evidence:{}", reg_name));
+            let evidence = signals
+                .iter()
+                .find(|s| s.id == format!("evidence:{}", reg_name));
 
             if let Some(ev) = evidence {
                 if ev.content.contains("NON-COMPLIANT") || ev.content.contains("Missing") {
@@ -201,8 +223,10 @@ impl Agent for ViolationDetectorAgent {
                     facts.push(Fact {
                         key: ContextKey::Strategies,
                         id: format!("violation:{}", reg_name),
-                        content: format!("Violation {}: COMPLIANT | Evidence: {} | Status: No action needed", 
-                            reg_name, ev.content),
+                        content: format!(
+                            "Violation {}: COMPLIANT | Evidence: {} | Status: No action needed",
+                            reg_name, ev.content
+                        ),
                     });
                 }
             }
@@ -241,17 +265,20 @@ impl Agent for RemediationProposalAgent {
             facts.push(Fact {
                 key: ContextKey::Evaluations,
                 id: "eval:compliant".into(),
-                content: "Status: COMPLIANT | All regulations satisfied | No remediation needed".into(),
+                content: "Status: COMPLIANT | All regulations satisfied | No remediation needed"
+                    .into(),
             });
         } else {
             for (i, violation) in violations.iter().enumerate() {
                 let reg_name = violation.id.strip_prefix("violation:").unwrap_or("unknown");
-                
+
                 facts.push(Fact {
                     key: ContextKey::Evaluations,
                     id: format!("eval:{}", i + 1),
-                    content: format!("Remediation {}: {} | Plan: {} | Priority: {} | Timeline: {} | {}", 
-                        i + 1, reg_name,
+                    content: format!(
+                        "Remediation {}: {} | Plan: {} | Priority: {} | Timeline: {} | {}",
+                        i + 1,
+                        reg_name,
                         match reg_name {
                             "gdpr" => "Implement data access logging, consent management system",
                             "soc2" => "Enhance access controls, enable audit logging",
@@ -260,7 +287,8 @@ impl Agent for RemediationProposalAgent {
                         },
                         "URGENT",
                         "30 days",
-                        if i == 0 { "RECOMMENDED" } else { "ALTERNATIVE" }),
+                        if i == 0 { "RECOMMENDED" } else { "ALTERNATIVE" }
+                    ),
                 });
             }
         }
@@ -297,14 +325,15 @@ impl Invariant for RequireRemediationPlans {
             .collect();
 
         if !violations.is_empty() {
-            let has_remediation = evaluations.iter().any(|e| {
-                e.content.contains("Remediation") && e.content.contains("RECOMMENDED")
-            });
+            let has_remediation = evaluations
+                .iter()
+                .any(|e| e.content.contains("Remediation") && e.content.contains("RECOMMENDED"));
 
             if !has_remediation {
-                return InvariantResult::Violated(Violation::new(
-                    format!("{} violations detected but no remediation plans provided", violations.len())
-                ));
+                return InvariantResult::Violated(Violation::new(format!(
+                    "{} violations detected but no remediation plans provided",
+                    violations.len()
+                )));
             }
         }
 
@@ -342,7 +371,9 @@ impl Invariant for RequireEvidenceForAllRegulations {
 
         for reg in regulations {
             let has_evidence = signals.iter().any(|s| s.id == format!("evidence:{}", reg));
-            let has_policy = constraints.iter().any(|c| c.id == format!("policy:{}", reg));
+            let has_policy = constraints
+                .iter()
+                .any(|c| c.id == format!("policy:{}", reg));
 
             if !has_evidence || !has_policy {
                 return InvariantResult::Violated(Violation::with_facts(
@@ -359,8 +390,8 @@ impl Invariant for RequireEvidenceForAllRegulations {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use converge_core::agents::SeedAgent;
     use converge_core::Engine;
+    use converge_core::agents::SeedAgent;
 
     #[test]
     fn regulation_parsing_creates_signals() {
@@ -460,7 +491,11 @@ mod tests {
         assert!(result.converged);
         let evals = result.context.get(ContextKey::Evaluations);
         // Should indicate compliance
-        assert!(evals.iter().any(|e| e.content.contains("COMPLIANT") || evals.is_empty()));
+        assert!(
+            evals
+                .iter()
+                .any(|e| e.content.contains("COMPLIANT") || evals.is_empty())
+        );
     }
 
     #[test]
@@ -486,4 +521,3 @@ mod tests {
         );
     }
 }
-

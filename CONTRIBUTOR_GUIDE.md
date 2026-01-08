@@ -62,7 +62,7 @@ You should understand these documents first:
 - `docs/public/` — Public API documentation for using `converge-core`
 - `docs/01-core-philosophy/MANIFESTO.md` — Core principles
 - `docs/01-core-philosophy/TERMINOLOGY.md` — Key terms
-- `DESIGN_TENETS.md` — Design principles
+- `docs/01-core-philosophy/DESIGN_TENETS.md` — Design principles
 
 **Note:** Internal architecture documents (`docs/02-architecture/`) are for core maintainers only and expose implementation details. Use the public documentation instead.
 

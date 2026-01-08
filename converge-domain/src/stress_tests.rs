@@ -13,35 +13,67 @@
 //! - Edge cases: Empty inputs, no solutions, invalid data
 //! - Scale: Large numbers of facts, agents, and cycles
 
-use converge_core::{Context, Engine};
 use converge_core::agents::SeedAgent;
+use converge_core::{Context, Engine};
 
 // Import all use case agents and invariants from lib.rs exports
 use crate::{
-    // Growth Strategy
-    MarketSignalAgent, CompetitorAgent, StrategyAgent, EvaluationAgent,
+    ActionPrioritizationAgent,
+    AttributeNormalizationAgent,
     // Meeting Scheduler
-    AvailabilityRetrievalAgent, TimeZoneNormalizationAgent, WorkingHoursConstraintAgent,
-    SlotOptimizationAgent, ConflictDetectionAgent,
-    // Resource Routing
-    TaskRetrievalAgent, ResourceRetrievalAgent, ConstraintValidationAgent,
-    SolverAgent, FeasibilityAgent,
-    // Inventory Rebalancing
-    SalesVelocityAgent, InventoryAgent, ForecastAgent, TransferOptimizationAgent,
-    CapacityConstraintAgent, FinancialImpactAgent, RebalanceDecisionAgent,
-    RequireCompleteForecasts, RequireBudgetCompliance, RequireSafetyStock,
-    // Strategic Sourcing
-    SupplierDiscoveryAgent, ComplianceAgent, ESGScoringAgent, PriceBenchmarkAgent,
-    RiskModelAgent, SourcingStrategyAgent, VendorRankingAgent,
+    AvailabilityRetrievalAgent,
+    CapacityConstraintAgent,
+    CategoryInferenceAgent,
+    ChurnRiskAgent,
+    CompetitorAgent,
+    ComplianceAgent,
+    ConflictDetectionAgent,
+    ConstraintValidationAgent,
+    DeduplicationAgent,
+    ESGScoringAgent,
+    EvaluationAgent,
+    EvidenceCollectorAgent,
+    FeasibilityAgent,
     // Catalog Enrichment
-    FeedIngestionAgent, DeduplicationAgent, AttributeNormalizationAgent,
-    CategoryInferenceAgent, PricingValidationAgent, ProductReadyAgent,
-    // CRM Account Health
-    UsageSignalAgent, SupportTicketAgent, RevenueTrendAgent, ChurnRiskAgent,
-    UpsellOpportunityAgent, ActionPrioritizationAgent,
+    FeedIngestionAgent,
+    FinancialImpactAgent,
+    ForecastAgent,
+    InventoryAgent,
+    // Growth Strategy
+    MarketSignalAgent,
+    PolicyRuleAgent,
+    PriceBenchmarkAgent,
+    PricingValidationAgent,
+    ProductReadyAgent,
+    RebalanceDecisionAgent,
     // Compliance Monitoring
-    RegulationParserAgent, PolicyRuleAgent, EvidenceCollectorAgent,
-    ViolationDetectorAgent, RemediationProposalAgent,
+    RegulationParserAgent,
+    RemediationProposalAgent,
+    RequireBudgetCompliance,
+    RequireCompleteForecasts,
+    RequireSafetyStock,
+    ResourceRetrievalAgent,
+    RevenueTrendAgent,
+    RiskModelAgent,
+    // Inventory Rebalancing
+    SalesVelocityAgent,
+    SlotOptimizationAgent,
+    SolverAgent,
+    SourcingStrategyAgent,
+    StrategyAgent,
+    // Strategic Sourcing
+    SupplierDiscoveryAgent,
+    SupportTicketAgent,
+    // Resource Routing
+    TaskRetrievalAgent,
+    TimeZoneNormalizationAgent,
+    TransferOptimizationAgent,
+    UpsellOpportunityAgent,
+    // CRM Account Health
+    UsageSignalAgent,
+    VendorRankingAgent,
+    ViolationDetectorAgent,
+    WorkingHoursConstraintAgent,
 };
 
 #[cfg(test)]
@@ -108,7 +140,7 @@ mod tests {
 
         assert!(result.converged);
         let signals = result.context.get(converge_core::ContextKey::Signals);
-        
+
         // All parallel agents should have run
         assert!(signals.iter().any(|s| s.id.starts_with("velocity:")));
         assert!(signals.iter().any(|s| s.id.starts_with("stock:")));
@@ -163,7 +195,10 @@ mod tests {
             Ok(r) => assert!(r.converged),
             Err(e) => {
                 // Invariant violation is acceptable if properly reported
-                assert!(format!("{:?}", e).contains("invariant") || format!("{:?}", e).contains("violation"));
+                assert!(
+                    format!("{:?}", e).contains("invariant")
+                        || format!("{:?}", e).contains("violation")
+                );
             }
         }
     }
@@ -188,7 +223,7 @@ mod tests {
         // Both should converge independently
         assert!(r1.converged);
         assert!(r2.converged);
-        
+
         // Contexts should be independent (may be empty or different)
         // Just verify both converged successfully
     }
@@ -197,7 +232,10 @@ mod tests {
     #[test]
     fn large_number_of_agents_converge() {
         let mut engine = Engine::new();
-        engine.register(SeedAgent::new("suppliers", "VendorA, VendorB, VendorC, VendorD, VendorE"));
+        engine.register(SeedAgent::new(
+            "suppliers",
+            "VendorA, VendorB, VendorC, VendorD, VendorE",
+        ));
         engine.register(SupplierDiscoveryAgent);
         engine.register(ComplianceAgent);
         engine.register(ESGScoringAgent);
@@ -232,7 +270,12 @@ mod tests {
         assert!(result.converged);
         let evals = result.context.get(converge_core::ContextKey::Evaluations);
         // Should indicate no solution found
-        assert!(evals.is_empty() || evals.iter().any(|e| e.content.contains("NO VENDORS") || e.content.contains("no")));
+        assert!(
+            evals.is_empty()
+                || evals
+                    .iter()
+                    .any(|e| e.content.contains("NO VENDORS") || e.content.contains("no"))
+        );
     }
 
     /// Test: Context is monotonic (facts only added, never removed)
@@ -247,7 +290,7 @@ mod tests {
         let result = engine.run(Context::new()).expect("should converge");
 
         let signals = result.context.get(converge_core::ContextKey::Signals);
-        
+
         // Should have accumulated facts
         assert!(signals.iter().any(|s| s.id.starts_with("product:")));
         assert!(signals.iter().any(|s| s.id.starts_with("dedup:")));
@@ -260,19 +303,19 @@ mod tests {
         // Test that agents only run when their dependencies are met
         let mut engine = Engine::new();
         engine.register(SeedAgent::new("account", "Account123"));
-        
+
         // These agents depend on Seeds
         engine.register(UsageSignalAgent);
         engine.register(SupportTicketAgent);
         engine.register(RevenueTrendAgent);
-        
+
         // This agent depends on Signals
         engine.register(ChurnRiskAgent);
 
         let result = engine.run(Context::new()).expect("should converge");
 
         assert!(result.converged);
-        
+
         // ChurnRiskAgent should have run after signals were available
         let strategies = result.context.get(converge_core::ContextKey::Strategies);
         assert!(strategies.iter().any(|s| s.id.starts_with("risk:")));
@@ -293,7 +336,7 @@ mod tests {
 
         assert!(result.converged);
         assert!(result.cycles > 0);
-        
+
         // After convergence, no new facts should be added
         // (This is implicitly tested by the convergence check)
     }
@@ -345,7 +388,10 @@ mod tests {
     fn fan_out_fan_in_patterns() {
         // Strategic sourcing: fan-out (many suppliers) -> fan-in (shortlist)
         let mut engine = Engine::new();
-        engine.register(SeedAgent::new("suppliers", "VendorA, VendorB, VendorC, VendorD, VendorE"));
+        engine.register(SeedAgent::new(
+            "suppliers",
+            "VendorA, VendorB, VendorC, VendorD, VendorE",
+        ));
         engine.register(SupplierDiscoveryAgent);
         engine.register(ComplianceAgent);
         engine.register(ESGScoringAgent);
@@ -357,16 +403,21 @@ mod tests {
         let result = engine.run(Context::new()).expect("should converge");
 
         assert!(result.converged);
-        
+
         // Should have many signals (fan-out)
         let signals = result.context.get(converge_core::ContextKey::Signals);
-        let supplier_count = signals.iter().filter(|s| s.id.starts_with("supplier:")).count();
+        let supplier_count = signals
+            .iter()
+            .filter(|s| s.id.starts_with("supplier:"))
+            .count();
         assert!(supplier_count >= 5);
-        
+
         // Should have fewer strategies (fan-in)
         let strategies = result.context.get(converge_core::ContextKey::Strategies);
-        let shortlist_count = strategies.iter().filter(|s| s.id.starts_with("shortlist:")).count();
+        let shortlist_count = strategies
+            .iter()
+            .filter(|s| s.id.starts_with("shortlist:"))
+            .count();
         assert!(shortlist_count <= supplier_count);
     }
 }
-

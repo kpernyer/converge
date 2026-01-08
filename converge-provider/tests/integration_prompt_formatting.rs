@@ -17,7 +17,9 @@
 use converge_core::llm::{LlmProvider, LlmRequest};
 use converge_core::prompt::{AgentRole, Constraint, OutputContract, PromptContext, PromptFormat};
 use converge_core::{Context, ContextKey, Fact};
-use converge_provider::{build_claude_prompt, AnthropicProvider, StructuredResponseParser, ProviderPromptBuilder};
+use converge_provider::{
+    AnthropicProvider, ProviderPromptBuilder, StructuredResponseParser, build_claude_prompt,
+};
 use std::time::Instant;
 
 /// Test context with sample facts for market analysis.
@@ -48,14 +50,23 @@ fn create_test_context() -> Context {
 fn extract_key_info(response: &str) -> Vec<String> {
     let mut info = Vec::new();
     let lower = response.to_lowercase();
-    
+
     // Extract key terms
-    for term in &["nordic", "b2b", "saas", "enterprise", "linkedin", "market", "growth", "strategy"] {
+    for term in &[
+        "nordic",
+        "b2b",
+        "saas",
+        "enterprise",
+        "linkedin",
+        "market",
+        "growth",
+        "strategy",
+    ] {
         if lower.contains(term) {
             info.push(term.to_string());
         }
     }
-    
+
     info
 }
 
@@ -87,19 +98,21 @@ fn make_request_or_skip(
 
 /// Calculates similarity between two responses (Jaccard similarity of key terms).
 fn response_similarity(response1: &str, response2: &str) -> f64 {
-    let info1: std::collections::HashSet<String> = extract_key_info(response1).into_iter().collect();
-    let info2: std::collections::HashSet<String> = extract_key_info(response2).into_iter().collect();
-    
+    let info1: std::collections::HashSet<String> =
+        extract_key_info(response1).into_iter().collect();
+    let info2: std::collections::HashSet<String> =
+        extract_key_info(response2).into_iter().collect();
+
     if info1.is_empty() && info2.is_empty() {
         return 1.0;
     }
     if info1.is_empty() || info2.is_empty() {
         return 0.0;
     }
-    
+
     let intersection = info1.intersection(&info2).count();
     let union = info1.union(&info2).count();
-    
+
     intersection as f64 / union as f64
 }
 
@@ -115,14 +128,14 @@ fn test_format_correctness_edn_vs_plain() {
             return;
         }
     };
-    
+
     let provider = AnthropicProvider::new(api_key, "claude-3-5-haiku-20241022");
     let ctx = create_test_context();
-    
+
     // Build prompts in both formats
     let prompt_ctx = PromptContext::from_context(&ctx, &[ContextKey::Signals]);
     let output_contract = OutputContract::new("proposed-fact", ContextKey::Strategies);
-    
+
     // EDN format
     let edn_prompt = build_claude_prompt(
         AgentRole::Proposer,
@@ -131,7 +144,7 @@ fn test_format_correctness_edn_vs_plain() {
         output_contract.clone(),
         vec![Constraint::NoHallucinate, Constraint::NoInvent],
     );
-    
+
     // Plain format (manually constructed for comparison)
     let plain_prompt = format!(
         "Analyze the following market signals and propose strategies:\n\n\
@@ -140,11 +153,11 @@ fn test_format_correctness_edn_vs_plain() {
         Signal 3: LinkedIn is primary B2B channel in region\n\n\
         Provide strategic recommendations based on these signals."
     );
-    
+
     println!("\n=== Format Correctness Test ===");
     println!("EDN prompt length: {} chars", edn_prompt.len());
     println!("Plain prompt length: {} chars", plain_prompt.len());
-    
+
     // Make requests
     let start = Instant::now();
     let edn_response = match make_request_or_skip(
@@ -160,7 +173,7 @@ fn test_format_correctness_edn_vs_plain() {
         Err(e) => panic!("EDN request failed: {}", e),
     };
     let edn_time = start.elapsed();
-    
+
     let start = Instant::now();
     let plain_response = match make_request_or_skip(
         &provider,
@@ -175,14 +188,22 @@ fn test_format_correctness_edn_vs_plain() {
         Err(e) => panic!("Plain request failed: {}", e),
     };
     let plain_time = start.elapsed();
-    
-    println!("\nEDN Response ({}ms):\n{}", edn_time.as_millis(), edn_response.content);
-    println!("\nPlain Response ({}ms):\n{}", plain_time.as_millis(), plain_response.content);
-    
+
+    println!(
+        "\nEDN Response ({}ms):\n{}",
+        edn_time.as_millis(),
+        edn_response.content
+    );
+    println!(
+        "\nPlain Response ({}ms):\n{}",
+        plain_time.as_millis(),
+        plain_response.content
+    );
+
     // Check similarity
     let similarity = response_similarity(&edn_response.content, &plain_response.content);
     println!("\nResponse similarity: {:.2}%", similarity * 100.0);
-    
+
     // Both should produce reasonable answers
     assert!(
         similarity > 0.3,
@@ -197,26 +218,31 @@ fn test_format_correctness_edn_vs_plain() {
         !plain_response.content.trim().is_empty(),
         "Plain response should not be empty"
     );
-    
+
     // Token comparison
     println!("\nToken Usage:");
-    println!("  EDN:   {} input, {} output, {} total", 
+    println!(
+        "  EDN:   {} input, {} output, {} total",
         edn_response.usage.prompt_tokens,
         edn_response.usage.completion_tokens,
-        edn_response.usage.total_tokens);
-    println!("  Plain: {} input, {} output, {} total",
+        edn_response.usage.total_tokens
+    );
+    println!(
+        "  Plain: {} input, {} output, {} total",
         plain_response.usage.prompt_tokens,
         plain_response.usage.completion_tokens,
-        plain_response.usage.total_tokens);
-    
+        plain_response.usage.total_tokens
+    );
+
     let token_savings = if plain_response.usage.prompt_tokens > 0 {
-        (1.0 - edn_response.usage.prompt_tokens as f64 / plain_response.usage.prompt_tokens as f64) * 100.0
+        (1.0 - edn_response.usage.prompt_tokens as f64 / plain_response.usage.prompt_tokens as f64)
+            * 100.0
     } else {
         0.0
     };
-    
+
     println!("  Token savings: {:.1}%", token_savings);
-    
+
     // Note: EDN with XML wrapping may use MORE input tokens due to:
     // 1. XML tags and structure (<prompt>, <instructions>, etc.)
     // 2. Explicit output format instructions
@@ -225,31 +251,43 @@ fn test_format_correctness_edn_vs_plain() {
     // - Better instruction following
     // - Often fewer output tokens (more concise responses)
     // - Better total token efficiency
-    
+
     let total_savings = if plain_response.usage.total_tokens > 0 {
-        (1.0 - edn_response.usage.total_tokens as f64 / plain_response.usage.total_tokens as f64) * 100.0
+        (1.0 - edn_response.usage.total_tokens as f64 / plain_response.usage.total_tokens as f64)
+            * 100.0
     } else {
         0.0
     };
-    
+
     println!("  Total token savings: {:.1}%", total_savings);
-    
+
     // Check total tokens - EDN should be similar or better overall
     // (XML wrapping adds input tokens but often reduces output tokens)
     if edn_response.usage.prompt_tokens > plain_response.usage.prompt_tokens {
         println!("  ⚠️  EDN uses more input tokens (XML wrapping overhead)");
-        println!("     But output tokens: EDN {} vs Plain {} (savings: {:.1}%)",
+        println!(
+            "     But output tokens: EDN {} vs Plain {} (savings: {:.1}%)",
             edn_response.usage.completion_tokens,
             plain_response.usage.completion_tokens,
             if plain_response.usage.completion_tokens > 0 {
-                (1.0 - edn_response.usage.completion_tokens as f64 / plain_response.usage.completion_tokens as f64) * 100.0
-            } else { 0.0 }
+                (1.0 - edn_response.usage.completion_tokens as f64
+                    / plain_response.usage.completion_tokens as f64)
+                    * 100.0
+            } else {
+                0.0
+            }
         );
     }
-    
+
     // Both formats should produce valid responses
-    assert!(!edn_response.content.trim().is_empty(), "EDN response should not be empty");
-    assert!(!plain_response.content.trim().is_empty(), "Plain response should not be empty");
+    assert!(
+        !edn_response.content.trim().is_empty(),
+        "EDN response should not be empty"
+    );
+    assert!(
+        !plain_response.content.trim().is_empty(),
+        "Plain response should not be empty"
+    );
 }
 
 /// Test EDN with and without XML wrapping to measure overhead.
@@ -264,13 +302,13 @@ fn test_edn_with_vs_without_xml() {
             return;
         }
     };
-    
+
     let provider = AnthropicProvider::new(api_key, "claude-3-5-haiku-20241022");
     let ctx = create_test_context();
-    
+
     let prompt_ctx = PromptContext::from_context(&ctx, &[ContextKey::Signals]);
     let output_contract = OutputContract::new("proposed-fact", ContextKey::Strategies);
-    
+
     use converge_core::prompt::AgentPrompt;
     let base = AgentPrompt::new(
         AgentRole::Proposer,
@@ -279,23 +317,24 @@ fn test_edn_with_vs_without_xml() {
         output_contract,
     )
     .with_constraint(Constraint::NoHallucinate);
-    
+
     // EDN with XML wrapping (current approach)
     let xml_prompt = ProviderPromptBuilder::new(base.clone())
         .with_output_format("xml")
         .build_for_claude();
-    
+
     // EDN without XML wrapping (pure EDN)
-    let edn_only_prompt = ProviderPromptBuilder::new(base)
-        .build_edn_only();
-    
+    let edn_only_prompt = ProviderPromptBuilder::new(base).build_edn_only();
+
     println!("\n=== EDN With vs Without XML Wrapping ===");
     println!("XML-wrapped prompt length: {} chars", xml_prompt.len());
     println!("EDN-only prompt length: {} chars", edn_only_prompt.len());
-    println!("XML overhead: {} chars ({:.1}%)",
+    println!(
+        "XML overhead: {} chars ({:.1}%)",
         xml_prompt.len() - edn_only_prompt.len(),
-        ((xml_prompt.len() - edn_only_prompt.len()) as f64 / edn_only_prompt.len() as f64) * 100.0);
-    
+        ((xml_prompt.len() - edn_only_prompt.len()) as f64 / edn_only_prompt.len() as f64) * 100.0
+    );
+
     // Make requests
     let start = Instant::now();
     let xml_response = match make_request_or_skip(
@@ -311,7 +350,7 @@ fn test_edn_with_vs_without_xml() {
         Err(e) => panic!("XML request failed: {}", e),
     };
     let xml_time = start.elapsed();
-    
+
     let start = Instant::now();
     let edn_only_response = match make_request_or_skip(
         &provider,
@@ -326,67 +365,90 @@ fn test_edn_with_vs_without_xml() {
         Err(e) => panic!("EDN-only request failed: {}", e),
     };
     let edn_only_time = start.elapsed();
-    
+
     println!("\n=== Response Comparison ===");
     println!("\nXML-wrapped Response ({}ms):", xml_time.as_millis());
-    println!("{}", xml_response.content.chars().take(200).collect::<String>());
+    println!(
+        "{}",
+        xml_response.content.chars().take(200).collect::<String>()
+    );
     if xml_response.content.len() > 200 {
         println!("... (truncated)");
     }
-    
+
     println!("\nEDN-only Response ({}ms):", edn_only_time.as_millis());
-    println!("{}", edn_only_response.content.chars().take(200).collect::<String>());
+    println!(
+        "{}",
+        edn_only_response
+            .content
+            .chars()
+            .take(200)
+            .collect::<String>()
+    );
     if edn_only_response.content.len() > 200 {
         println!("... (truncated)");
     }
-    
+
     println!("\n=== Token Usage ===");
     println!("XML-wrapped:");
     println!("  Input:  {} tokens", xml_response.usage.prompt_tokens);
     println!("  Output: {} tokens", xml_response.usage.completion_tokens);
     println!("  Total:  {} tokens", xml_response.usage.total_tokens);
-    
+
     println!("EDN-only:");
     println!("  Input:  {} tokens", edn_only_response.usage.prompt_tokens);
-    println!("  Output: {} tokens", edn_only_response.usage.completion_tokens);
+    println!(
+        "  Output: {} tokens",
+        edn_only_response.usage.completion_tokens
+    );
     println!("  Total:  {} tokens", edn_only_response.usage.total_tokens);
-    
+
     let input_overhead = if edn_only_response.usage.prompt_tokens > 0 {
-        ((xml_response.usage.prompt_tokens as f64 / edn_only_response.usage.prompt_tokens as f64) - 1.0) * 100.0
+        ((xml_response.usage.prompt_tokens as f64 / edn_only_response.usage.prompt_tokens as f64)
+            - 1.0)
+            * 100.0
     } else {
         0.0
     };
-    
+
     let total_overhead = if edn_only_response.usage.total_tokens > 0 {
-        ((xml_response.usage.total_tokens as f64 / edn_only_response.usage.total_tokens as f64) - 1.0) * 100.0
+        ((xml_response.usage.total_tokens as f64 / edn_only_response.usage.total_tokens as f64)
+            - 1.0)
+            * 100.0
     } else {
         0.0
     };
-    
+
     println!("\n=== Overhead Analysis ===");
     println!("Input token overhead: {:.1}%", input_overhead);
     println!("Total token overhead: {:.1}%", total_overhead);
-    println!("Response time difference: {:.1}ms ({:.1}%)",
+    println!(
+        "Response time difference: {:.1}ms ({:.1}%)",
         (xml_time.as_millis() as f64 - edn_only_time.as_millis() as f64).abs(),
         if edn_only_time.as_millis() > 0 {
-            ((xml_time.as_millis() as f64 - edn_only_time.as_millis() as f64).abs() / edn_only_time.as_millis() as f64) * 100.0
-        } else { 0.0 });
-    
+            ((xml_time.as_millis() as f64 - edn_only_time.as_millis() as f64).abs()
+                / edn_only_time.as_millis() as f64)
+                * 100.0
+        } else {
+            0.0
+        }
+    );
+
     // Check if XML response is more structured
-    let xml_has_structure = xml_response.content.contains("<response>") 
+    let xml_has_structure = xml_response.content.contains("<response>")
         || xml_response.content.contains("<proposal")
         || xml_response.content.contains("</proposal>");
-    
+
     let edn_has_structure = edn_only_response.content.contains("<response>")
         || edn_only_response.content.contains("<proposal")
         || edn_only_response.content.contains("</proposal>")
         || edn_only_response.content.contains("{")
         || edn_only_response.content.contains(":");
-    
+
     println!("\n=== Structure Analysis ===");
     println!("XML-wrapped has structure: {}", xml_has_structure);
     println!("EDN-only has structure: {}", edn_has_structure);
-    
+
     // Try parsing XML response
     let xml_proposals = StructuredResponseParser::parse_claude_xml(
         &xml_response,
@@ -394,17 +456,23 @@ fn test_edn_with_vs_without_xml() {
         "anthropic",
     );
     println!("XML-wrapped parsed proposals: {}", xml_proposals.len());
-    
+
     // Both should produce valid responses
     assert!(!xml_response.content.trim().is_empty());
     assert!(!edn_only_response.content.trim().is_empty());
-    
+
     println!("\n=== Summary ===");
     if input_overhead > 0.0 {
-        println!("XML wrapping adds {:.1}% input token overhead", input_overhead);
+        println!(
+            "XML wrapping adds {:.1}% input token overhead",
+            input_overhead
+        );
     }
     if xml_has_structure && xml_proposals.len() > 0 {
-        println!("✓ XML wrapping enables structured parsing ({} proposals)", xml_proposals.len());
+        println!(
+            "✓ XML wrapping enables structured parsing ({} proposals)",
+            xml_proposals.len()
+        );
     }
     if total_overhead < 5.0 {
         println!("✓ Total token overhead is minimal ({:.1}%)", total_overhead);
@@ -423,13 +491,13 @@ fn test_claude_xml_preference() {
             return;
         }
     };
-    
+
     let provider = AnthropicProvider::new(api_key, "claude-3-5-haiku-20241022");
     let ctx = create_test_context();
-    
+
     let prompt_ctx = PromptContext::from_context(&ctx, &[ContextKey::Signals]);
     let output_contract = OutputContract::new("proposed-fact", ContextKey::Strategies);
-    
+
     // XML-wrapped EDN prompt (Claude-optimized)
     let xml_prompt = build_claude_prompt(
         AgentRole::Proposer,
@@ -438,7 +506,7 @@ fn test_claude_xml_preference() {
         output_contract.clone(),
         vec![Constraint::NoHallucinate],
     );
-    
+
     // Plain EDN without XML wrapping
     use converge_core::prompt::AgentPrompt;
     let plain_edn_prompt = AgentPrompt::new(
@@ -449,9 +517,9 @@ fn test_claude_xml_preference() {
     )
     .with_constraint(Constraint::NoHallucinate)
     .serialize(PromptFormat::Edn);
-    
+
     println!("\n=== Claude XML Preference Test ===");
-    
+
     // Test XML prompt
     let start = Instant::now();
     let xml_response = match make_request_or_skip(
@@ -467,7 +535,7 @@ fn test_claude_xml_preference() {
         Err(e) => panic!("XML request failed: {}", e),
     };
     let xml_time = start.elapsed();
-    
+
     // Test plain EDN prompt
     let start = Instant::now();
     let plain_edn_response = match make_request_or_skip(
@@ -483,29 +551,33 @@ fn test_claude_xml_preference() {
         Err(e) => panic!("Plain EDN request failed: {}", e),
     };
     let plain_edn_time = start.elapsed();
-    
-    println!("\nXML Response ({}ms, {} tokens):", 
-        xml_time.as_millis(), 
-        xml_response.usage.total_tokens);
+
+    println!(
+        "\nXML Response ({}ms, {} tokens):",
+        xml_time.as_millis(),
+        xml_response.usage.total_tokens
+    );
     println!("{}", xml_response.content);
-    
-    println!("\nPlain EDN Response ({}ms, {} tokens):",
+
+    println!(
+        "\nPlain EDN Response ({}ms, {} tokens):",
         plain_edn_time.as_millis(),
-        plain_edn_response.usage.total_tokens);
+        plain_edn_response.usage.total_tokens
+    );
     println!("{}", plain_edn_response.content);
-    
+
     // Check if XML response is more structured
-    let xml_has_structure = xml_response.content.contains("<response>") 
+    let xml_has_structure = xml_response.content.contains("<response>")
         || xml_response.content.contains("<proposal")
         || xml_response.content.contains("</proposal>");
-    
+
     println!("\nXML response has structure: {}", xml_has_structure);
-    
+
     // XML should be at least as good (response time and structure)
     println!("\nPerformance:");
     println!("  XML:   {}ms", xml_time.as_millis());
     println!("  Plain: {}ms", plain_edn_time.as_millis());
-    
+
     // Both should work, but XML might be faster or more structured
     assert!(!xml_response.content.trim().is_empty());
     assert!(!plain_edn_response.content.trim().is_empty());
@@ -523,13 +595,13 @@ fn test_response_time_comparison() {
             return;
         }
     };
-    
+
     let provider = AnthropicProvider::new(api_key, "claude-3-5-haiku-20241022");
     let ctx = create_test_context();
-    
+
     let prompt_ctx = PromptContext::from_context(&ctx, &[ContextKey::Signals]);
     let output_contract = OutputContract::new("proposed-fact", ContextKey::Strategies);
-    
+
     // EDN format
     let edn_prompt = build_claude_prompt(
         AgentRole::Proposer,
@@ -538,7 +610,7 @@ fn test_response_time_comparison() {
         output_contract.clone(),
         vec![Constraint::NoHallucinate],
     );
-    
+
     // Plain text format
     let plain_prompt = format!(
         "Analyze these market signals:\n\
@@ -547,19 +619,19 @@ fn test_response_time_comparison() {
         - LinkedIn is primary B2B channel in region\n\n\
         Propose strategic recommendations."
     );
-    
+
     println!("\n=== Response Time Comparison ===");
-    
+
     // Run multiple iterations for better statistics
     let iterations = 3;
     let mut edn_times = Vec::new();
     let mut plain_times = Vec::new();
     let mut edn_tokens = Vec::new();
     let mut plain_tokens = Vec::new();
-    
+
     for i in 0..iterations {
         println!("\nIteration {}:", i + 1);
-        
+
         // EDN
         let start = Instant::now();
         let edn_response = match make_request_or_skip(
@@ -577,7 +649,7 @@ fn test_response_time_comparison() {
         let edn_time = start.elapsed();
         edn_times.push(edn_time);
         edn_tokens.push(edn_response.usage.total_tokens);
-        
+
         // Plain
         let start = Instant::now();
         let plain_response = match make_request_or_skip(
@@ -595,37 +667,55 @@ fn test_response_time_comparison() {
         let plain_time = start.elapsed();
         plain_times.push(plain_time);
         plain_tokens.push(plain_response.usage.total_tokens);
-        
-        println!("  EDN:   {}ms ({} tokens)", edn_time.as_millis(), edn_response.usage.total_tokens);
-        println!("  Plain: {}ms ({} tokens)", plain_time.as_millis(), plain_response.usage.total_tokens);
+
+        println!(
+            "  EDN:   {}ms ({} tokens)",
+            edn_time.as_millis(),
+            edn_response.usage.total_tokens
+        );
+        println!(
+            "  Plain: {}ms ({} tokens)",
+            plain_time.as_millis(),
+            plain_response.usage.total_tokens
+        );
     }
-    
+
     // Calculate averages
-    let avg_edn_time: f64 = edn_times.iter().map(|t| t.as_millis() as f64).sum::<f64>() / iterations as f64;
-    let avg_plain_time: f64 = plain_times.iter().map(|t| t.as_millis() as f64).sum::<f64>() / iterations as f64;
+    let avg_edn_time: f64 =
+        edn_times.iter().map(|t| t.as_millis() as f64).sum::<f64>() / iterations as f64;
+    let avg_plain_time: f64 = plain_times
+        .iter()
+        .map(|t| t.as_millis() as f64)
+        .sum::<f64>()
+        / iterations as f64;
     let avg_edn_tokens: f64 = edn_tokens.iter().map(|&t| t as f64).sum::<f64>() / iterations as f64;
-    let avg_plain_tokens: f64 = plain_tokens.iter().map(|&t| t as f64).sum::<f64>() / iterations as f64;
-    
+    let avg_plain_tokens: f64 =
+        plain_tokens.iter().map(|&t| t as f64).sum::<f64>() / iterations as f64;
+
     println!("\n=== Summary ===");
     println!("Average Response Time:");
     println!("  EDN:   {:.1}ms", avg_edn_time);
     println!("  Plain: {:.1}ms", avg_plain_time);
-    println!("  Difference: {:.1}ms ({:.1}%)",
+    println!(
+        "  Difference: {:.1}ms ({:.1}%)",
         avg_plain_time - avg_edn_time,
-        ((avg_plain_time - avg_edn_time) / avg_plain_time * 100.0));
-    
+        ((avg_plain_time - avg_edn_time) / avg_plain_time * 100.0)
+    );
+
     println!("\nAverage Token Usage:");
     println!("  EDN:   {:.1} tokens", avg_edn_tokens);
     println!("  Plain: {:.1} tokens", avg_plain_tokens);
-    println!("  Savings: {:.1} tokens ({:.1}%)",
+    println!(
+        "  Savings: {:.1} tokens ({:.1}%)",
         avg_plain_tokens - avg_edn_tokens,
-        ((avg_plain_tokens - avg_edn_tokens) / avg_plain_tokens * 100.0));
-    
+        ((avg_plain_tokens - avg_edn_tokens) / avg_plain_tokens * 100.0)
+    );
+
     // EDN should generally be more efficient
     if avg_plain_tokens > 0.0 {
         let token_savings = (avg_plain_tokens - avg_edn_tokens) / avg_plain_tokens * 100.0;
         println!("\n✓ Token savings: {:.1}%", token_savings);
-        
+
         // We expect some token savings, but don't fail if it's small (network variance)
         if token_savings > 5.0 {
             println!("  ✓ Significant token savings achieved!");
@@ -645,13 +735,13 @@ fn test_token_compaction() {
             return;
         }
     };
-    
+
     let provider = AnthropicProvider::new(api_key, "claude-3-5-haiku-20241022");
     let ctx = create_test_context();
-    
+
     let prompt_ctx = PromptContext::from_context(&ctx, &[ContextKey::Signals]);
     let output_contract = OutputContract::new("proposed-fact", ContextKey::Strategies);
-    
+
     // EDN format
     let edn_prompt = build_claude_prompt(
         AgentRole::Proposer,
@@ -660,7 +750,7 @@ fn test_token_compaction() {
         output_contract.clone(),
         vec![Constraint::NoHallucinate, Constraint::NoInvent],
     );
-    
+
     // Plain markdown format
     let markdown_prompt = format!(
         "# Market Analysis Request\n\n\
@@ -679,26 +769,31 @@ fn test_token_compaction() {
         ## Output Format\n\
         Provide proposed facts with strategic recommendations."
     );
-    
+
     println!("\n=== Token Compaction Test ===");
     println!("EDN prompt length: {} chars", edn_prompt.len());
     println!("Markdown prompt length: {} chars", markdown_prompt.len());
-    
+
     let char_diff = markdown_prompt.len().saturating_sub(edn_prompt.len());
     let char_savings_pct = if markdown_prompt.len() > 0 {
         (1.0 - edn_prompt.len() as f64 / markdown_prompt.len() as f64) * 100.0
     } else {
         0.0
     };
-    
+
     if edn_prompt.len() < markdown_prompt.len() {
-        println!("Character savings: {} ({:.1}%)", char_diff, char_savings_pct);
+        println!(
+            "Character savings: {} ({:.1}%)",
+            char_diff, char_savings_pct
+        );
     } else {
-        println!("EDN is longer by {} chars ({:.1}% overhead) - but may still save tokens due to structure",
+        println!(
+            "EDN is longer by {} chars ({:.1}% overhead) - but may still save tokens due to structure",
             edn_prompt.len() - markdown_prompt.len(),
-            (edn_prompt.len() as f64 / markdown_prompt.len() as f64 - 1.0) * 100.0);
+            (edn_prompt.len() as f64 / markdown_prompt.len() as f64 - 1.0) * 100.0
+        );
     }
-    
+
     // Make requests to measure actual token usage
     let edn_response = match make_request_or_skip(
         &provider,
@@ -712,7 +807,7 @@ fn test_token_compaction() {
         }
         Err(e) => panic!("EDN request failed: {}", e),
     };
-    
+
     let markdown_response = match make_request_or_skip(
         &provider,
         &LlmRequest::new(markdown_prompt.clone()).with_max_tokens(200),
@@ -725,47 +820,58 @@ fn test_token_compaction() {
         }
         Err(e) => panic!("Markdown request failed: {}", e),
     };
-    
+
     println!("\nToken Usage:");
-    println!("  EDN:      {} input, {} output, {} total",
+    println!(
+        "  EDN:      {} input, {} output, {} total",
         edn_response.usage.prompt_tokens,
         edn_response.usage.completion_tokens,
-        edn_response.usage.total_tokens);
-    println!("  Markdown: {} input, {} output, {} total",
+        edn_response.usage.total_tokens
+    );
+    println!(
+        "  Markdown: {} input, {} output, {} total",
         markdown_response.usage.prompt_tokens,
         markdown_response.usage.completion_tokens,
-        markdown_response.usage.total_tokens);
-    
+        markdown_response.usage.total_tokens
+    );
+
     let input_savings = if markdown_response.usage.prompt_tokens > 0 {
-        (1.0 - edn_response.usage.prompt_tokens as f64 / markdown_response.usage.prompt_tokens as f64) * 100.0
+        (1.0 - edn_response.usage.prompt_tokens as f64
+            / markdown_response.usage.prompt_tokens as f64)
+            * 100.0
     } else {
         0.0
     };
-    
+
     let total_savings = if markdown_response.usage.total_tokens > 0 {
-        (1.0 - edn_response.usage.total_tokens as f64 / markdown_response.usage.total_tokens as f64) * 100.0
+        (1.0 - edn_response.usage.total_tokens as f64 / markdown_response.usage.total_tokens as f64)
+            * 100.0
     } else {
         0.0
     };
-    
+
     println!("\nToken Savings:");
     println!("  Input tokens: {:.1}%", input_savings);
     println!("  Total tokens: {:.1}%", total_savings);
-    
+
     // EDN should ideally use fewer input tokens, but allow for API variance
     // (Sometimes tokenization can vary slightly between requests)
     if edn_response.usage.prompt_tokens > markdown_response.usage.prompt_tokens {
-        println!("\n⚠️  Note: EDN used more tokens than Markdown (EDN: {}, Markdown: {})", 
-            edn_response.usage.prompt_tokens,
-            markdown_response.usage.prompt_tokens);
+        println!(
+            "\n⚠️  Note: EDN used more tokens than Markdown (EDN: {}, Markdown: {})",
+            edn_response.usage.prompt_tokens, markdown_response.usage.prompt_tokens
+        );
         println!("   This may be due to API tokenization variance or XML wrapping overhead.");
         println!("   In practice, EDN structure should still provide parsing benefits.");
     } else if input_savings > 10.0 {
-        println!("\n✓ Significant token savings achieved ({:.1}%)!", input_savings);
+        println!(
+            "\n✓ Significant token savings achieved ({:.1}%)!",
+            input_savings
+        );
     } else if input_savings > 0.0 {
         println!("\n✓ Token savings achieved ({:.1}%)", input_savings);
     }
-    
+
     // Don't fail the test if EDN uses more tokens - this can happen due to:
     // 1. XML wrapping overhead (for Claude optimization)
     // 2. API tokenization variance
@@ -785,13 +891,13 @@ fn test_structured_response_parsing() {
             return;
         }
     };
-    
+
     let provider = AnthropicProvider::new(api_key, "claude-3-5-haiku-20241022");
     let ctx = create_test_context();
-    
+
     let prompt_ctx = PromptContext::from_context(&ctx, &[ContextKey::Signals]);
     let output_contract = OutputContract::new("proposed-fact", ContextKey::Strategies);
-    
+
     // Build XML-optimized prompt
     let xml_prompt = build_claude_prompt(
         AgentRole::Proposer,
@@ -800,9 +906,9 @@ fn test_structured_response_parsing() {
         output_contract,
         vec![Constraint::NoHallucinate],
     );
-    
+
     println!("\n=== Structured Response Parsing Test ===");
-    
+
     let response = match make_request_or_skip(
         &provider,
         &LlmRequest::new(xml_prompt).with_max_tokens(500),
@@ -815,30 +921,32 @@ fn test_structured_response_parsing() {
         }
         Err(e) => panic!("Request failed: {}", e),
     };
-    
+
     println!("Raw Response:\n{}", response.content);
-    
+
     // Try to parse as XML
-    let proposals = StructuredResponseParser::parse_claude_xml(
-        &response,
-        ContextKey::Strategies,
-        "anthropic",
-    );
-    
+    let proposals =
+        StructuredResponseParser::parse_claude_xml(&response, ContextKey::Strategies, "anthropic");
+
     println!("\nParsed Proposals: {}", proposals.len());
     for (i, proposal) in proposals.iter().enumerate() {
-        println!("  [{}] ID: {}, Confidence: {:.2}, Content: {}",
+        println!(
+            "  [{}] ID: {}, Confidence: {:.2}, Content: {}",
             i + 1,
             proposal.id,
             proposal.confidence,
-            proposal.content.chars().take(60).collect::<String>());
+            proposal.content.chars().take(60).collect::<String>()
+        );
     }
-    
+
     // Should have at least some proposals if XML parsing worked
     // (Note: if response isn't XML, parser will return empty, which is OK)
     if !proposals.is_empty() {
-        println!("\n✓ Successfully parsed {} structured proposals", proposals.len());
-        
+        println!(
+            "\n✓ Successfully parsed {} structured proposals",
+            proposals.len()
+        );
+
         // Verify proposal structure
         for proposal in &proposals {
             assert!(!proposal.id.is_empty(), "Proposal should have ID");
@@ -852,8 +960,10 @@ fn test_structured_response_parsing() {
         println!("\n⚠ No structured proposals found (response may not be XML)");
         println!("  This is OK - the response may be plain text instead of XML");
     }
-    
-    // Response should not be empty
-    assert!(!response.content.trim().is_empty(), "Response should not be empty");
-}
 
+    // Response should not be empty
+    assert!(
+        !response.content.trim().is_empty(),
+        "Response should not be empty"
+    );
+}

@@ -102,7 +102,11 @@ impl ModelMetadata {
     #[must_use]
     pub fn satisfies(&self, requirements: &AgentRequirements) -> bool {
         // Cost check
-        if !requirements.max_cost_class.allowed_classes().contains(&self.cost_class) {
+        if !requirements
+            .max_cost_class
+            .allowed_classes()
+            .contains(&self.cost_class)
+        {
             return false;
         }
 
@@ -199,9 +203,7 @@ impl ModelSelector {
     /// Creates an empty selector (add models manually).
     #[must_use]
     pub fn empty() -> Self {
-        Self {
-            models: Vec::new(),
-        }
+        Self { models: Vec::new() }
     }
 
     /// Adds a model to the selector.
@@ -222,10 +224,7 @@ impl ModelSelector {
 }
 
 impl ModelSelectorTrait for ModelSelector {
-    fn select(
-        &self,
-        requirements: &AgentRequirements,
-    ) -> Result<(String, String), LlmError> {
+    fn select(&self, requirements: &AgentRequirements) -> Result<(String, String), LlmError> {
         let mut candidates: Vec<(&ModelMetadata, f64)> = self
             .models
             .iter()
@@ -291,31 +290,13 @@ impl Default for ModelSelector {
                 )
                 .with_reasoning(true),
                 // OpenAI
-                ModelMetadata::new(
-                    "openai",
-                    "gpt-3.5-turbo",
-                    CostClass::VeryLow,
-                    1200,
-                    0.70,
-                ),
+                ModelMetadata::new("openai", "gpt-3.5-turbo", CostClass::VeryLow, 1200, 0.70),
                 ModelMetadata::new("openai", "gpt-4", CostClass::Medium, 5000, 0.90)
                     .with_reasoning(true),
-                ModelMetadata::new(
-                    "openai",
-                    "gpt-4-turbo",
-                    CostClass::Medium,
-                    4000,
-                    0.92,
-                )
-                .with_reasoning(true),
+                ModelMetadata::new("openai", "gpt-4-turbo", CostClass::Medium, 4000, 0.92)
+                    .with_reasoning(true),
                 // Google Gemini
-                ModelMetadata::new(
-                    "gemini",
-                    "gemini-pro",
-                    CostClass::Low,
-                    2000,
-                    0.80,
-                ),
+                ModelMetadata::new("gemini", "gemini-pro", CostClass::Low, 2000, 0.80),
                 ModelMetadata::new(
                     "gemini",
                     "gemini-2.0-flash-exp",
@@ -333,14 +314,8 @@ impl Default for ModelSelector {
                 )
                 .with_reasoning(true)
                 .with_web_search(true),
-                ModelMetadata::new(
-                    "perplexity",
-                    "pplx-7b-online",
-                    CostClass::Low,
-                    2500,
-                    0.75,
-                )
-                .with_web_search(true),
+                ModelMetadata::new("perplexity", "pplx-7b-online", CostClass::Low, 2500, 0.75)
+                    .with_web_search(true),
                 // Qwen
                 ModelMetadata::new("qwen", "qwen-turbo", CostClass::VeryLow, 1500, 0.70),
                 ModelMetadata::new("qwen", "qwen-plus", CostClass::Low, 2500, 0.80),
@@ -352,22 +327,10 @@ impl Default for ModelSelector {
                     1500,
                     0.75,
                 ),
-                ModelMetadata::new(
-                    "openrouter",
-                    "openai/gpt-4",
-                    CostClass::Medium,
-                    5000,
-                    0.90,
-                )
-                .with_reasoning(true),
+                ModelMetadata::new("openrouter", "openai/gpt-4", CostClass::Medium, 5000, 0.90)
+                    .with_reasoning(true),
                 // MinMax
-                ModelMetadata::new(
-                    "minmax",
-                    "abab5.5-chat",
-                    CostClass::Low,
-                    2000,
-                    0.75,
-                ),
+                ModelMetadata::new("minmax", "abab5.5-chat", CostClass::Low, 2000, 0.75),
                 // Grok
                 ModelMetadata::new("grok", "grok-beta", CostClass::Medium, 3000, 0.80),
                 // Mistral
@@ -390,22 +353,10 @@ impl Default for ModelSelector {
                 .with_reasoning(true)
                 .with_multilingual(true),
                 // DeepSeek
-                ModelMetadata::new(
-                    "deepseek",
-                    "deepseek-chat",
-                    CostClass::VeryLow,
-                    1500,
-                    0.75,
-                )
-                .with_reasoning(true),
-                ModelMetadata::new(
-                    "deepseek",
-                    "deepseek-r1",
-                    CostClass::Low,
-                    3000,
-                    0.85,
-                )
-                .with_reasoning(true),
+                ModelMetadata::new("deepseek", "deepseek-chat", CostClass::VeryLow, 1500, 0.75)
+                    .with_reasoning(true),
+                ModelMetadata::new("deepseek", "deepseek-r1", CostClass::Low, 3000, 0.85)
+                    .with_reasoning(true),
                 // Baidu ERNIE (China)
                 ModelMetadata::new("baidu", "ernie-bot", CostClass::Low, 2500, 0.80)
                     .with_data_sovereignty(DataSovereignty::China)
@@ -490,9 +441,20 @@ impl ProviderRegistry {
 
         // Check all known providers
         let known_providers = vec![
-            "anthropic", "openai", "gemini", "perplexity", "openrouter",
-            "qwen", "minmax", "grok", "mistral", "deepseek",
-            "baidu", "zhipu", "kimi", "apertus",
+            "anthropic",
+            "openai",
+            "gemini",
+            "perplexity",
+            "openrouter",
+            "qwen",
+            "minmax",
+            "grok",
+            "mistral",
+            "deepseek",
+            "baidu",
+            "zhipu",
+            "kimi",
+            "apertus",
         ];
 
         let available_providers: std::collections::HashSet<String> = known_providers
@@ -552,7 +514,10 @@ impl ProviderRegistry {
     /// Gets the list of available providers.
     #[must_use]
     pub fn available_providers(&self) -> Vec<&str> {
-        self.available_providers.iter().map(|s| s.as_str()).collect()
+        self.available_providers
+            .iter()
+            .map(|s| s.as_str())
+            .collect()
     }
 
     /// Checks if a provider is available.
@@ -563,10 +528,7 @@ impl ProviderRegistry {
 }
 
 impl ModelSelectorTrait for ProviderRegistry {
-    fn select(
-        &self,
-        requirements: &AgentRequirements,
-    ) -> Result<(String, String), LlmError> {
+    fn select(&self, requirements: &AgentRequirements) -> Result<(String, String), LlmError> {
         // Get all models that satisfy requirements
         let all_candidates = self.base_selector.list_satisfying(requirements);
 
@@ -662,14 +624,16 @@ mod tests {
         let (provider, model) = selector.select(&reqs).unwrap();
         // Should select a VeryLow cost, fast model
         assert!(
-            provider == "anthropic" || provider == "openai" || provider == "gemini" || provider == "qwen"
+            provider == "anthropic"
+                || provider == "openai"
+                || provider == "gemini"
+                || provider == "qwen"
         );
         assert!(
             model.contains("haiku")
-            || model.contains("flash")
-            || model.contains("turbo")
-            || model.contains("qwen")
+                || model.contains("flash")
+                || model.contains("turbo")
+                || model.contains("qwen")
         );
     }
 }
-

@@ -5,12 +5,12 @@
 
 //! LLM-enabled Catalog Enrichment use case.
 
+use crate::llm_utils::{create_mock_llm_agent, requirements};
 use converge_core::{
+    ContextKey, Engine,
     agents::SeedAgent,
     llm::{LlmAgent, MockProvider, MockResponse},
-    ContextKey, Engine,
 };
-use crate::llm_utils::{create_mock_llm_agent, requirements};
 use std::sync::Arc;
 
 /// Sets up LLM-enabled Catalog Enrichment agents with mock providers.
@@ -46,9 +46,11 @@ mod tests {
     fn mock_llm_catalog_enrichment_converges() {
         let mut engine = Engine::new();
         engine.register(SeedAgent::new("feeds", "ProductA:Widget:99.99"));
-        
+
         // Add deterministic agents to create Signals first
-        use crate::catalog_enrichment::{FeedIngestionAgent, DeduplicationAgent, AttributeNormalizationAgent};
+        use crate::catalog_enrichment::{
+            AttributeNormalizationAgent, DeduplicationAgent, FeedIngestionAgent,
+        };
         engine.register(FeedIngestionAgent);
         engine.register(DeduplicationAgent);
         engine.register(AttributeNormalizationAgent);
@@ -60,4 +62,3 @@ mod tests {
         assert!(result.converged);
     }
 }
-

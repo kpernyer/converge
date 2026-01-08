@@ -56,7 +56,11 @@ impl Agent for SalesVelocityAgent {
 
         // Extract regions from seeds
         let regions = if let Some(regions_seed) = seeds.iter().find(|s| s.id == "regions") {
-            regions_seed.content.split(',').map(|s| s.trim()).collect::<Vec<_>>()
+            regions_seed
+                .content
+                .split(',')
+                .map(|s| s.trim())
+                .collect::<Vec<_>>()
         } else {
             vec!["North", "South", "East", "West"]
         };
@@ -67,7 +71,16 @@ impl Agent for SalesVelocityAgent {
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: format!("velocity:{}", region.to_lowercase()),
-                content: format!("Region {}: {} units/day | Trend: {}", region, velocity, if velocity > 10 { "Increasing" } else { "Stable" }),
+                content: format!(
+                    "Region {}: {} units/day | Trend: {}",
+                    region,
+                    velocity,
+                    if velocity > 10 {
+                        "Increasing"
+                    } else {
+                        "Stable"
+                    }
+                ),
             });
         }
 
@@ -100,7 +113,11 @@ impl Agent for InventoryAgent {
         let mut facts = Vec::new();
 
         let regions = if let Some(regions_seed) = seeds.iter().find(|s| s.id == "regions") {
-            regions_seed.content.split(',').map(|s| s.trim()).collect::<Vec<_>>()
+            regions_seed
+                .content
+                .split(',')
+                .map(|s| s.trim())
+                .collect::<Vec<_>>()
         } else {
             vec!["North", "South", "East", "West"]
         };
@@ -110,11 +127,20 @@ impl Agent for InventoryAgent {
 
         for (i, region) in regions.iter().enumerate() {
             let stock = stock_levels.get(i).copied().unwrap_or(50);
-            let status = if stock < 50 { "Low stock" } else if stock > 100 { "High stock" } else { "Normal" };
+            let status = if stock < 50 {
+                "Low stock"
+            } else if stock > 100 {
+                "High stock"
+            } else {
+                "Normal"
+            };
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: format!("stock:{}", region.to_lowercase()),
-                content: format!("Region {}: {} units | Status: {} | Safety stock: 50", region, stock, status),
+                content: format!(
+                    "Region {}: {} units | Status: {} | Safety stock: 50",
+                    region, stock, status
+                ),
             });
         }
 
@@ -151,12 +177,18 @@ impl Agent for ForecastAgent {
         let regions: Vec<String> = signals
             .iter()
             .filter(|s| s.id.starts_with("velocity:"))
-            .map(|s| s.id.strip_prefix("velocity:").unwrap_or("unknown").to_string())
+            .map(|s| {
+                s.id.strip_prefix("velocity:")
+                    .unwrap_or("unknown")
+                    .to_string()
+            })
             .collect();
 
         for region in regions {
             // Forecast based on velocity and stock
-            let velocity_signal = signals.iter().find(|s| s.id == format!("velocity:{}", region));
+            let velocity_signal = signals
+                .iter()
+                .find(|s| s.id == format!("velocity:{}", region));
             let stock_signal = signals.iter().find(|s| s.id == format!("stock:{}", region));
 
             let velocity = velocity_signal
@@ -238,9 +270,14 @@ impl Agent for TransferOptimizationAgent {
                     facts.push(Fact {
                         key: ContextKey::Strategies,
                         id: format!("transfer:{}", transfer_id),
-                        content: format!("Transfer {} units: {} → {} | Distance: {}km | Cost: ${}", 
-                            transfer_amount, high_region, low_region, 
-                            transfer_id * 100, transfer_amount * 5),
+                        content: format!(
+                            "Transfer {} units: {} → {} | Distance: {}km | Cost: ${}",
+                            transfer_amount,
+                            high_region,
+                            low_region,
+                            transfer_id * 100,
+                            transfer_amount * 5
+                        ),
                     });
                     transfer_id += 1;
                 }
@@ -273,8 +310,7 @@ impl Agent for CapacityConstraintAgent {
     }
 
     fn accepts(&self, ctx: &Context) -> bool {
-        ctx.has(ContextKey::Strategies)
-            && !ctx.has(ContextKey::Constraints)
+        ctx.has(ContextKey::Strategies) && !ctx.has(ContextKey::Constraints)
     }
 
     fn execute(&self, _ctx: &Context) -> AgentEffect {
@@ -333,15 +369,20 @@ impl Agent for FinancialImpactAgent {
                 .unwrap_or(0);
 
             let transfer_id = transfer.id.strip_prefix("transfer:").unwrap_or("unknown");
-            
+
             // Calculate total impact (cost + opportunity cost)
             let total_impact = cost + (cost / 10); // 10% opportunity cost
 
             facts.push(Fact {
                 key: ContextKey::Strategies,
                 id: format!("financial:{}", transfer_id),
-                content: format!("Financial impact: Transfer {} | Cost: ${} | Total impact: ${} | ROI: {} days", 
-                    transfer_id, cost, total_impact, if cost > 0 { 30 } else { 0 }),
+                content: format!(
+                    "Financial impact: Transfer {} | Cost: ${} | Total impact: ${} | ROI: {} days",
+                    transfer_id,
+                    cost,
+                    total_impact,
+                    if cost > 0 { 30 } else { 0 }
+                ),
             });
         }
 
@@ -378,14 +419,19 @@ impl Agent for RebalanceDecisionAgent {
 
         let transfers: Vec<_> = strategies
             .iter()
-            .filter(|s| s.id.starts_with("transfer:") && s.id != "transfer:none" && !s.content.contains("No transfers"))
+            .filter(|s| {
+                s.id.starts_with("transfer:")
+                    && s.id != "transfer:none"
+                    && !s.content.contains("No transfers")
+            })
             .collect();
 
         if transfers.is_empty() {
             facts.push(Fact {
                 key: ContextKey::Evaluations,
                 id: "eval:no-rebalancing".into(),
-                content: "Status: NO ACTION NEEDED | All regions balanced | No transfers required".into(),
+                content: "Status: NO ACTION NEEDED | All regions balanced | No transfers required"
+                    .into(),
             });
         } else {
             // Rank transfers by cost-effectiveness
@@ -426,9 +472,15 @@ impl Agent for RebalanceDecisionAgent {
                 facts.push(Fact {
                     key: ContextKey::Evaluations,
                     id: format!("eval:{}", i + 1),
-                    content: format!("Plan {}: Transfer {} | {} units | Cost: ${} | Score: {} | {}", 
-                        i + 1, transfer_id, units, cost, score,
-                        if i == 0 { "RECOMMENDED" } else { "ALTERNATIVE" }),
+                    content: format!(
+                        "Plan {}: Transfer {} | {} units | Cost: ${} | Score: {} | {}",
+                        i + 1,
+                        transfer_id,
+                        units,
+                        cost,
+                        score,
+                        if i == 0 { "RECOMMENDED" } else { "ALTERNATIVE" }
+                    ),
                 });
             }
         }
@@ -460,7 +512,10 @@ impl Invariant for RequireSafetyStock {
         let signals = ctx.get(ContextKey::Signals);
 
         // Check if any recommended transfer would violate safety stock
-        for eval in evaluations.iter().filter(|e| e.content.contains("RECOMMENDED")) {
+        for eval in evaluations
+            .iter()
+            .filter(|e| e.content.contains("RECOMMENDED"))
+        {
             // Extract transfer details and verify safety stock
             // For simplicity, assume transfers respect constraints
             if eval.content.contains("violates") || eval.content.contains("below safety") {
@@ -482,9 +537,9 @@ impl Invariant for RequireSafetyStock {
 
             if stock < 50 {
                 // Low stock is OK if we have a transfer plan
-                let has_transfer_plan = evaluations.iter().any(|e| {
-                    e.content.contains("RECOMMENDED") && !e.content.contains("NO ACTION")
-                });
+                let has_transfer_plan = evaluations
+                    .iter()
+                    .any(|e| e.content.contains("RECOMMENDED") && !e.content.contains("NO ACTION"));
 
                 if !has_transfer_plan {
                     return InvariantResult::Violated(Violation::with_facts(
@@ -566,7 +621,9 @@ impl Invariant for RequireCompleteForecasts {
             .collect();
 
         for region in regions_with_stock {
-            let has_forecast = signals.iter().any(|s| s.id == format!("forecast:{}", region));
+            let has_forecast = signals
+                .iter()
+                .any(|s| s.id == format!("forecast:{}", region));
             if !has_forecast {
                 return InvariantResult::Violated(Violation::with_facts(
                     format!("region {} missing forecast", region),
@@ -582,8 +639,8 @@ impl Invariant for RequireCompleteForecasts {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use converge_core::agents::SeedAgent;
     use converge_core::Engine;
+    use converge_core::agents::SeedAgent;
 
     #[test]
     fn parallel_data_agents_run_independently() {
@@ -729,4 +786,3 @@ mod tests {
         assert!(evals.is_empty() || evals.iter().any(|e| e.content.contains("NO ACTION")));
     }
 }
-

@@ -178,7 +178,9 @@ impl Agent for SupplierStatusAgent {
             facts.push(Fact {
                 key: ContextKey::Signals,
                 id: "supplier:x".into(),
-                content: "Supplier X: DELAYED 3 days | Capacity: 0 | Alternative: Supplier Y available".into(),
+                content:
+                    "Supplier X: DELAYED 3 days | Capacity: 0 | Alternative: Supplier Y available"
+                        .into(),
             });
         }
 
@@ -232,7 +234,9 @@ impl Agent for RouteGenerationAgent {
             facts.push(Fact {
                 key: ContextKey::Strategies,
                 id: "route:alternative-1".into(),
-                content: "Route 1: Warehouse A → Supplier Y → Delivery | Distance: 200km | Time: 2 days".into(),
+                content:
+                    "Route 1: Warehouse A → Supplier Y → Delivery | Distance: 200km | Time: 2 days"
+                        .into(),
             });
             facts.push(Fact {
                 key: ContextKey::Strategies,
@@ -299,7 +303,10 @@ impl Agent for CostEstimationAgent {
 
             facts.push(Fact {
                 key: ContextKey::Strategies,
-                id: format!("cost:{}", route.id.strip_prefix("route:").unwrap_or("unknown")),
+                id: format!(
+                    "cost:{}",
+                    route.id.strip_prefix("route:").unwrap_or("unknown")
+                ),
                 content: format!(
                     "Cost estimate: ${} | Route: {} | Breakdown: Transport ${}, Handling ${}",
                     cost,
@@ -360,7 +367,10 @@ impl Agent for RiskAssessmentAgent {
 
             facts.push(Fact {
                 key: ContextKey::Strategies,
-                id: format!("risk:{}", route.id.strip_prefix("route:").unwrap_or("unknown")),
+                id: format!(
+                    "risk:{}",
+                    route.id.strip_prefix("route:").unwrap_or("unknown")
+                ),
                 content: format!(
                     "Risk assessment: {} | Score: {}/100 | Factors: {}",
                     risk_level,
@@ -391,8 +401,7 @@ impl Agent for SLAValidationAgent {
     }
 
     fn accepts(&self, ctx: &Context) -> bool {
-        ctx.has(ContextKey::Strategies)
-            && !ctx.has(ContextKey::Constraints)
+        ctx.has(ContextKey::Strategies) && !ctx.has(ContextKey::Constraints)
     }
 
     fn execute(&self, _ctx: &Context) -> AgentEffect {
@@ -553,12 +562,13 @@ impl Invariant for RequireFeasiblePlan {
         let evaluations = ctx.get(ContextKey::Evaluations);
 
         let has_feasible = evaluations.iter().any(|e| {
-            !e.content.contains("INFEASIBLE") && (e.content.contains("RECOMMENDED") || e.content.contains("ALTERNATIVE"))
+            !e.content.contains("INFEASIBLE")
+                && (e.content.contains("RECOMMENDED") || e.content.contains("ALTERNATIVE"))
         });
 
         if !has_feasible {
             return InvariantResult::Violated(Violation::new(
-                "no feasible supply chain plan found"
+                "no feasible supply chain plan found",
             ));
         }
 
@@ -595,10 +605,17 @@ impl Invariant for RequireSLACompliance {
             })
             .unwrap_or(3.0);
 
-        for eval in evaluations.iter().filter(|e| !e.content.contains("INFEASIBLE")) {
+        for eval in evaluations
+            .iter()
+            .filter(|e| !e.content.contains("INFEASIBLE"))
+        {
             // Extract time from evaluation
             if let Some(time_str) = eval.content.split("Time: ").nth(1) {
-                if let Some(time) = time_str.split_whitespace().next().and_then(|s| s.parse::<f64>().ok()) {
+                if let Some(time) = time_str
+                    .split_whitespace()
+                    .next()
+                    .and_then(|s| s.parse::<f64>().ok())
+                {
                     if time > max_days {
                         return InvariantResult::Violated(Violation::with_facts(
                             format!("plan violates SLA: {} days > {} days", time, max_days),
@@ -646,8 +663,12 @@ impl Invariant for RequireCompleteAssessments {
         // Now check that all routes have assessments
         for route in routes {
             let route_id = route.id.strip_prefix("route:").unwrap_or("unknown");
-            let has_cost = strategies.iter().any(|s| s.id.contains(route_id) && s.id.starts_with("cost:"));
-            let has_risk = strategies.iter().any(|s| s.id.contains(route_id) && s.id.starts_with("risk:"));
+            let has_cost = strategies
+                .iter()
+                .any(|s| s.id.contains(route_id) && s.id.starts_with("cost:"));
+            let has_risk = strategies
+                .iter()
+                .any(|s| s.id.contains(route_id) && s.id.starts_with("risk:"));
 
             if !has_cost || !has_risk {
                 return InvariantResult::Violated(Violation::with_facts(
@@ -664,8 +685,8 @@ impl Invariant for RequireCompleteAssessments {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use converge_core::agents::SeedAgent;
     use converge_core::Engine;
+    use converge_core::agents::SeedAgent;
 
     #[test]
     fn parallel_data_agents_run_independently() {
@@ -722,7 +743,11 @@ mod tests {
         assert!(result.context.has(ContextKey::Evaluations));
         let evals = result.context.get(ContextKey::Evaluations);
         assert!(!evals.is_empty());
-        assert!(evals.iter().any(|e| e.content.contains("RECOMMENDED") || e.content.contains("ALTERNATIVE")));
+        assert!(
+            evals
+                .iter()
+                .any(|e| e.content.contains("RECOMMENDED") || e.content.contains("ALTERNATIVE"))
+        );
     }
 
     #[test]
@@ -744,7 +769,7 @@ mod tests {
         engine.register_invariant(RequireCompleteAssessments);
 
         let result = engine.run(Context::new());
-        
+
         assert!(result.is_ok(), "Engine run failed: {:?}", result);
         let result = result.unwrap();
         assert!(result.converged);
@@ -777,4 +802,3 @@ mod tests {
         );
     }
 }
-

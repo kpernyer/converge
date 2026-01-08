@@ -18,14 +18,15 @@ These documents are intended for those maintaining the `converge-core` library i
 ## For Contributors
 
 If you're contributing to other modules (domain, provider, runtime, tool), you typically don't need these internal specs. See:
-- [Public Documentation](../public/) — For using the library
-- [Development Documentation](../05-development/) — For contributing to other modules
+- [Architecture Documentation](../architecture/) — For system architecture and API overview
+- [Development Documentation](../development/) — For contributing to other modules
+- [Product Documentation](../product/) — For usage guides
 
 ## Structure
 
 The internal architecture documentation is organized in the parent `docs/` directory:
-- `02-architecture/` — Detailed architecture and execution model
-- `05-development/` — Development guides and decisions
+- `architecture/` — Detailed architecture and execution model
+- `development/` — Development guides and decisions
 
 These are marked as internal because they expose implementation details that are not part of the public API contract.
 

@@ -21,68 +21,68 @@
 //! - [`crm_account_health`]: CRM account health and growth strategy
 //! - [`compliance_monitoring`]: Continuous compliance monitoring
 
-pub mod growth_strategy;
-pub mod meeting_scheduler;
-pub mod resource_routing;
-pub mod release_readiness;
-pub mod supply_chain;
-pub mod inventory_rebalancing;
-pub mod strategic_sourcing;
 pub mod catalog_enrichment;
-pub mod crm_account_health;
 pub mod compliance_monitoring;
+pub mod crm_account_health;
+pub mod growth_strategy;
+pub mod inventory_rebalancing;
+pub mod meeting_scheduler;
+pub mod release_readiness;
+pub mod resource_routing;
+pub mod strategic_sourcing;
+pub mod supply_chain;
 
 pub mod llm_utils;
 
 // LLM-enabled versions of use cases
+pub mod catalog_enrichment_llm;
+pub mod compliance_monitoring_llm;
+pub mod crm_account_health_llm;
 pub mod growth_strategy_llm;
+pub mod inventory_rebalancing_llm;
 pub mod meeting_scheduler_llm;
 pub mod strategic_sourcing_llm;
-pub mod catalog_enrichment_llm;
-pub mod crm_account_health_llm;
-pub mod compliance_monitoring_llm;
-pub mod inventory_rebalancing_llm;
 
 #[cfg(test)]
 mod stress_tests;
 
 pub use growth_strategy::{
+    // Invariants
+    BrandSafetyInvariant,
     // Agents
     CompetitorAgent,
     EvaluationAgent,
     MarketSignalAgent,
-    StrategyAgent,
-    // Invariants
-    BrandSafetyInvariant,
     RequireEvaluationRationale,
     RequireMultipleStrategies,
     RequireStrategyEvaluations,
+    StrategyAgent,
 };
 
 pub use meeting_scheduler::{
     // Agents
     AvailabilityRetrievalAgent,
     ConflictDetectionAgent,
-    SlotOptimizationAgent,
-    TimeZoneNormalizationAgent,
-    WorkingHoursConstraintAgent,
     // Invariants
     RequireParticipantAvailability,
     RequirePositiveDuration,
     RequireValidSlot,
+    SlotOptimizationAgent,
+    TimeZoneNormalizationAgent,
+    WorkingHoursConstraintAgent,
 };
 
 pub use resource_routing::{
     // Agents
     ConstraintValidationAgent,
     FeasibilityAgent,
-    ResourceRetrievalAgent,
-    SolverAgent,
-    TaskRetrievalAgent,
     // Invariants
     RequireAllTasksAssigned,
     RequireCapacityRespected,
     RequireValidDefinitions,
+    ResourceRetrievalAgent,
+    SolverAgent,
+    TaskRetrievalAgent,
 };
 
 pub use release_readiness::{
@@ -91,13 +91,13 @@ pub use release_readiness::{
     DocumentationAgent,
     PerformanceRegressionAgent,
     ReleaseReadyAgent,
-    RiskSummaryAgent,
-    SecurityScanAgent,
-    TestCoverageAgent,
     // Invariants
     RequireAllChecksComplete,
     RequireMinimumCoverage,
     RequireNoCriticalVulnerabilities,
+    RiskSummaryAgent,
+    SecurityScanAgent,
+    TestCoverageAgent,
 };
 
 pub use supply_chain::{
@@ -106,14 +106,14 @@ pub use supply_chain::{
     CostEstimationAgent,
     DemandSnapshotAgent,
     InventoryStateAgent,
-    RiskAssessmentAgent,
-    RouteGenerationAgent,
-    SLAValidationAgent,
-    SupplierStatusAgent,
     // Invariants
     RequireCompleteAssessments,
     RequireFeasiblePlan,
     RequireSLACompliance,
+    RiskAssessmentAgent,
+    RouteGenerationAgent,
+    SLAValidationAgent,
+    SupplierStatusAgent,
 };
 
 pub use inventory_rebalancing::{
@@ -123,12 +123,12 @@ pub use inventory_rebalancing::{
     ForecastAgent,
     InventoryAgent,
     RebalanceDecisionAgent,
-    SalesVelocityAgent,
-    TransferOptimizationAgent,
     // Invariants
     RequireBudgetCompliance,
     RequireCompleteForecasts,
     RequireSafetyStock,
+    SalesVelocityAgent,
+    TransferOptimizationAgent,
 };
 
 pub use strategic_sourcing::{
@@ -136,14 +136,14 @@ pub use strategic_sourcing::{
     ComplianceAgent,
     ESGScoringAgent,
     PriceBenchmarkAgent,
-    RiskModelAgent,
-    SourcingStrategyAgent,
-    SupplierDiscoveryAgent,
-    VendorRankingAgent,
     // Invariants
     RequireCompleteAssessments as RequireSourcingAssessments,
     RequireCompliantVendor,
     RequireShortlistCompliance,
+    RiskModelAgent,
+    SourcingStrategyAgent,
+    SupplierDiscoveryAgent,
+    VendorRankingAgent,
 };
 
 pub use catalog_enrichment::{
@@ -154,24 +154,24 @@ pub use catalog_enrichment::{
     FeedIngestionAgent,
     PricingValidationAgent,
     ProductReadyAgent,
-    SchemaInvariantAgent,
     // Invariants
     RequireNoDuplicates,
     RequireRequiredAttributes,
     RequireValidPrices,
+    SchemaInvariantAgent,
 };
 
 pub use crm_account_health::{
     // Agents
     ActionPrioritizationAgent,
     ChurnRiskAgent,
+    // Invariants
+    RequireChurnActionPlan,
+    RequireCompleteAnalysis,
     RevenueTrendAgent,
     SupportTicketAgent,
     UpsellOpportunityAgent,
     UsageSignalAgent,
-    // Invariants
-    RequireChurnActionPlan,
-    RequireCompleteAnalysis,
 };
 
 pub use compliance_monitoring::{
@@ -180,8 +180,8 @@ pub use compliance_monitoring::{
     PolicyRuleAgent,
     RegulationParserAgent,
     RemediationProposalAgent,
-    ViolationDetectorAgent,
     // Invariants
     RequireEvidenceForAllRegulations,
     RequireRemediationPlans,
+    ViolationDetectorAgent,
 };

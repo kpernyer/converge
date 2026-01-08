@@ -8,7 +8,7 @@
 use utoipa::OpenApi;
 
 use crate::error::RuntimeErrorResponse;
-use crate::handlers::{JobRequest, JobResponse, JobMetadata, ContextSummary};
+use crate::handlers::{ContextSummary, JobMetadata, JobRequest, JobResponse};
 
 /// OpenAPI schema for Converge Runtime API.
 #[derive(OpenApi)]
@@ -43,4 +43,3 @@ use crate::handlers::{JobRequest, JobResponse, JobMetadata, ContextSummary};
     ),
 )]
 pub struct ApiDoc;
-

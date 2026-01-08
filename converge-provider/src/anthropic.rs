@@ -5,7 +5,9 @@
 
 //! Anthropic Claude API provider.
 
-use converge_core::llm::{FinishReason, LlmError, LlmProvider, LlmRequest, LlmResponse, TokenUsage};
+use converge_core::llm::{
+    FinishReason, LlmError, LlmProvider, LlmRequest, LlmResponse, TokenUsage,
+};
 use serde::{Deserialize, Serialize};
 
 /// Anthropic Claude API provider.

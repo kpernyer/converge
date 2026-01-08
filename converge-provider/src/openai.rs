@@ -5,7 +5,9 @@
 
 //! OpenAI GPT API provider.
 
-use converge_core::llm::{FinishReason, LlmError, LlmProvider, LlmRequest, LlmResponse, TokenUsage};
+use converge_core::llm::{
+    FinishReason, LlmError, LlmProvider, LlmRequest, LlmResponse, TokenUsage,
+};
 use serde::{Deserialize, Serialize};
 
 /// OpenAI GPT API provider.
@@ -131,14 +133,14 @@ impl LlmProvider for OpenAiProvider {
         let url = format!("{}/v1/chat/completions", self.base_url);
 
         let mut messages = Vec::new();
-        
+
         if let Some(ref system) = request.system {
             messages.push(OpenAiMessage {
                 role: "system",
                 content: system,
             });
         }
-        
+
         messages.push(OpenAiMessage {
             role: "user",
             content: &request.prompt,
@@ -221,4 +223,3 @@ mod tests {
         assert_eq!(provider.model(), "gpt-4");
     }
 }
-

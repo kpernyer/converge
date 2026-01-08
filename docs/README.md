@@ -1,112 +1,133 @@
-# Converge Documentation Index
+# Converge Documentation
 
-This directory contains all documentation for the Converge project, organized for both human readers and AI agents.
+Knowledge base for the Converge semantic convergence engine.
 
-## 📚 Documentation Structure
+---
 
-### [public/](./public/)
-**Public API documentation** for the `converge-core` library.
+## 📚 Knowledge Base Structure
 
-- High-level API overview
-- Core concepts (without implementation details)
-- Usage guide
-- Public guarantees
+### [architecture/](./architecture/)
+Core system architecture, execution model, and convergence guarantees.
 
-**Note:** The `converge-core` library is distributed as a compiled crate. Source code and internal implementation details are private.
+**Key Documents:**
+- `ARCHITECTURE.md` — High-level system architecture
+- `ENGINE_EXECUTION_MODEL.md` — Execution and convergence detection
+- `CONVERGENCE_SEMANTICS.md` — Convergence guarantees
+- `ROOT_INTENT_SCHEMA.md` — Entry point schema
+- `FAILURE_MODES.md` — Failure handling
+- `SCALING_MODEL.md` — Scaling approach
+- `CORE_CONCEPTS.md` — Essential concepts without implementation details
+- `API_OVERVIEW.md` — Public API overview
+
+### [agents/](./agents/)
+Agent model, lifecycle, LLM integration, and human-in-the-loop patterns.
+
+**Key Documents:**
+- `AGENT_MODEL.md` — Agent trait and interface
+- `AGENT_LIFECYCLE.md` — Agent lifecycle phases
+- `LLM_INTEGRATION.md` — LLM agent integration
+- `PROMPT_CONTRACT.md` — Prompt structuring for LLMs
+- `HUMAN_IN_THE_LOOP.md` — Human approval patterns
+
+### [governance/](./governance/)
+Design tenets, terminology, and core principles.
+
+**Key Documents:**
+- `DESIGN_TENETS.md` — The 9 non-negotiable principles
+- `GOVERNANCE.md` — Core manifesto and philosophy
+- `TERMINOLOGY.md` — Precise definitions
+
+### [testing/](./testing/)
+Testing strategies, property testing, and invariant enforcement.
+
+**Key Documents:**
+- `INVARIANTS.md` — Gherkin invariant system
+
+### [product/](./product/)
+Product guide, FAQ, usage instructions, and strategic planning.
+
+**Key Documents:**
+- `PRODUCT_GUIDE.md` — When to use Converge
+- `USAGE_GUIDE.md` — How to use the Converge Core library
+- `FAQ.md` — Frequently asked questions
+- `LONG_TERM_STRATEGIC_PLAN.md` — Strategic roadmap
+
+### [deployment/](./deployment/)
+Technology stack, deployment guides, and communication patterns.
+
+**Key Documents:**
+- `TECHNOLOGY_STACK.md` — Mandatory technology choices
+- `DEPLOYMENT.md` — Deployment and operations
+- `COMMUNICATION_MODEL.md` — Agent communication model
+
+### [use-cases/](./use-cases/)
+Concrete examples showing how Converge solves real problems.
+
+**Key Documents:**
+- `USE_CASE_TRACKER.md` — Implementation status
+- `CONVERGE_GROWTH_STRATEGY_USECASE.md` — Growth strategy example
+- `CONVERGE_MEETING_SCHEDULER_USECASE.md` — Meeting scheduler example
+- `CONVERGE_RESOURCE_ROUTING_USECASE.md` — Resource routing example
+
+### [reference/](./reference/)
+Understanding Converge in context of other systems and patterns.
+
+**Key Documents:**
+- `WHY_NOT_ACTORS.md` — Why not actor systems
+- `TEMPORAL_MODEL.md` — Temporal integration
+- `DISTRIBUTED_SYSTEMS.md` — Distributed systems considerations
+- `REFERENCE_ARCHITECTURES.md` — Reference architectures
+
+### [development/](./development/)
+Implementation status, plans, decisions, and repository guidelines.
+
+**Key Documents:**
+- `STATUS.md` — Current implementation status
+- `DECISIONS.md` — Authoritative implementation decisions
+- `TASKS.md` — Task lists
+- `PROJECT_PLAN.md` — Project milestones
+- `REPOSITORY_GUIDELINES.md` — Project structure and coding standards
+- `SPECIFICATION_COMPLIANCE_ASSESSMENT.md` — Compliance assessment
+
+### [assistant-guides/](./assistant-guides/)
+Guidelines for AI assistants working on Converge.
+
+**Key Documents:**
+- `Rust-Best-Practices-v2.md` — Rust coding standards
+- `cursor-use-case-owner-coder.md` — Use-case owner role
+- `codex-assistant-coder.md` — Codex assistant guide
+- `gemini-cloudops.md` — Gemini cloud ops guide
 
 ### [internal/](./internal/)
-**Internal documentation** for core maintainers.
-
-- Implementation details
-- Design specifications
-- Architecture decisions
-- Execution model specifics
-
-**Note:** These documents are for maintaining `converge-core` itself, not for using the library.
-
-### [01-core-philosophy/](./01-core-philosophy/)
-**Start here** to understand what Converge is and why it exists.
-
-- Core principles and manifesto
-- Terminology and definitions
-- When to use (and not use) Converge
-
-### [02-architecture/](./02-architecture/)
-**Internal architecture** documentation (for core maintainers).
-
-- System architecture and layers
-- Execution model and convergence semantics
-- Root Intent schema
-- Context model
-- Agent model and lifecycle
-- Gherkin invariant system
-- LLM integration model
-
-**Note:** These documents expose implementation details. For public API documentation, see [public/](./public/).
-
-### [03-use-cases/](./03-use-cases/)
-**Concrete examples** showing how Converge solves real problems.
-
-- Growth Strategy Runtime
-- Meeting Scheduler Runtime
-- Resource Routing Runtime
-- Domain-specific context schemas
-
-### [04-reference-comparisons/](./04-reference-comparisons/)
-**Understanding** Converge in context of other systems and patterns.
-
-- Why not actors? (vs Erlang/OTP, Akka)
-- Temporal integration model
-- Distributed systems considerations
-- Scaling model
-- Failure modes
-- Reference architectures
-
-### [05-development/](./05-development/)
-**Implementation** status, plans, and decisions.
-
-- Project plan and milestones
-- Current implementation status
-- Task lists
-- Authoritative implementation decisions
-- Human-in-the-loop patterns
-- Deployment and operations guide
-
-### [06-assistant-guides/](./06-assistant-guides/)
-**Guidelines** for AI assistants working on Converge.
-
-- Use-case owner role definition
-- Rust best practices
-- Cursor rules (also in root `.cursorrules`)
-- Assistant-specific instructions
+Internal documentation for core maintainers.
 
 ---
 
 ## 🚀 Quick Start Paths
 
 ### For New Contributors
-1. Read `01-core-philosophy/MANIFESTO.md`
-2. Read `01-core-philosophy/TERMINOLOGY.md`
-3. Read `02-architecture/ARCHITECTURE.md`
-4. Review `05-development/STATUS.md` for current state
+1. Read `governance/DESIGN_TENETS.md`
+2. Read `governance/TERMINOLOGY.md`
+3. Read `architecture/ARCHITECTURE.md`
+4. Review `development/STATUS.md` for current state
 
 ### For Domain Experts / Use-Case Authors
-1. Read `01-core-philosophy/WHEN_TO_USE_CONVERGE.md`
-2. Review `03-use-cases/` examples
-3. Read `06-assistant-guides/cursor-use-case-owner-coder.md`
-4. Study `02-architecture/ROOT_INTENT_SCHEMA.md`
+1. Read `product/PRODUCT_GUIDE.md`
+2. Review `use-cases/` examples
+3. Read `assistant-guides/cursor-use-case-owner-coder.md`
+4. Study `architecture/ROOT_INTENT_SCHEMA.md`
 
 ### For AI Assistants
-1. Read root `.cursorrules` (comprehensive rules)
-2. Read `06-assistant-guides/cursor-use-case-owner-coder.md` (use-case role)
-3. Review `05-development/DECISIONS.md` (authoritative choices)
-4. Study `02-architecture/` for system understanding
+1. Read root `AGENTS.md` (comprehensive guide)
+2. Read `assistant-guides/cursor-use-case-owner-coder.md` (use-case role)
+3. Review `development/DECISIONS.md` (authoritative choices)
+4. Study `architecture/` for system understanding
 
 ### For System Architects
-1. Read `02-architecture/ARCHITECTURE.md`
-2. Read `02-architecture/ENGINE_EXECUTION_MODEL.md`
-3. Read `02-architecture/CONVERGENCE_SEMANTICS.md`
-4. Review `04-reference-comparisons/` for context
+1. Read `architecture/ARCHITECTURE.md`
+2. Read `architecture/ENGINE_EXECUTION_MODEL.md`
+3. Read `architecture/CONVERGENCE_SEMANTICS.md`
+4. Review `reference/` for context
 
 ---
 
@@ -114,17 +135,17 @@ This directory contains all documentation for the Converge project, organized fo
 
 ### Core Flow
 ```
-MANIFESTO.md → ARCHITECTURE.md → ENGINE_EXECUTION_MODEL.md → Use Cases
+governance/GOVERNANCE.md → architecture/ARCHITECTURE.md → architecture/ENGINE_EXECUTION_MODEL.md → use-cases/
 ```
 
 ### Implementation Flow
 ```
-PROJECT_PLAN.md → STATUS.md → TASKS.md → DECISIONS.md
+development/PROJECT_PLAN.md → development/STATUS.md → development/TASKS.md → development/DECISIONS.md
 ```
 
 ### Use-Case Flow
 ```
-Use Case Doc → Context Schema → Root Intent → Gherkin Invariants
+use-cases/ → architecture/ROOT_INTENT_SCHEMA.md → testing/INVARIANTS.md
 ```
 
 ---
@@ -134,45 +155,36 @@ Use Case Doc → Context Schema → Root Intent → Gherkin Invariants
 ### By Topic
 
 **Convergence:**
-- `02-architecture/CONVERGENCE_SEMANTICS.md` (how it works)
-- `02-architecture/CONVERGENCE_PROOFS.md` (why it's guaranteed)
-- `04-reference-comparisons/FAILURE_MODES.md` (what can go wrong)
+- `architecture/CONVERGENCE_SEMANTICS.md` (how it works)
+- `architecture/CONVERGENCE_PROOFS.md` (why it's guaranteed)
+- `architecture/FAILURE_MODES.md` (what can go wrong)
 
 **Agents:**
-- `02-architecture/AGENTS.md` (agent model)
-- `02-architecture/AGENT_LIFECYCLE.md` (agent lifecycle)
-- `02-architecture/LLM_INTEGRATION.md` (LLM agents)
+- `agents/AGENT_MODEL.md` (agent model)
+- `agents/AGENT_LIFECYCLE.md` (agent lifecycle)
+- `agents/LLM_INTEGRATION.md` (LLM agents)
 
 **Context:**
-- `02-architecture/ARCHITECTURE.md` (overview)
-- `03-use-cases/CONTEXT_SCHEMA_GROWTH.md` (example schema)
-- `02-architecture/ROOT_INTENT_SCHEMA.md` (root intent)
+- `architecture/ARCHITECTURE.md` (overview)
+- `architecture/ROOT_INTENT_SCHEMA.md` (root intent)
+- `use-cases/CONTEXT_SCHEMA_GROWTH.md` (example schema)
 
-**Gherkin:**
-- `02-architecture/GHERKIN_MODEL.md` (invariant system)
-- `05-development/GHERKIN_HITL_EXAMPLES.md` (human-in-the-loop)
+**Invariants:**
+- `testing/INVARIANTS.md` (invariant system)
+- `agents/HUMAN_IN_THE_LOOP.md` (human-in-the-loop)
 
 **Implementation:**
-- `05-development/DECISIONS.md` (authoritative choices)
-- `05-development/STATUS.md` (what's built)
-- `05-development/TASKS.md` (what's next)
-- `05-development/DEPLOYMENT.md` (deployment and operations)
-
----
-
-## 📝 Document Status
-
-All documents in this directory are:
-- ✅ **Current** — Reflects agreed architecture
-- ✅ **Authoritative** — No unresolved ambiguities
-- ✅ **Complete** — Ready for implementation
+- `development/DECISIONS.md` (authoritative choices)
+- `development/STATUS.md` (what's built)
+- `development/TASKS.md` (what's next)
+- `deployment/DEPLOYMENT.md` (deployment and operations)
 
 ---
 
 ## 🔗 External References
 
 - **Code:** `converge-core/` — Rust implementation
-- **Rules:** `.cursorrules` — Cursor AI rules (root directory)
+- **Rules:** `AGENTS.md` — AI assistant guide (root directory)
 - **Build:** `Justfile` — Development commands
 
 ---
@@ -181,16 +193,14 @@ All documents in this directory are:
 
 When working with this documentation:
 
-1. **Always check `05-development/DECISIONS.md`** for authoritative implementation choices
+1. **Always check `development/DECISIONS.md`** for authoritative implementation choices
 2. **Respect the architecture** — don't propose changes that violate core principles
 3. **Use use-cases as templates** — they show the pattern for new domains
-4. **Refer to terminology** — use `TERMINOLOGY.md` for precise definitions
-5. **Check status** — `STATUS.md` shows what's already implemented
+4. **Refer to terminology** — use `governance/TERMINOLOGY.md` for precise definitions
+5. **Check status** — `development/STATUS.md` shows what's already implemented
 
 ---
 
 ## 📅 Last Updated
 
-Documentation structure organized: 2024
-All documents reflect Phase 0 (Architecture Lock) completion.
-
+Documentation restructured as knowledge base: January 2025

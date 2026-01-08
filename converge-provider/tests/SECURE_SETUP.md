@@ -49,5 +49,5 @@ cargo test --test integration_prompt_formatting test_format_correctness_edn_vs_p
 - ✅ Never share your API key
 - ✅ Rotate keys if accidentally exposed
 
-See `docs/05-development/SECURE_API_KEY_SETUP.md` for more options.
+See `docs/development/SECURE_API_KEY_SETUP.md` for more options.
 

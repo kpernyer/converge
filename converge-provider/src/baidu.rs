@@ -5,7 +5,9 @@
 
 //! Baidu ERNIE API provider.
 
-use converge_core::llm::{FinishReason, LlmError, LlmProvider, LlmRequest, LlmResponse, TokenUsage};
+use converge_core::llm::{
+    FinishReason, LlmError, LlmProvider, LlmRequest, LlmResponse, TokenUsage,
+};
 use serde::{Deserialize, Serialize};
 
 /// Baidu ERNIE API provider.
@@ -206,7 +208,9 @@ impl LlmProvider for BaiduProvider {
         if let Some(error_code) = baidu_response.error_code {
             return Err(LlmError::provider(format!(
                 "Baidu API error: {}",
-                baidu_response.error_msg.unwrap_or_else(|| format!("Error code: {}", error_code))
+                baidu_response
+                    .error_msg
+                    .unwrap_or_else(|| format!("Error code: {}", error_code))
             )));
         }
 
@@ -226,4 +230,3 @@ impl LlmProvider for BaiduProvider {
         format!("baidu:{}:{}", self.model, request_id)
     }
 }
-

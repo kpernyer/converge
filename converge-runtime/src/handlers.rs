@@ -6,9 +6,9 @@
 //! HTTP request handlers for Converge Runtime.
 
 use axum::{
+    Router,
     extract::Json,
     routing::{get, post},
-    Router,
 };
 use converge_core::{Context, ContextKey, Engine};
 use serde::{Deserialize, Serialize};
@@ -134,10 +134,10 @@ pub async fn handle_job(
     // Spawn blocking task to run engine (CPU-bound work)
     let result = task::spawn_blocking(move || {
         let mut engine = Engine::new();
-        
+
         // TODO: Register agents based on request or configuration
         // For now, create a minimal engine
-        
+
         // Create context from request or use empty
         // TODO: Properly deserialize RootIntent and create Context
         // For now, use empty context
@@ -154,13 +154,12 @@ pub async fn handle_job(
     let duration = start.elapsed();
 
     // Build context summary
-    let fact_counts: std::collections::HashMap<String, usize> = 
-        ContextKey::iter()
-            .map(|key| {
-                let count = result.context.get(key).len();
-                (format!("{:?}", key), count)
-            })
-            .collect();
+    let fact_counts: std::collections::HashMap<String, usize> = ContextKey::iter()
+        .map(|key| {
+            let count = result.context.get(key).len();
+            (format!("{:?}", key), count)
+        })
+        .collect();
 
     let context_summary = ContextSummary {
         fact_counts,
@@ -193,4 +192,3 @@ pub fn router() -> Router<()> {
         .route("/ready", get(ready))
         .route("/api/v1/jobs", post(handle_job))
 }
-

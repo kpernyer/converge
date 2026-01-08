@@ -50,5 +50,5 @@ The runtime uses:
 - **Axum** for HTTP routing and middleware
 - **tracing** for structured logging
 
-See `docs/05-development/RAYON_TOKIO_INTEGRATION.md` for details on how Rayon and Tokio work together.
+See `docs/development/RAYON_TOKIO_INTEGRATION.md` for details on how Rayon and Tokio work together.
 

@@ -52,9 +52,15 @@ impl axum::response::IntoResponse for RuntimeError {
         let (status, message) = match self {
             RuntimeError::Converge(e) => {
                 let status = match e {
-                    ConvergeError::BudgetExhausted { .. } => axum::http::StatusCode::PAYLOAD_TOO_LARGE,
-                    ConvergeError::InvariantViolation { .. } => axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-                    ConvergeError::AgentFailed { .. } => axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    ConvergeError::BudgetExhausted { .. } => {
+                        axum::http::StatusCode::PAYLOAD_TOO_LARGE
+                    }
+                    ConvergeError::InvariantViolation { .. } => {
+                        axum::http::StatusCode::UNPROCESSABLE_ENTITY
+                    }
+                    ConvergeError::AgentFailed { .. } => {
+                        axum::http::StatusCode::INTERNAL_SERVER_ERROR
+                    }
                     ConvergeError::Conflict { .. } => axum::http::StatusCode::CONFLICT,
                 };
                 (status, format!("Converge error: {}", e))

@@ -16,7 +16,9 @@
 //! - Maintain token efficiency
 
 use converge_core::llm::LlmResponse;
-use converge_core::prompt::{AgentPrompt, AgentRole, Constraint, OutputContract, PromptContext, PromptFormat};
+use converge_core::prompt::{
+    AgentPrompt, AgentRole, Constraint, OutputContract, PromptContext, PromptFormat,
+};
 use converge_core::{ContextKey, ProposedFact};
 
 /// Provider-specific prompt builder.
@@ -72,7 +74,9 @@ impl ProviderPromptBuilder {
                     prompt.push_str("Respond in XML format with the following structure:\n");
                     prompt.push_str("<response>\n");
                     prompt.push_str("  <proposals>\n");
-                    prompt.push_str("    <proposal id=\"...\" confidence=\"0.0-1.0\">content</proposal>\n");
+                    prompt.push_str(
+                        "    <proposal id=\"...\" confidence=\"0.0-1.0\">content</proposal>\n",
+                    );
                     prompt.push_str("  </proposals>\n");
                     prompt.push_str("</response>\n");
                     prompt.push_str("</instructions>");
@@ -178,7 +182,9 @@ impl StructuredResponseParser {
                 }
                 if let Some(conf_start) = line.find("confidence=\"") {
                     let conf_end = line[conf_start + 12..].find('"').unwrap_or(0);
-                    if let Ok(conf) = line[conf_start + 12..conf_start + 12 + conf_end].parse::<f64>() {
+                    if let Ok(conf) =
+                        line[conf_start + 12..conf_start + 12 + conf_end].parse::<f64>()
+                    {
                         current_confidence = conf;
                     }
                 }
@@ -188,7 +194,10 @@ impl StructuredResponseParser {
                         current_content = line[content_start + 1..content_end].trim().to_string();
                     }
                 }
-            } else if in_proposal && !line.starts_with("</proposal>") && !line.starts_with("<proposal") {
+            } else if in_proposal
+                && !line.starts_with("</proposal>")
+                && !line.starts_with("<proposal")
+            {
                 // Multi-line content
                 if !current_content.is_empty() {
                     current_content.push(' ');
@@ -271,7 +280,10 @@ impl StructuredResponseParser {
                 json.get("id").and_then(|v| v.as_str()),
                 json.get("content").and_then(|v| v.as_str()),
             ) {
-                let confidence = json.get("confidence").and_then(|v| v.as_f64()).unwrap_or(0.7);
+                let confidence = json
+                    .get("confidence")
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or(0.7);
                 proposals.push(ProposedFact {
                     key: target_key,
                     id: id.to_string(),
@@ -320,8 +332,8 @@ pub fn build_claude_prompt(
     output_contract: OutputContract,
     constraints: impl IntoIterator<Item = Constraint>,
 ) -> String {
-    let base = AgentPrompt::new(role, objective, context, output_contract)
-        .with_constraints(constraints);
+    let base =
+        AgentPrompt::new(role, objective, context, output_contract).with_constraints(constraints);
 
     ProviderPromptBuilder::new(base)
         .with_output_format("xml")
@@ -336,8 +348,8 @@ pub fn build_openai_prompt(
     output_contract: OutputContract,
     constraints: impl IntoIterator<Item = Constraint>,
 ) -> String {
-    let base = AgentPrompt::new(role, objective, context, output_contract)
-        .with_constraints(constraints);
+    let base =
+        AgentPrompt::new(role, objective, context, output_contract).with_constraints(constraints);
 
     ProviderPromptBuilder::new(base).build_for_openai()
 }
@@ -461,4 +473,3 @@ mod tests {
         assert_eq!(proposals[1].confidence, 0.90);
     }
 }
-

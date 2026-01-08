@@ -16,13 +16,13 @@
 //! For testing, use `create_mock_llm_agent` from `llm_utils`.
 
 use converge_core::{
+    ContextKey, Engine,
     agents::SeedAgent,
     llm::{LlmAgent, LlmAgentConfig, MockProvider, MockResponse, ResponseParser, SimpleParser},
     model_selection::AgentRequirements,
     prompt::PromptFormat,
-    ContextKey, Engine,
 };
-use converge_provider::{create_provider, ProviderRegistry};
+use converge_provider::{ProviderRegistry, create_provider};
 use std::sync::Arc;
 
 use crate::llm_utils::{create_llm_agent, create_mock_llm_agent, requirements};
@@ -184,7 +184,10 @@ mod tests {
         // LLM agents emit proposals to ContextKey::Proposals
         // At least the first agent (MarketSignalAgent) should run since it depends on Seeds
         let proposals = result.context.get(ContextKey::Proposals);
-        assert!(!proposals.is_empty(), "At least one LLM agent should have produced proposals");
+        assert!(
+            !proposals.is_empty(),
+            "At least one LLM agent should have produced proposals"
+        );
     }
 
     #[test]
@@ -202,4 +205,3 @@ mod tests {
         assert!(reqs_synthesis.min_quality > reqs_fast.min_quality);
     }
 }
-

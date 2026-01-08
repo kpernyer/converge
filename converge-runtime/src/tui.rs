@@ -40,7 +40,7 @@ impl TuiApp {
         }
 
         tracing::info!("TUI not yet implemented");
-        
+
         // TODO: Implement TUI
         // use ratatui::prelude::*;
         // use crossterm::event::{self, Event, KeyCode};
@@ -50,7 +50,7 @@ impl TuiApp {
         //     // Handle events
         //     // Update state
         // }
-        
+
         Ok(())
     }
 }
@@ -68,4 +68,3 @@ impl TuiApp {
         Ok(())
     }
 }
-

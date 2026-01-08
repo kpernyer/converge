@@ -226,6 +226,6 @@ http POST http://localhost:8080/api/v1/jobs context:=null
 ## Next Steps
 
 - See `README.md` for more information about the runtime
-- Check `docs/05-development/DEPLOYMENT.md` for deployment guidance
+- Check `docs/deployment/DEPLOYMENT.md` for deployment guidance
 - Review OpenAPI spec at `/swagger-ui` for complete API documentation
 

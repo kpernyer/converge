@@ -5,12 +5,12 @@
 
 //! LLM-enabled Strategic Sourcing use case.
 
+use crate::llm_utils::{create_mock_llm_agent, requirements};
 use converge_core::{
+    ContextKey, Engine,
     agents::SeedAgent,
     llm::{LlmAgent, MockProvider, MockResponse},
-    ContextKey, Engine,
 };
-use crate::llm_utils::{create_mock_llm_agent, requirements};
 use std::sync::Arc;
 
 /// Sets up LLM-enabled Strategic Sourcing agents with mock providers.
@@ -102,7 +102,9 @@ mod tests {
         assert!(result.converged);
         // LLM agents emit proposals to ContextKey::Proposals
         let proposals = result.context.get(ContextKey::Proposals);
-        assert!(!proposals.is_empty(), "At least one LLM agent should have produced proposals");
+        assert!(
+            !proposals.is_empty(),
+            "At least one LLM agent should have produced proposals"
+        );
     }
 }
-

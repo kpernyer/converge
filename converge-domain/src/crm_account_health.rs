@@ -50,7 +50,8 @@ impl Agent for UsageSignalAgent {
         let seeds = ctx.get(ContextKey::Seeds);
         let mut facts = Vec::new();
 
-        let account_id = seeds.iter()
+        let account_id = seeds
+            .iter()
             .find(|s| s.id == "account")
             .map(|s| s.content.as_str())
             .unwrap_or("Account123");
@@ -59,12 +60,18 @@ impl Agent for UsageSignalAgent {
         facts.push(Fact {
             key: ContextKey::Signals,
             id: "usage:active-users".into(),
-            content: format!("Usage {}: Active users: 450 | Trend: +5% MoM | Engagement: High", account_id),
+            content: format!(
+                "Usage {}: Active users: 450 | Trend: +5% MoM | Engagement: High",
+                account_id
+            ),
         });
         facts.push(Fact {
             key: ContextKey::Signals,
             id: "usage:feature-adoption".into(),
-            content: format!("Usage {}: Feature adoption: 78% | Top features: A, B, C | Underutilized: D", account_id),
+            content: format!(
+                "Usage {}: Feature adoption: 78% | Top features: A, B, C | Underutilized: D",
+                account_id
+            ),
         });
 
         AgentEffect::with_facts(facts)
@@ -95,7 +102,8 @@ impl Agent for SupportTicketAgent {
         let seeds = ctx.get(ContextKey::Seeds);
         let mut facts = Vec::new();
 
-        let account_id = seeds.iter()
+        let account_id = seeds
+            .iter()
             .find(|s| s.id == "account")
             .map(|s| s.content.as_str())
             .unwrap_or("Account123");
@@ -109,7 +117,10 @@ impl Agent for SupportTicketAgent {
         facts.push(Fact {
             key: ContextKey::Signals,
             id: "support:escalations".into(),
-            content: format!("Support {}: Escalations: 2 | Critical issues: 0 | Status: Healthy", account_id),
+            content: format!(
+                "Support {}: Escalations: 2 | Critical issues: 0 | Status: Healthy",
+                account_id
+            ),
         });
 
         AgentEffect::with_facts(facts)
@@ -140,7 +151,8 @@ impl Agent for RevenueTrendAgent {
         let seeds = ctx.get(ContextKey::Seeds);
         let mut facts = Vec::new();
 
-        let account_id = seeds.iter()
+        let account_id = seeds
+            .iter()
             .find(|s| s.id == "account")
             .map(|s| s.content.as_str())
             .unwrap_or("Account123");
@@ -149,7 +161,10 @@ impl Agent for RevenueTrendAgent {
         facts.push(Fact {
             key: ContextKey::Signals,
             id: "revenue:mrr".into(),
-            content: format!("Revenue {}: MRR: $15,000 | Growth: +8% MoM | Contract: Annual", account_id),
+            content: format!(
+                "Revenue {}: MRR: $15,000 | Growth: +8% MoM | Contract: Annual",
+                account_id
+            ),
         });
         facts.push(Fact {
             key: ContextKey::Signals,
@@ -187,23 +202,32 @@ impl Agent for ChurnRiskAgent {
         let mut facts = Vec::new();
 
         // Analyze signals for churn indicators
-        let usage_trend = signals.iter()
+        let usage_trend = signals
+            .iter()
             .find(|s| s.id == "usage:active-users")
             .map(|s| if s.content.contains("+") { 1 } else { -1 })
             .unwrap_or(0);
 
-        let support_health = signals.iter()
+        let support_health = signals
+            .iter()
             .find(|s| s.id == "support:escalations")
             .map(|s| if s.content.contains("Healthy") { 1 } else { -1 })
             .unwrap_or(0);
 
-        let revenue_growth = signals.iter()
+        let revenue_growth = signals
+            .iter()
             .find(|s| s.id == "revenue:mrr")
             .map(|s| if s.content.contains("+") { 1 } else { -1 })
             .unwrap_or(0);
 
         let risk_score = (3 - (usage_trend + support_health + revenue_growth)) * 20;
-        let risk_level = if risk_score < 30 { "LOW" } else if risk_score < 60 { "MEDIUM" } else { "HIGH" };
+        let risk_level = if risk_score < 30 {
+            "LOW"
+        } else if risk_score < 60 {
+            "MEDIUM"
+        } else {
+            "HIGH"
+        };
 
         facts.push(Fact {
             key: ContextKey::Strategies,
@@ -237,14 +261,20 @@ impl Agent for UpsellOpportunityAgent {
         let has_usage = signals.iter().any(|s| s.id.starts_with("usage:"));
         let has_revenue = signals.iter().any(|s| s.id.starts_with("revenue:"));
 
-        has_usage && has_revenue && !ctx.get(ContextKey::Strategies).iter().any(|s| s.id.starts_with("opportunity:"))
+        has_usage
+            && has_revenue
+            && !ctx
+                .get(ContextKey::Strategies)
+                .iter()
+                .any(|s| s.id.starts_with("opportunity:"))
     }
 
     fn execute(&self, ctx: &Context) -> AgentEffect {
         let signals = ctx.get(ContextKey::Signals);
         let mut facts = Vec::new();
 
-        let usage_adoption = signals.iter()
+        let usage_adoption = signals
+            .iter()
             .find(|s| s.id == "usage:feature-adoption")
             .and_then(|s| {
                 s.content
@@ -255,7 +285,8 @@ impl Agent for UpsellOpportunityAgent {
             })
             .unwrap_or(0);
 
-        let expansion_potential = signals.iter()
+        let expansion_potential = signals
+            .iter()
             .find(|s| s.id == "revenue:expansion")
             .and_then(|s| {
                 s.content
@@ -312,7 +343,13 @@ impl Agent for ActionPrioritizationAgent {
         let mut actions = Vec::new();
 
         if let Some(risk) = churn_risk {
-            let priority = if risk.content.contains("HIGH") { 1 } else if risk.content.contains("MEDIUM") { 2 } else { 3 };
+            let priority = if risk.content.contains("HIGH") {
+                1
+            } else if risk.content.contains("MEDIUM") {
+                2
+            } else {
+                3
+            };
             actions.push((priority, "Churn Risk", risk.content.clone()));
         }
 
@@ -327,10 +364,14 @@ impl Agent for ActionPrioritizationAgent {
             facts.push(Fact {
                 key: ContextKey::Evaluations,
                 id: format!("eval:{}", i + 1),
-                content: format!("Action {}: {} | {} | Priority: {} | {}", 
-                    i + 1, action_type, content,
+                content: format!(
+                    "Action {}: {} | {} | Priority: {} | {}",
+                    i + 1,
+                    action_type,
+                    content,
                     if i == 0 { "URGENT" } else { "NORMAL" },
-                    if i == 0 { "RECOMMENDED" } else { "ALTERNATIVE" }),
+                    if i == 0 { "RECOMMENDED" } else { "ALTERNATIVE" }
+                ),
             });
         }
 
@@ -368,18 +409,18 @@ impl Invariant for RequireChurnActionPlan {
         let strategies = ctx.get(ContextKey::Strategies);
         let evaluations = ctx.get(ContextKey::Evaluations);
 
-        let has_high_risk = strategies.iter().any(|s| {
-            s.id.starts_with("risk:") && s.content.contains("HIGH")
-        });
+        let has_high_risk = strategies
+            .iter()
+            .any(|s| s.id.starts_with("risk:") && s.content.contains("HIGH"));
 
         if has_high_risk {
-            let has_action = evaluations.iter().any(|e| {
-                e.content.contains("Churn Risk") && e.content.contains("RECOMMENDED")
-            });
+            let has_action = evaluations
+                .iter()
+                .any(|e| e.content.contains("Churn Risk") && e.content.contains("RECOMMENDED"));
 
             if !has_action {
                 return InvariantResult::Violated(Violation::new(
-                    "high churn risk detected but no action plan provided"
+                    "high churn risk detected but no action plan provided",
                 ));
             }
         }
@@ -411,24 +452,22 @@ impl Invariant for RequireCompleteAnalysis {
         }
 
         let required_signals = ["usage:", "support:", "revenue:"];
-        let has_all_signals = required_signals.iter().all(|prefix| {
-            signals.iter().any(|s| s.id.starts_with(prefix))
-        });
+        let has_all_signals = required_signals
+            .iter()
+            .all(|prefix| signals.iter().any(|s| s.id.starts_with(prefix)));
 
         if !has_all_signals {
-            return InvariantResult::Violated(Violation::new(
-                "missing required signal analysis"
-            ));
+            return InvariantResult::Violated(Violation::new("missing required signal analysis"));
         }
 
         // Should have either risk or opportunity assessment
-        let has_assessment = strategies.iter().any(|s| {
-            s.id.starts_with("risk:") || s.id.starts_with("opportunity:")
-        });
+        let has_assessment = strategies
+            .iter()
+            .any(|s| s.id.starts_with("risk:") || s.id.starts_with("opportunity:"));
 
         if !has_assessment {
             return InvariantResult::Violated(Violation::new(
-                "no risk or opportunity assessment provided"
+                "no risk or opportunity assessment provided",
             ));
         }
 
@@ -439,8 +478,8 @@ impl Invariant for RequireCompleteAnalysis {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use converge_core::agents::SeedAgent;
     use converge_core::Engine;
+    use converge_core::agents::SeedAgent;
 
     #[test]
     fn parallel_signal_agents_run_independently() {
@@ -490,7 +529,11 @@ mod tests {
         assert!(result.converged);
         let strategies = result.context.get(ContextKey::Strategies);
         // May or may not have opportunity depending on signals
-        assert!(strategies.iter().any(|s| s.id.starts_with("risk:") || s.id.starts_with("opportunity:")));
+        assert!(
+            strategies
+                .iter()
+                .any(|s| s.id.starts_with("risk:") || s.id.starts_with("opportunity:"))
+        );
     }
 
     #[test]
@@ -557,4 +600,3 @@ mod tests {
         );
     }
 }
-

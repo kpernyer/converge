@@ -28,7 +28,11 @@ pub struct HttpProviderConfig {
 impl HttpProviderConfig {
     /// Creates a new HTTP provider configuration.
     #[must_use]
-    pub fn new(api_key: impl Into<String>, model: impl Into<String>, base_url: impl Into<String>) -> Self {
+    pub fn new(
+        api_key: impl Into<String>,
+        model: impl Into<String>,
+        base_url: impl Into<String>,
+    ) -> Self {
         Self {
             api_key: api_key.into(),
             model: model.into(),
@@ -290,15 +294,9 @@ pub trait OpenAiCompatibleProvider {
     /// Makes a completion request.
     ///
     /// Default implementation uses `make_chat_completion_request`.
-    fn complete_openai_compatible(
-        &self,
-        request: &LlmRequest,
-    ) -> Result<LlmResponse, LlmError> {
-        let chat_request = ChatCompletionRequest::from_llm_request(
-            self.config().model.clone(),
-            request,
-        );
+    fn complete_openai_compatible(&self, request: &LlmRequest) -> Result<LlmResponse, LlmError> {
+        let chat_request =
+            ChatCompletionRequest::from_llm_request(self.config().model.clone(), request);
         make_chat_completion_request(self.config(), self.endpoint(), chat_request)
     }
 }
-

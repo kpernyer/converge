@@ -75,9 +75,10 @@ Converge is designed to power:
 ## Getting Started
 
 See:
-- DESIGN_TENETS.md
-- ARCHITECTURE.md
-- TECHNOLOGY_STACK.md
+- `AGENTS.md` — Comprehensive guide for AI assistants
+- `docs/governance/DESIGN_TENETS.md` — Design principles
+- `docs/architecture/ARCHITECTURE.md` — System architecture
+- `docs/deployment/TECHNOLOGY_STACK.md` — Technology choices
 
 ---
 
@@ -88,7 +89,7 @@ We welcome contributors who value:
 - clarity
 - restraint
 
-See CONTRIBUTOR_GUIDE.md.
+See `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`.
 
 ---
 

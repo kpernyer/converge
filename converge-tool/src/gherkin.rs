@@ -120,8 +120,16 @@ impl SpecValidation {
     /// Returns a summary string.
     #[must_use]
     pub fn summary(&self) -> String {
-        let errors = self.issues.iter().filter(|i| i.severity == Severity::Error).count();
-        let warnings = self.issues.iter().filter(|i| i.severity == Severity::Warning).count();
+        let errors = self
+            .issues
+            .iter()
+            .filter(|i| i.severity == Severity::Error)
+            .count();
+        let warnings = self
+            .issues
+            .iter()
+            .filter(|i| i.severity == Severity::Warning)
+            .count();
 
         if self.is_valid {
             format!(
@@ -155,7 +163,11 @@ impl GherkinValidator {
     /// # Errors
     ///
     /// Returns error if the specification cannot be parsed or validated.
-    pub fn validate(&self, content: &str, file_name: &str) -> Result<SpecValidation, ValidationError> {
+    pub fn validate(
+        &self,
+        content: &str,
+        file_name: &str,
+    ) -> Result<SpecValidation, ValidationError> {
         // Parse the Gherkin content
         let feature = gherkin::Feature::parse(content, gherkin::GherkinEnv::default())
             .map_err(|e| ValidationError::ParseError(format!("{e}")))?;
@@ -192,10 +204,11 @@ impl GherkinValidator {
     /// Returns error if the file cannot be read or validated.
     pub fn validate_file(&self, path: impl AsRef<Path>) -> Result<SpecValidation, ValidationError> {
         let path = path.as_ref();
-        let content = std::fs::read_to_string(path)
-            .map_err(|e| ValidationError::IoError(format!("{e}")))?;
+        let content =
+            std::fs::read_to_string(path).map_err(|e| ValidationError::IoError(format!("{e}")))?;
 
-        let file_name = path.file_name()
+        let file_name = path
+            .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("unknown");
 
@@ -233,7 +246,10 @@ impl GherkinValidator {
     }
 
     /// Validates the overall feature structure.
-    fn validate_feature(&self, feature: &gherkin::Feature) -> Result<Vec<ValidationIssue>, ValidationError> {
+    fn validate_feature(
+        &self,
+        feature: &gherkin::Feature,
+    ) -> Result<Vec<ValidationIssue>, ValidationError> {
         let mut issues = Vec::new();
 
         // Check that the feature has a description
@@ -295,7 +311,9 @@ Respond with ONLY one of:
             .with_max_tokens(200)
             .with_temperature(0.3);
 
-        let response = self.provider.complete(&request)
+        let response = self
+            .provider
+            .complete(&request)
             .map_err(|e| ValidationError::LlmError(format!("{e}")))?;
 
         let content = response.content.trim();
@@ -364,7 +382,9 @@ Respond with ONLY one of:
             .with_max_tokens(200)
             .with_temperature(0.3);
 
-        let response = self.provider.complete(&request)
+        let response = self
+            .provider
+            .complete(&request)
             .map_err(|e| ValidationError::LlmError(format!("{e}")))?;
 
         let content = response.content.trim();
@@ -408,9 +428,18 @@ Respond with ONLY one of:
         }
 
         // Check for Given/When/Then structure
-        let has_given = scenario.steps.iter().any(|s| matches!(s.ty, gherkin::StepType::Given));
-        let has_when = scenario.steps.iter().any(|s| matches!(s.ty, gherkin::StepType::When));
-        let has_then = scenario.steps.iter().any(|s| matches!(s.ty, gherkin::StepType::Then));
+        let has_given = scenario
+            .steps
+            .iter()
+            .any(|s| matches!(s.ty, gherkin::StepType::Given));
+        let has_when = scenario
+            .steps
+            .iter()
+            .any(|s| matches!(s.ty, gherkin::StepType::When));
+        let has_then = scenario
+            .steps
+            .iter()
+            .any(|s| matches!(s.ty, gherkin::StepType::Then));
 
         if !has_given && !has_when {
             issues.push(ValidationIssue {
@@ -428,7 +457,9 @@ Respond with ONLY one of:
                 category: IssueCategory::Convention,
                 severity: Severity::Error,
                 message: "Scenario lacks Then steps (expected outcomes)".to_string(),
-                suggestion: Some("Add at least one Then step defining the expected outcome".to_string()),
+                suggestion: Some(
+                    "Add at least one Then step defining the expected outcome".to_string(),
+                ),
             });
         }
 
@@ -506,10 +537,7 @@ Feature: Growth Strategy Validation
     Then at least two distinct growth strategies exist
 "#;
 
-        let validator = GherkinValidator::new(
-            mock_valid_provider(),
-            ValidationConfig::default(),
-        );
+        let validator = GherkinValidator::new(mock_valid_provider(), ValidationConfig::default());
 
         let result = validator.validate(content, "test.feature").unwrap();
 
@@ -539,10 +567,12 @@ Feature: Bad Spec
         let result = validator.validate(content, "bad.feature").unwrap();
 
         assert!(result.has_errors());
-        assert!(result.issues.iter().any(|i|
-            i.category == IssueCategory::Convention &&
-            i.message.contains("Then")
-        ));
+        assert!(
+            result
+                .issues
+                .iter()
+                .any(|i| i.category == IssueCategory::Convention && i.message.contains("Then"))
+        );
     }
 
     #[test]
@@ -567,9 +597,7 @@ Feature: Uncertain Spec
         let result = validator.validate(content, "uncertain.feature").unwrap();
 
         assert!(result.has_warnings());
-        assert!(result.issues.iter().any(|i|
-            i.message.contains("might")
-        ));
+        assert!(result.issues.iter().any(|i| i.message.contains("might")));
     }
 
     #[test]
@@ -586,16 +614,14 @@ Feature: Test
     Then everything is perfect forever
 "#;
 
-        let validator = GherkinValidator::new(
-            provider,
-            ValidationConfig::default(),
-        );
+        let validator = GherkinValidator::new(provider, ValidationConfig::default());
 
         let result = validator.validate(content, "test.feature").unwrap();
 
-        assert!(result.issues.iter().any(|i|
-            i.category == IssueCategory::BusinessSense &&
-            i.severity == Severity::Error
-        ));
+        assert!(
+            result.issues.iter().any(
+                |i| i.category == IssueCategory::BusinessSense && i.severity == Severity::Error
+            )
+        );
     }
 }

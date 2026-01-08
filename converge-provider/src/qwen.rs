@@ -5,7 +5,9 @@
 
 //! Qwen (Alibaba Cloud) API provider.
 
-use converge_core::llm::{FinishReason, LlmError, LlmProvider, LlmRequest, LlmResponse, TokenUsage};
+use converge_core::llm::{
+    FinishReason, LlmError, LlmProvider, LlmRequest, LlmResponse, TokenUsage,
+};
 use serde::{Deserialize, Serialize};
 
 /// Qwen API provider (Alibaba Cloud DashScope).
@@ -138,17 +140,20 @@ impl LlmProvider for QwenProvider {
     }
 
     fn complete(&self, request: &LlmRequest) -> Result<LlmResponse, LlmError> {
-        let url = format!("{}/api/v1/services/aigc/text-generation/generation", self.base_url);
+        let url = format!(
+            "{}/api/v1/services/aigc/text-generation/generation",
+            self.base_url
+        );
 
         let mut messages = Vec::new();
-        
+
         if let Some(ref system) = request.system {
             messages.push(QwenMessage {
                 role: "system".to_string(),
                 content: system.clone(),
             });
         }
-        
+
         messages.push(QwenMessage {
             role: "user".to_string(),
             content: request.prompt.clone(),
@@ -182,9 +187,7 @@ impl LlmProvider for QwenProvider {
 
             let code = error_body.code.as_deref().unwrap_or("unknown");
             return match code {
-                "InvalidApiKey" | "InvalidParameter" => {
-                    Err(LlmError::auth(error_body.message))
-                }
+                "InvalidApiKey" | "InvalidParameter" => Err(LlmError::auth(error_body.message)),
                 "Throttling" => Err(LlmError::rate_limit(error_body.message)),
                 _ => Err(LlmError::provider(error_body.message)),
             };
@@ -236,4 +239,3 @@ mod tests {
         assert_eq!(provider.model(), "qwen-turbo");
     }
 }
-

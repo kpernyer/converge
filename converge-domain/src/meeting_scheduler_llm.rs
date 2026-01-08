@@ -5,12 +5,12 @@
 
 //! LLM-enabled Meeting Scheduler use case.
 
+use crate::llm_utils::{create_mock_llm_agent, requirements};
 use converge_core::{
+    ContextKey, Engine,
     agents::SeedAgent,
     llm::{LlmAgent, MockProvider, MockResponse},
-    ContextKey, Engine,
 };
-use crate::llm_utils::{create_mock_llm_agent, requirements};
 use std::sync::Arc;
 
 /// Sets up LLM-enabled Meeting Scheduler agents with mock providers (for testing).
@@ -86,7 +86,9 @@ mod tests {
         assert!(result.converged);
         // LLM agents emit proposals to ContextKey::Proposals
         let proposals = result.context.get(ContextKey::Proposals);
-        assert!(!proposals.is_empty(), "At least one LLM agent should have produced proposals");
+        assert!(
+            !proposals.is_empty(),
+            "At least one LLM agent should have produced proposals"
+        );
     }
 }
-

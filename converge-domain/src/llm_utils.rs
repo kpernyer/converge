@@ -9,12 +9,12 @@
 //! the Converge pattern for model selection based on agent requirements.
 
 use converge_core::{
+    ContextKey,
     llm::{LlmAgent, LlmAgentConfig, MockProvider, MockResponse, ResponseParser, SimpleParser},
     model_selection::{AgentRequirements, CostClass, ModelSelectorTrait},
     prompt::PromptFormat,
-    ContextKey,
 };
-use converge_provider::{create_provider, ProviderRegistry};
+use converge_provider::{ProviderRegistry, create_provider};
 use std::sync::Arc;
 
 /// Creates an LLM agent with model selection.
@@ -39,10 +39,10 @@ pub fn create_llm_agent(
 ) -> Result<LlmAgent, converge_core::llm::LlmError> {
     // Select model based on requirements
     let (provider_name, model_id) = registry.select(&requirements)?;
-    
+
     // Create provider
     let provider = create_provider(&provider_name, &model_id)?;
-    
+
     // Create agent config
     let config = LlmAgentConfig {
         system_prompt: system_prompt.into(),
@@ -55,15 +55,15 @@ pub fn create_llm_agent(
         temperature: 0.7,
         requirements: Some(requirements),
     };
-    
+
     let name_str = name.into();
-    
+
     // Create parser
     let parser: Arc<dyn ResponseParser> = Arc::new(SimpleParser {
         id_prefix: format!("{}:", name_str.clone()),
         confidence: 0.7,
     });
-    
+
     Ok(LlmAgent::new(name_str, provider, config).with_parser(parser))
 }
 
@@ -83,7 +83,7 @@ pub fn create_mock_llm_agent(
 ) -> (LlmAgent, Arc<MockProvider>) {
     // Create mock provider with responses
     let mock_provider = Arc::new(MockProvider::new(mock_responses));
-    
+
     // Create agent config
     let config = LlmAgentConfig {
         system_prompt: system_prompt.into(),
@@ -96,15 +96,15 @@ pub fn create_mock_llm_agent(
         temperature: 0.7,
         requirements: Some(requirements),
     };
-    
+
     let name_str = name.into();
-    
+
     // Create parser
     let parser: Arc<dyn ResponseParser> = Arc::new(SimpleParser {
         id_prefix: format!("{}:", name_str.clone()),
         confidence: 0.7,
     });
-    
+
     let agent = LlmAgent::new(name_str, mock_provider.clone(), config).with_parser(parser);
     (agent, mock_provider)
 }
@@ -122,8 +122,7 @@ pub mod requirements {
     /// Requirements for analysis agents (e.g., market analysis, strategy synthesis).
     #[must_use]
     pub fn analysis() -> AgentRequirements {
-        AgentRequirements::balanced()
-            .with_min_quality(0.75)
+        AgentRequirements::balanced().with_min_quality(0.75)
     }
 
     /// Requirements for deep research agents (e.g., competitor analysis, risk assessment).
@@ -135,22 +134,18 @@ pub mod requirements {
     /// Requirements for synthesis agents (e.g., strategy synthesis, consolidation).
     #[must_use]
     pub fn synthesis() -> AgentRequirements {
-        AgentRequirements::new(CostClass::Medium, 10000, true)
-            .with_min_quality(0.8)
+        AgentRequirements::new(CostClass::Medium, 10000, true).with_min_quality(0.8)
     }
 
     /// Requirements for validation agents (e.g., compliance checking, quality gates).
     #[must_use]
     pub fn validation() -> AgentRequirements {
-        AgentRequirements::balanced()
-            .with_min_quality(0.85)
+        AgentRequirements::balanced().with_min_quality(0.85)
     }
 
     /// Requirements for categorization agents (e.g., category inference, classification).
     #[must_use]
     pub fn categorization() -> AgentRequirements {
-        AgentRequirements::fast_cheap()
-            .with_min_quality(0.7)
+        AgentRequirements::fast_cheap().with_min_quality(0.7)
     }
 }
-

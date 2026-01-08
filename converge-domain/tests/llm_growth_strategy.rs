@@ -15,11 +15,11 @@
 //! This proves the full safety model in a real-world use case.
 
 use converge_core::agents::SeedAgent;
-use converge_core::validation::{encode_proposal, ValidationAgent, ValidationConfig};
+use converge_core::validation::{ValidationAgent, ValidationConfig, encode_proposal};
 use converge_core::{Agent, AgentEffect, Context, ContextKey, Engine, Fact, ProposedFact};
 use converge_domain::growth_strategy::{
-    BrandSafetyInvariant, EvaluationAgent, RequireMultipleStrategies,
-    RequireStrategyEvaluations, StrategyAgent,
+    BrandSafetyInvariant, EvaluationAgent, RequireMultipleStrategies, RequireStrategyEvaluations,
+    StrategyAgent,
 };
 
 // =============================================================================
@@ -43,8 +43,11 @@ impl Agent for LlmSignalAgent {
 
     fn accepts(&self, ctx: &Context) -> bool {
         // Run once when seeds exist but we haven't proposed signals yet
-        ctx.has(ContextKey::Seeds) &&
-        !ctx.get(ContextKey::Proposals).iter().any(|p| p.id.contains("llm-signal"))
+        ctx.has(ContextKey::Seeds)
+            && !ctx
+                .get(ContextKey::Proposals)
+                .iter()
+                .any(|p| p.id.contains("llm-signal"))
     }
 
     fn execute(&self, ctx: &Context) -> AgentEffect {
@@ -121,8 +124,11 @@ impl Agent for LlmHypothesisAgent {
 
     fn accepts(&self, ctx: &Context) -> bool {
         // Run once when signals exist but we haven't proposed hypotheses yet
-        ctx.has(ContextKey::Signals) &&
-        !ctx.get(ContextKey::Proposals).iter().any(|p| p.id.contains("llm-hyp"))
+        ctx.has(ContextKey::Signals)
+            && !ctx
+                .get(ContextKey::Proposals)
+                .iter()
+                .any(|p| p.id.contains("llm-hyp"))
     }
 
     fn execute(&self, ctx: &Context) -> AgentEffect {
@@ -186,9 +192,9 @@ impl Agent for SignalToCompetitorAgent {
     fn accepts(&self, ctx: &Context) -> bool {
         // Run when we have validated signals about competition
         let signals = ctx.get(ContextKey::Signals);
-        let has_competition_signal = signals.iter().any(|s|
-            s.content.contains("competitor") && !s.id.contains("rejected")
-        );
+        let has_competition_signal = signals
+            .iter()
+            .any(|s| s.content.contains("competitor") && !s.id.contains("rejected"));
         has_competition_signal && !ctx.has(ContextKey::Competitors)
     }
 
@@ -247,7 +253,10 @@ fn llm_powered_growth_strategy_verbose() {
     println!("\n  TRUSTED AGENTS (Human Input):");
     let s1 = engine.register(SeedAgent::new("market:nordic-b2b", "Nordic B2B market"));
     println!("    [{}] SeedAgent: market:nordic-b2b", s1);
-    let s2 = engine.register(SeedAgent::new("product:saas-platform", "Enterprise SaaS Platform"));
+    let s2 = engine.register(SeedAgent::new(
+        "product:saas-platform",
+        "Enterprise SaaS Platform",
+    ));
     println!("    [{}] SeedAgent: product:saas-platform", s2);
 
     // LLM agents (untrusted - outputs go to Proposals)
@@ -255,7 +264,10 @@ fn llm_powered_growth_strategy_verbose() {
     let llm1 = engine.register(LlmSignalAgent);
     println!("    [{}] LlmSignalAgent: Proposes market signals", llm1);
     let llm2 = engine.register(LlmHypothesisAgent);
-    println!("    [{}] LlmHypothesisAgent: Proposes strategic hypotheses", llm2);
+    println!(
+        "    [{}] LlmHypothesisAgent: Proposes strategic hypotheses",
+        llm2
+    );
 
     // Validation gateway
     println!("\n  VALIDATION GATEWAY:");
@@ -274,7 +286,10 @@ fn llm_powered_growth_strategy_verbose() {
     // Strategy pipeline (operates on validated facts)
     println!("\n  STRATEGY PIPELINE (Uses Validated Facts Only):");
     let comp = engine.register(SignalToCompetitorAgent);
-    println!("    [{}] SignalToCompetitorAgent: Signals → Competitors", comp);
+    println!(
+        "    [{}] SignalToCompetitorAgent: Signals → Competitors",
+        comp
+    );
     let strat = engine.register(StrategyAgent);
     println!("    [{}] StrategyAgent: Competitors → Strategies", strat);
     let eval = engine.register(EvaluationAgent);
@@ -329,8 +344,14 @@ fn llm_powered_growth_strategy_verbose() {
     let hypotheses = result.context.get(ContextKey::Hypotheses);
 
     // Count rejections
-    let rejections: Vec<_> = signals.iter().filter(|s| s.id.contains("rejected")).collect();
-    let accepted_signals: Vec<_> = signals.iter().filter(|s| !s.id.contains("rejected")).collect();
+    let rejections: Vec<_> = signals
+        .iter()
+        .filter(|s| s.id.contains("rejected"))
+        .collect();
+    let accepted_signals: Vec<_> = signals
+        .iter()
+        .filter(|s| !s.id.contains("rejected"))
+        .collect();
 
     println!("\n  LLM Proposals Submitted: {}", proposals.len());
     println!("  ───────────────────────────────────────────────────────────────────────────");
@@ -432,11 +453,26 @@ fn llm_powered_growth_strategy_verbose() {
     println!("╠══════════════════════════════════════════════════════════════════════════════╣");
     println!("║  Agents:           8 (2 human, 2 LLM, 1 validator, 3 strategy)               ║");
     println!("║  Invariants:       3                                                         ║");
-    println!("║  Cycles:           {}                                                        ║", result.cycles);
-    println!("║  LLM Proposals:    {}                                                         ║", proposals.len());
-    println!("║  Accepted:         {}                                                         ║", accepted_signals.len() + hypotheses.len());
-    println!("║  Rejected:         {}                                                         ║", rejections.len());
-    println!("║  Final Strategies: {}                                                         ║", strategies.len());
+    println!(
+        "║  Cycles:           {}                                                        ║",
+        result.cycles
+    );
+    println!(
+        "║  LLM Proposals:    {}                                                         ║",
+        proposals.len()
+    );
+    println!(
+        "║  Accepted:         {}                                                         ║",
+        accepted_signals.len() + hypotheses.len()
+    );
+    println!(
+        "║  Rejected:         {}                                                         ║",
+        rejections.len()
+    );
+    println!(
+        "║  Final Strategies: {}                                                         ║",
+        strategies.len()
+    );
     println!("║  Convergence:      ✓ ACHIEVED                                                ║");
     println!("╚══════════════════════════════════════════════════════════════════════════════╝");
     println!();
@@ -445,7 +481,10 @@ fn llm_powered_growth_strategy_verbose() {
     assert!(result.converged);
     assert!(!strategies.is_empty(), "Should have strategies");
     assert!(!evaluations.is_empty(), "Should have evaluations");
-    assert!(!rejections.is_empty(), "Should have rejected some LLM proposals");
+    assert!(
+        !rejections.is_empty(),
+        "Should have rejected some LLM proposals"
+    );
     assert!(
         rejections.iter().any(|r| r.content.contains("guaranteed")),
         "Should have rejected hallucination with 'guaranteed'"
