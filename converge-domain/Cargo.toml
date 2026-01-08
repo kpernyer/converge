@@ -5,6 +5,10 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+repository = "https://github.com/kpernyer/converge"
+documentation = "https://docs.rs/converge-domain"
+keywords = ["agent", "domain", "converge", "multi-agent"]
+categories = ["algorithms", "simulation"]
 
 [dependencies]
 converge-core = { workspace = true }

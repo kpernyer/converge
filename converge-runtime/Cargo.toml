@@ -5,6 +5,10 @@ edition = "2024"
 rust-version = "1.85"
 description = "Converge HTTP/gRPC/TUI runtime server"
 license = "MIT"
+repository = "https://github.com/kpernyer/converge"
+documentation = "https://docs.rs/converge-runtime"
+keywords = ["runtime", "http", "grpc", "converge"]
+categories = ["web-programming::http-server", "network-programming"]
 
 [dependencies]
 # Core library
