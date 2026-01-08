@@ -72,9 +72,61 @@ Converge is designed to power:
 
 ---
 
-## Getting Started
+## Installation
 
-See:
+Add to your `Cargo.toml`:
+
+```toml
+[dependencies]
+converge-core = "0.3"
+```
+
+Or use cargo:
+
+```bash
+cargo add converge-core
+```
+
+### Additional Crates
+
+```bash
+cargo add converge-provider  # LLM providers (Anthropic, OpenAI, etc.)
+cargo add converge-domain    # Domain-specific agents
+cargo add converge-tool      # Development tools (Gherkin validation)
+```
+
+---
+
+## Quick Start
+
+```rust
+use converge_core::{Context, ContextKey, Fact};
+
+fn main() {
+    let mut ctx = Context::new();
+
+    let fact = Fact {
+        key: ContextKey::Seeds,
+        id: "greeting".into(),
+        content: "Hello from Converge!".into(),
+    };
+
+    ctx.add_fact(fact).expect("should add");
+
+    let facts = ctx.get(ContextKey::Seeds);
+    for f in facts {
+        println!("Content: {}", f.content);
+    }
+
+    println!("Context version: {}", ctx.version());
+}
+```
+
+---
+
+## Documentation
+
+- [API Docs (docs.rs)](https://docs.rs/converge-core)
 - `AGENTS.md` — Comprehensive guide for AI assistants
 - `docs/governance/DESIGN_TENETS.md` — Design principles
 - `docs/architecture/ARCHITECTURE.md` — System architecture
@@ -95,4 +147,5 @@ See `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`.
 
 ## License
 
-Apache 2.0
+- **converge-core**: Proprietary (Aprio One AB)
+- **converge-provider, converge-domain, converge-tool, converge-runtime**: MIT
