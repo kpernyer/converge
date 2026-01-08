@@ -78,7 +78,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-converge-core = "0.3"
+converge-core = "0.4"
 ```
 
 Or use cargo:
@@ -105,11 +105,8 @@ use converge_core::{Context, ContextKey, Fact};
 fn main() {
     let mut ctx = Context::new();
 
-    let fact = Fact {
-        key: ContextKey::Seeds,
-        id: "greeting".into(),
-        content: "Hello from Converge!".into(),
-    };
+    // Create a fact using the new() constructor
+    let fact = Fact::new(ContextKey::Seeds, "greeting", "Hello from Converge!");
 
     ctx.add_fact(fact).expect("should add");
 
