@@ -11,10 +11,10 @@
 - [x] Task: Ensure all `Context` and `Fact` types have necessary derives (Debug, Clone, Serialize, Deserialize) for cross-crate usage. 0ec86f1
 - [x] Task: Conductor - User Manual Verification 'Execution' (Protocol in workflow.md)
 
-## Phase 3: Convergence (Core Test Suite)
-- [ ] Task: Create a comprehensive integration test in `converge-core/tests/core_mechanics.rs` that simulates a generic agent loop using only core types and mocks.
-- [ ] Task: Verify that existing property tests in `converge-core` still pass and cover the core invariants.
-- [ ] Task: Conductor - User Manual Verification 'Convergence' (Protocol in workflow.md)
+## Phase 3: Convergence (Core Test Suite) [checkpoint: 23454f5]
+- [x] Task: Create a comprehensive integration test in `converge-core/tests/core_mechanics.rs` that simulates a generic agent loop using only core types and mocks. 7be1532
+- [x] Task: Verify that existing property tests in `converge-core` still pass and cover the core invariants. 7be1532
+- [x] Task: Conductor - User Manual Verification 'Convergence' (Protocol in workflow.md)
 
 ## Phase 4: Finalizing (Documentation & Release Prep)
 - [ ] Task: Update `converge-core/README.md` (or lib.rs docs) to clearly define its scope and how to use it with the other crates.
