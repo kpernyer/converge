@@ -20,8 +20,10 @@ jobs:
       - name: Remove submodule (use crates.io version)
         run: |
           rm -rf converge-core
-          # Remove from workspace members
-          sed -i 's/"converge-core",//' Cargo.toml
+          # Remove converge-core from workspace members array only
+          sed -i '/members = \[/,/\]/ s/"converge-core",//' Cargo.toml
+          # Remove the path from converge-core dependency (keep version only)
+          sed -i 's/converge-core = { path = "converge-core", version/converge-core = { version/' Cargo.toml
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -60,7 +62,8 @@ jobs:
       - name: Remove submodule
         run: |
           rm -rf converge-core
-          sed -i 's/"converge-core",//' Cargo.toml
+          sed -i '/members = \[/,/\]/ s/"converge-core",//' Cargo.toml
+          sed -i 's/converge-core = { path = "converge-core", version/converge-core = { version/' Cargo.toml
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
