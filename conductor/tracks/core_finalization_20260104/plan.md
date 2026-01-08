@@ -1,9 +1,9 @@
 # Plan: Finalize Converge Core
 
-## Phase 1: Readiness (Dependency & Boundary Audit)
-- [~] Task: Audit `converge-core/Cargo.toml` and remove any unused or inappropriate dependencies (e.g., specific HTTP clients if not needed for traits).
-- [ ] Task: Verify that `converge-core` does not import from or reference the other workspace crates.
-- [ ] Task: Conductor - User Manual Verification 'Readiness' (Protocol in workflow.md)
+## Phase 1: Readiness (Dependency & Boundary Audit) [checkpoint: e78ed40]
+- [x] Task: Audit `converge-core/Cargo.toml` and remove any unused or inappropriate dependencies (e.g., specific HTTP clients if not needed for traits). ddc056e
+- [x] Task: Verify that `converge-core` does not import from or reference the other workspace crates. ddc056e
+- [x] Task: Conductor - User Manual Verification 'Readiness' (Protocol in workflow.md)
 
 ## Phase 2: Execution (Trait & Mock Hardening)
 - [ ] Task: Review `LlmProvider` and `Agent` traits for completeness and public visibility.
