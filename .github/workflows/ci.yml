@@ -25,12 +25,12 @@ jobs:
       - name: Remove submodule (use crates.io version)
         run: |
           rm -rf converge-core
-          # Remove converge-core from workspace members array
-          sed -i 's/"converge-core",//' Cargo.toml
+          # Remove converge-core from workspace members (line starts with spaces and quotes)
+          sed -i '/^[[:space:]]*"converge-core",$/d' Cargo.toml
           # Remove the path from converge-core dependency (keep version only)
-          sed -i 's|path = "converge-core", ||' Cargo.toml
+          sed -i 's/{ path = "converge-core", version/{ version/' Cargo.toml
           # Show result for debugging
-          grep -A5 "workspace.dependencies" Cargo.toml
+          head -25 Cargo.toml
 
       - name: Cache cargo
         uses: actions/cache@v4
@@ -67,8 +67,8 @@ jobs:
       - name: Remove submodule
         run: |
           rm -rf converge-core
-          sed -i 's/"converge-core",//' Cargo.toml
-          sed -i 's|path = "converge-core", ||' Cargo.toml
+          sed -i '/^[[:space:]]*"converge-core",$/d' Cargo.toml
+          sed -i 's/{ path = "converge-core", version/{ version/' Cargo.toml
 
       - name: Build docs
         run: cargo doc --workspace --no-deps
