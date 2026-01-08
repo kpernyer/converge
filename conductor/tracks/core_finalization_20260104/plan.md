@@ -1,7 +1,7 @@
 # Plan: Finalize Converge Core
 
 ## Phase 1: Readiness (Dependency & Boundary Audit)
-- [ ] Task: Audit `converge-core/Cargo.toml` and remove any unused or inappropriate dependencies (e.g., specific HTTP clients if not needed for traits).
+- [~] Task: Audit `converge-core/Cargo.toml` and remove any unused or inappropriate dependencies (e.g., specific HTTP clients if not needed for traits).
 - [ ] Task: Verify that `converge-core` does not import from or reference the other workspace crates.
 - [ ] Task: Conductor - User Manual Verification 'Readiness' (Protocol in workflow.md)
 

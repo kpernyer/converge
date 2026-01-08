@@ -1,5 +1,129 @@
 # Growth Strategy Use Case - Flow Analysis
 
+## Why Strategies and Evaluations Are Empty
+
+**Root Cause**: Cascading dependency failure due to `LlmAgent` idempotency check bug.
+
+### The Dependency Chain
+
+```
+MarketSignalAgent (runs) 
+  → Proposals (Signals) 
+  → ValidationAgent 
+  → Signals ✅ (exists)
+
+CompetitorAgent (doesn't run) 
+  → No Proposals (Competitors)
+  → No Competitors ❌ (empty)
+
+StrategyAgent (can't run)
+  → Depends on: [Signals, Competitors]
+  → Uses: `.any()` (only needs ONE dependency)
+  → Signals exist ✅, but Competitors empty ❌
+  → Should still run (because `.any()`), but doesn't
+  → Likely blocked by idempotency check bug
+
+EvaluationAgent (can't run)
+  → Depends on: [Strategies]
+  → Strategies empty ❌ (because StrategyAgent didn't run)
+  → Can't run
+```
+
+### The Problem
+
+1. **CompetitorAgent doesn't run** (idempotency check looks at wrong place)
+2. **Competitors are empty** (no competitor intelligence)
+3. **StrategyAgent should still run** (depends on Signals OR Competitors via `.any()`)
+4. **But StrategyAgent doesn't run** (likely same idempotency check bug)
+5. **Strategies are empty** (StrategyAgent never ran)
+6. **EvaluationAgent can't run** (depends on Strategies, which are empty)
+7. **Evaluations are empty** (EvaluationAgent never ran)
+
+### The Idempotency Check Bug
+
+`LlmAgent.accepts()` checks idempotency incorrectly:
+
+```rust
+fn accepts(&self, ctx: &Context) -> bool {
+    // Precondition: at least one input dependency has data
+    let has_input = self.config.dependencies.iter().any(|k| ctx.has(*k));
+    if !has_input {
+        return false;
+    }
+
+    // Idempotency: check if we've already contributed to target key
+    let my_prefix = format!("{}-", self.name);
+    let already_contributed = ctx
+        .get(self.config.target_key)  // ❌ Only checks after validation!
+        .iter()
+        .any(|f| f.id.starts_with(&my_prefix));
+
+    !already_contributed
+}
+```
+
+**The bug**: It only checks `target_key` (e.g., `Strategies`), but agents emit to `Proposals` first. So:
+- Agent runs → emits proposal to `Proposals`
+- Idempotency check looks at `Strategies` → no facts yet (not validated)
+- Agent might think it hasn't contributed
+- But more importantly: **Agent should check `Proposals` for pending contributions**
+
+### Why StrategyAgent Doesn't Run
+
+Even though StrategyAgent uses `.any()` (only needs one dependency), it's likely not running because:
+
+1. **Idempotency check bug**: Checks `Strategies` instead of `Proposals`
+2. **Dependency satisfaction**: Signals exist, so `.any()` should pass
+3. **But**: The idempotency check might be incorrectly identifying that it already contributed
+
+Or, more likely:
+- StrategyAgent's `accepts()` is called
+- It checks if it already contributed to `Strategies`
+- It doesn't find any (correct - not validated yet)
+- But it should also check `Proposals` to see if there's a pending proposal
+- Since it doesn't check `Proposals`, it might be incorrectly determining idempotency
+
+### The Fix
+
+`LlmAgent.accepts()` should check **both** places:
+
+```rust
+fn accepts(&self, ctx: &Context) -> bool {
+    // Precondition: at least one input dependency has data
+    let has_input = self.config.dependencies.iter().any(|k| ctx.has(*k));
+    if !has_input {
+        return false;
+    }
+
+    // Idempotency: check if we've already contributed
+    let my_prefix = format!("{}-", self.name);
+    
+    // Check Proposals (pending contributions)
+    let has_pending_proposal = ctx
+        .get(ContextKey::Proposals)
+        .iter()
+        .any(|f| {
+            // Proposal IDs are: "proposal:{target_key}:{agent_name}-{uuid}"
+            f.id.contains(&my_prefix)
+        });
+    
+    // Check target_key (validated contributions)
+    let has_validated_fact = ctx
+        .get(self.config.target_key)
+        .iter()
+        .any(|f| f.id.starts_with(&my_prefix));
+
+    // Run if we haven't contributed (no pending proposal AND no validated fact)
+    !has_pending_proposal && !has_validated_fact
+}
+```
+
+This ensures:
+- Agent runs when dependencies are satisfied
+- Agent doesn't run if it has a pending proposal
+- Agent doesn't run if it has a validated fact
+- No internal state needed
+
 ## Current Problem: Underspecified Root Intent
 
 The current test setup is too minimal. We're just providing:
@@ -119,10 +243,10 @@ Current State:
                                     │
                                     ▼
                         ┌───────────────────────┐
-                        │ StrategyAgent        │
-                        │ (Claude Sonnet)      │
+                        │ StrategyAgent         │
+                        │ (Claude Sonnet)       │
                         │                      │
-                        │ Synthesizes:         │
+                        │ Synthesizes:          │
                         │ - Channel strategies │
                         │ - Positioning        │
                         │ - Pricing            │
@@ -142,7 +266,7 @@ Current State:
 │  Strategies:                                                                 │
 │                                                                             │
 │    1. "Enterprise Direct Sales Expansion"                                   │
-│       - Target: Nordic enterprises (500+ employees)                         │
+│       - Target: Nordic enterprises (500+ employees)                        │
 │       - Channel: Direct sales + LinkedIn                                    │
 │       - CAC: $15K, LTV: $150K, ROI: 10x                                    │
 │       - Risk: Medium (long sales cycles)                                    │
@@ -153,12 +277,12 @@ Current State:
 │       - Channel: GitHub, technical content, conferences                     │
 │       - CAC: $2K, LTV: $50K, ROI: 25x                                       │
 │       - Risk: Low (organic growth)                                          │
-│       - Timeline: 3-6 months to build momentum                               │
+│       - Timeline: 3-6 months to build momentum                              │
 │                                                                             │
 │    3. "Partner Channel Program"                                            │
 │       - Target: System integrators, consultants                             │
 │       - Channel: Partner network                                           │
-│       - CAC: $5K, LTV: $75K, ROI: 15x                                      │
+│       - CAC: $5K, LTV: $75K, ROI: 15x                                       │
 │       - Risk: Medium (partner dependency)                                   │
 │       - Timeline: 4-8 months to establish partnerships                      │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -238,6 +362,7 @@ Each cycle builds on the previous one.
 ### 3. Validation is Critical
 Every LLM output must be validated before becoming a fact:
 - MarketSignalAgent → Proposals → ValidationAgent → Signals
+- CompetitorAgent → Proposals → ValidationAgent → Competitors
 - StrategyAgent → Proposals → ValidationAgent → Strategies
 - EvaluationAgent → Proposals → ValidationAgent → Evaluations
 
@@ -245,6 +370,19 @@ Every LLM output must be validated before becoming a fact:
 - **Fast/Cheap** (Gemini Flash) for high-volume signal extraction
 - **Web Search** (Perplexity) for competitor intelligence and evaluation
 - **Reasoning** (Claude Sonnet) for strategy synthesis
+
+### 5. Core Design Issue: LlmAgent Idempotency Check
+
+**This is a converge-core bug** that prevents multi-step LLM pipelines from working correctly.
+
+**The bug**: `LlmAgent.accepts()` only checks `target_key` for idempotency, but agents emit to `Proposals` first. It should check **both** `Proposals` (pending) and `target_key` (validated).
+
+**Impact**: 
+- CompetitorAgent doesn't run → Competitors empty
+- StrategyAgent doesn't run → Strategies empty  
+- EvaluationAgent can't run → Evaluations empty
+
+**Fix Required**: Check both `ContextKey::Proposals` and `target_key` for existing contributions.
 
 ## What the Test Should Actually Test
 

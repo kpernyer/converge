@@ -14,6 +14,94 @@ use converge_core::{
     AgentRequirements, ComplianceLevel, CostClass, DataSovereignty, ModelSelectorTrait,
 };
 
+/// Breakdown of fitness score components.
+#[derive(Debug, Clone, PartialEq)]
+pub struct FitnessBreakdown {
+    /// Cost efficiency score (0.0-1.0, higher = cheaper).
+    /// VeryLow=1.0, Low=0.8, Medium=0.6, High=0.4, VeryHigh=0.2
+    pub cost_score: f64,
+    /// Latency efficiency score (0.0-1.0, higher = faster).
+    /// Calculated as: 1.0 - (typical_latency / max_allowed_latency)
+    pub latency_score: f64,
+    /// Quality score (0.0-1.0, model's quality rating).
+    pub quality_score: f64,
+    /// Total weighted score: 40% cost + 30% latency + 30% quality.
+    pub total: f64,
+}
+
+impl std::fmt::Display for FitnessBreakdown {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{:.3} = 40%×cost({:.2}) + 30%×latency({:.2}) + 30%×quality({:.2})",
+            self.total, self.cost_score, self.latency_score, self.quality_score
+        )
+    }
+}
+
+/// Result of model selection with detailed information.
+#[derive(Debug, Clone)]
+pub struct SelectionResult {
+    /// The selected model's metadata.
+    pub selected: ModelMetadata,
+    /// Fitness breakdown for the selected model.
+    pub fitness: FitnessBreakdown,
+    /// All candidates that were considered, with their fitness scores.
+    /// Sorted by fitness (best first).
+    pub candidates: Vec<(ModelMetadata, FitnessBreakdown)>,
+    /// Models that were rejected and why.
+    pub rejected: Vec<(ModelMetadata, RejectionReason)>,
+}
+
+/// Reason why a model was rejected during selection.
+#[derive(Debug, Clone, PartialEq)]
+pub enum RejectionReason {
+    /// Provider not available (no API key).
+    ProviderUnavailable,
+    /// Cost class exceeds budget.
+    CostTooHigh { model_cost: CostClass, max_allowed: CostClass },
+    /// Latency exceeds limit.
+    LatencyTooHigh { model_latency_ms: u32, max_allowed_ms: u32 },
+    /// Quality below threshold.
+    QualityTooLow { model_quality: f64, min_required: f64 },
+    /// Reasoning required but not supported.
+    ReasoningRequired,
+    /// Web search required but not supported.
+    WebSearchRequired,
+    /// Data sovereignty mismatch.
+    DataSovereigntyMismatch { required: DataSovereignty, model_has: DataSovereignty },
+    /// Compliance level mismatch.
+    ComplianceMismatch { required: ComplianceLevel, model_has: ComplianceLevel },
+    /// Multilingual required but not supported.
+    MultilingualRequired,
+}
+
+impl std::fmt::Display for RejectionReason {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ProviderUnavailable => write!(f, "provider unavailable (no API key)"),
+            Self::CostTooHigh { model_cost, max_allowed } => {
+                write!(f, "cost {:?} exceeds max {:?}", model_cost, max_allowed)
+            }
+            Self::LatencyTooHigh { model_latency_ms, max_allowed_ms } => {
+                write!(f, "latency {}ms exceeds max {}ms", model_latency_ms, max_allowed_ms)
+            }
+            Self::QualityTooLow { model_quality, min_required } => {
+                write!(f, "quality {:.2} below min {:.2}", model_quality, min_required)
+            }
+            Self::ReasoningRequired => write!(f, "reasoning required but not supported"),
+            Self::WebSearchRequired => write!(f, "web search required but not supported"),
+            Self::DataSovereigntyMismatch { required, model_has } => {
+                write!(f, "data sovereignty {:?} != required {:?}", model_has, required)
+            }
+            Self::ComplianceMismatch { required, model_has } => {
+                write!(f, "compliance {:?} != required {:?}", model_has, required)
+            }
+            Self::MultilingualRequired => write!(f, "multilingual required but not supported"),
+        }
+    }
+}
+
 /// Model metadata for selection.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ModelMetadata {
@@ -184,6 +272,110 @@ impl ModelMetadata {
         // Weighted combination
         // Cost: 40%, Latency: 30%, Quality: 30%
         0.4 * cost_score + 0.3 * latency_score + 0.3 * quality_score
+    }
+
+    /// Calculates a detailed fitness breakdown for matching requirements.
+    ///
+    /// Returns `None` if the model doesn't satisfy requirements.
+    #[must_use]
+    pub fn fitness_breakdown(&self, requirements: &AgentRequirements) -> Option<FitnessBreakdown> {
+        if !self.satisfies(requirements) {
+            return None;
+        }
+
+        let cost_score = match self.cost_class {
+            CostClass::VeryLow => 1.0,
+            CostClass::Low => 0.8,
+            CostClass::Medium => 0.6,
+            CostClass::High => 0.4,
+            CostClass::VeryHigh => 0.2,
+        };
+
+        let latency_ratio =
+            f64::from(self.typical_latency_ms) / f64::from(requirements.max_latency_ms);
+        let latency_score = 1.0 - latency_ratio.min(1.0);
+
+        let quality_score = self.quality;
+
+        let total = 0.4 * cost_score + 0.3 * latency_score + 0.3 * quality_score;
+
+        Some(FitnessBreakdown {
+            cost_score,
+            latency_score,
+            quality_score,
+            total,
+        })
+    }
+
+    /// Determines why this model was rejected for the given requirements.
+    ///
+    /// Returns `None` if the model satisfies all requirements.
+    #[must_use]
+    pub fn rejection_reason(&self, requirements: &AgentRequirements) -> Option<RejectionReason> {
+        // Cost check
+        if !requirements
+            .max_cost_class
+            .allowed_classes()
+            .contains(&self.cost_class)
+        {
+            return Some(RejectionReason::CostTooHigh {
+                model_cost: self.cost_class,
+                max_allowed: requirements.max_cost_class,
+            });
+        }
+
+        // Latency check
+        if self.typical_latency_ms > requirements.max_latency_ms {
+            return Some(RejectionReason::LatencyTooHigh {
+                model_latency_ms: self.typical_latency_ms,
+                max_allowed_ms: requirements.max_latency_ms,
+            });
+        }
+
+        // Reasoning check
+        if requirements.requires_reasoning && !self.has_reasoning {
+            return Some(RejectionReason::ReasoningRequired);
+        }
+
+        // Web search check
+        if requirements.requires_web_search && !self.supports_web_search {
+            return Some(RejectionReason::WebSearchRequired);
+        }
+
+        // Quality check
+        if self.quality < requirements.min_quality {
+            return Some(RejectionReason::QualityTooLow {
+                model_quality: self.quality,
+                min_required: requirements.min_quality,
+            });
+        }
+
+        // Data sovereignty check
+        if requirements.data_sovereignty != DataSovereignty::Any
+            && self.data_sovereignty != requirements.data_sovereignty
+        {
+            return Some(RejectionReason::DataSovereigntyMismatch {
+                required: requirements.data_sovereignty,
+                model_has: self.data_sovereignty,
+            });
+        }
+
+        // Compliance check
+        if requirements.compliance != ComplianceLevel::None
+            && self.compliance != requirements.compliance
+        {
+            return Some(RejectionReason::ComplianceMismatch {
+                required: requirements.compliance,
+                model_has: self.compliance,
+            });
+        }
+
+        // Multilingual check
+        if requirements.requires_multilingual && !self.supports_multilingual {
+            return Some(RejectionReason::MultilingualRequired);
+        }
+
+        None
     }
 }
 
@@ -527,6 +719,80 @@ impl ProviderRegistry {
     #[must_use]
     pub fn is_available(&self, provider: &str) -> bool {
         self.available_providers.contains(provider)
+    }
+
+    /// Selects the best model with detailed information about the selection process.
+    ///
+    /// Returns a `SelectionResult` containing:
+    /// - The selected model and its fitness breakdown
+    /// - All candidates that were considered (sorted by fitness)
+    /// - Models that were rejected and why
+    ///
+    /// # Errors
+    ///
+    /// Returns error if no model satisfies the requirements.
+    pub fn select_with_details(
+        &self,
+        requirements: &AgentRequirements,
+    ) -> Result<SelectionResult, LlmError> {
+        let mut candidates: Vec<(ModelMetadata, FitnessBreakdown)> = Vec::new();
+        let mut rejected: Vec<(ModelMetadata, RejectionReason)> = Vec::new();
+
+        // Process all models in the base selector
+        for model in &self.base_selector.models {
+            // Check provider availability first
+            if !self.available_providers.contains(&model.provider) {
+                rejected.push((model.clone(), RejectionReason::ProviderUnavailable));
+                continue;
+            }
+
+            // Use override if available
+            let metadata = self
+                .metadata_overrides
+                .get(&(model.provider.clone(), model.model.clone()))
+                .unwrap_or(model);
+
+            // Check if model satisfies requirements
+            if let Some(breakdown) = metadata.fitness_breakdown(requirements) {
+                candidates.push((metadata.clone(), breakdown));
+            } else if let Some(reason) = metadata.rejection_reason(requirements) {
+                rejected.push((metadata.clone(), reason));
+            }
+        }
+
+        if candidates.is_empty() {
+            let available = self
+                .available_providers
+                .iter()
+                .map(std::string::String::as_str)
+                .collect::<Vec<_>>()
+                .join(", ");
+            return Err(LlmError::provider(format!(
+                "No available model found satisfying requirements. Available providers: [{}]",
+                if available.is_empty() {
+                    "none (set API keys)".to_string()
+                } else {
+                    available
+                }
+            )));
+        }
+
+        // Sort by fitness score (descending)
+        candidates.sort_by(|a, b| {
+            b.1.total
+                .partial_cmp(&a.1.total)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+        // Extract the best
+        let (selected, fitness) = candidates[0].clone();
+
+        Ok(SelectionResult {
+            selected,
+            fitness,
+            candidates,
+            rejected,
+        })
     }
 }
 

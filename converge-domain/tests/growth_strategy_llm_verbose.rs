@@ -72,10 +72,10 @@ fn create_registry_with_logging() -> ProviderRegistry {
     registry
 }
 
-/// Shows which model was selected for given requirements.
+/// Shows which model was selected for given requirements with detailed breakdown.
 fn show_model_selection(agent_name: &str, requirements: &converge_core::model_selection::AgentRequirements) {
     let registry = ProviderRegistry::from_env();
-    
+
     eprintln!("\n🎯 Model Selection for {}:", agent_name);
     eprintln!("   Requirements:");
     eprintln!("     • Max Cost: {:?}", requirements.max_cost_class);
@@ -83,13 +83,46 @@ fn show_model_selection(agent_name: &str, requirements: &converge_core::model_se
     eprintln!("     • Requires Reasoning: {}", requirements.requires_reasoning);
     eprintln!("     • Requires Web Search: {}", requirements.requires_web_search);
     eprintln!("     • Min Quality: {:.2}", requirements.min_quality);
-    
-    match registry.select(requirements) {
-        Ok((provider, model)) => {
-            eprintln!("   ✅ Selected: {} / {}", provider, model);
-            
-            // Show why this was selected (if we can find the metadata)
-            eprintln!("   📊 Note: Model selected based on fitness score matching requirements");
+
+    match registry.select_with_details(requirements) {
+        Ok(result) => {
+            let s = &result.selected;
+            let f = &result.fitness;
+
+            eprintln!("   ✅ Selected: {} / {}", s.provider, s.model);
+            eprintln!("   📊 Fitness: {}", f);
+            eprintln!("      • Cost: {:?} (score: {:.2})", s.cost_class, f.cost_score);
+            eprintln!("      • Latency: {}ms (score: {:.2})", s.typical_latency_ms, f.latency_score);
+            eprintln!("      • Quality: {:.2} (score: {:.2})", s.quality, f.quality_score);
+
+            // Show other candidates considered
+            if result.candidates.len() > 1 {
+                eprintln!("   📋 Also considered ({} alternatives):", result.candidates.len() - 1);
+                for (model, breakdown) in result.candidates.iter().skip(1).take(3) {
+                    eprintln!("      • {}/{}: {:.3}", model.provider, model.model, breakdown.total);
+                }
+                if result.candidates.len() > 4 {
+                    eprintln!("      • ... and {} more", result.candidates.len() - 4);
+                }
+            }
+
+            // Show rejection summary
+            if !result.rejected.is_empty() {
+                let unavailable = result.rejected.iter()
+                    .filter(|(_, r)| matches!(r, converge_provider::RejectionReason::ProviderUnavailable))
+                    .count();
+                let requirements_mismatch = result.rejected.len() - unavailable;
+
+                if requirements_mismatch > 0 {
+                    eprintln!("   🚫 Rejected ({} models):", requirements_mismatch);
+                    for (model, reason) in result.rejected.iter()
+                        .filter(|(_, r)| !matches!(r, converge_provider::RejectionReason::ProviderUnavailable))
+                        .take(3)
+                    {
+                        eprintln!("      • {}/{}: {}", model.provider, model.model, reason);
+                    }
+                }
+            }
         }
         Err(e) => {
             eprintln!("   ❌ Selection Failed: {}", e);

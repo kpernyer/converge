@@ -121,7 +121,10 @@ pub use grok::GrokProvider;
 pub use kimi::KimiProvider;
 pub use minmax::MinMaxProvider;
 pub use mistral::MistralProvider;
-pub use model_selection::{ModelMetadata, ModelSelector, ProviderRegistry, is_provider_available};
+pub use model_selection::{
+    FitnessBreakdown, ModelMetadata, ModelSelector, ProviderRegistry, RejectionReason,
+    SelectionResult, is_provider_available,
+};
 pub use openai::OpenAiProvider;
 pub use openrouter::OpenRouterProvider;
 pub use perplexity::PerplexityProvider;
