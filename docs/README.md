@@ -64,7 +64,6 @@ Technology stack, deployment guides, and communication patterns.
 Concrete examples showing how Converge solves real problems.
 
 **Key Documents:**
-- `USE_CASE_TRACKER.md` — Implementation status
 - `CONVERGE_GROWTH_STRATEGY_USECASE.md` — Growth strategy example
 - `CONVERGE_MEETING_SCHEDULER_USECASE.md` — Meeting scheduler example
 - `CONVERGE_RESOURCE_ROUTING_USECASE.md` — Resource routing example

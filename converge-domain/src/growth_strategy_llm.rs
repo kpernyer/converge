@@ -50,25 +50,29 @@ pub fn setup_llm_growth_strategy(
     )?;
     engine.register(market_agent);
 
-    // Competitor Agent: Analysis of competitor landscape
+    // Competitor Agent: Analysis of competitor landscape (with web search for real-time data)
+    // Note: Depends on Signals (after MarketSignalAgent runs) to get market context
+    let mut competitor_reqs = requirements::analysis();
+    competitor_reqs.requires_web_search = true; // Enable web search for competitor intelligence
     let competitor_agent = create_llm_agent(
         "CompetitorAgent",
-        "You are a competitive intelligence analyst. Analyze competitor strategies and positioning.",
+        "You are a competitive intelligence analyst. Analyze competitor strategies and positioning. Use web search to find current information about competitors.",
         "Analyze competitors from: {context}",
-        ContextKey::Signals,
-        vec![ContextKey::Seeds],
-        requirements::analysis(),
+        ContextKey::Competitors,
+        vec![ContextKey::Signals], // Depends on Signals (validated market signals)
+        competitor_reqs,
         registry,
     )?;
     engine.register(competitor_agent);
 
     // Strategy Agent: Deep synthesis of strategies
+    // Depends on both Signals and Competitors for comprehensive strategy synthesis
     let strategy_agent = create_llm_agent(
         "StrategyAgent",
         "You are a strategic planner. Synthesize growth strategies from market signals and competitor analysis.",
         "Synthesize growth strategies from: {context}",
         ContextKey::Strategies,
-        vec![ContextKey::Signals],
+        vec![ContextKey::Signals, ContextKey::Competitors], // Needs both signals and competitor intel
         requirements::synthesis(),
         registry,
     )?;
@@ -166,6 +170,7 @@ pub fn setup_mock_llm_growth_strategy(engine: &mut Engine) -> Vec<Arc<MockProvid
 #[cfg(test)]
 mod tests {
     use super::*;
+    use converge_core::agents::SeedAgent;
     use converge_core::Context;
 
     #[test]

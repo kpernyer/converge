@@ -87,6 +87,7 @@ pub fn setup_mock_llm_strategic_sourcing(engine: &mut Engine) -> Vec<Arc<MockPro
 #[cfg(test)]
 mod tests {
     use super::*;
+    use converge_core::agents::SeedAgent;
     use converge_core::Context;
 
     #[test]

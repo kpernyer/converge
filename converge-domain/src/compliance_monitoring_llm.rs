@@ -55,6 +55,7 @@ pub fn setup_mock_llm_compliance_monitoring(engine: &mut Engine) -> Vec<Arc<Mock
 #[cfg(test)]
 mod tests {
     use super::*;
+    use converge_core::agents::SeedAgent;
     use converge_core::Context;
 
     #[test]

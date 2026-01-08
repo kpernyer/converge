@@ -154,6 +154,23 @@ Typed context schema for the Growth Strategy runtime.
 - Fact types
 - Monotonic evolution rules
 
+## Gherkin Validation Tests
+
+### [GHERKIN_VALIDATION_TESTS.md](./GHERKIN_VALIDATION_TESTS.md)
+Comprehensive documentation of Gherkin validation integration tests.
+
+**Shows:**
+- All 21 test cases with Gherkin code
+- LLM prompts (system and user) for each test
+- Request parameters (temperature, max_tokens)
+- Expected and actual LLM responses
+- Test objectives and validation results
+
+**Purpose**: These tests verify that the Gherkin validator provides early feedback to business developers before compiling bad Gherkin into the system. The validator uses Anthropic Claude to check:
+- Business sense (semantic validity)
+- Compilability to Rust invariants (technical feasibility)
+- Convention compliance (style adherence)
+
 ---
 
 ## Using These Documents
@@ -212,5 +229,5 @@ To create a new use-case:
 5. Write Gherkin invariants
 6. Ensure convergence criteria are clear and measurable
 
-See `../06-assistant-guides/cursor-use-case-owner-coder.md` for the use-case owner role.
+See `../assistant-guides/cursor-use-case-owner-coder.md` for the use-case owner role.
 

@@ -17,6 +17,7 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 tracing-test = "0.2"
+dotenv = "0.15"
 
 [lints]
 workspace = true
