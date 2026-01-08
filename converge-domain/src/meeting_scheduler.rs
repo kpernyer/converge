@@ -468,6 +468,12 @@ impl Invariant for RequireParticipantAvailability {
         let evaluations = ctx.get(ContextKey::Evaluations);
         let signals = ctx.get(ContextKey::Signals);
 
+        // Only check when pipeline has progressed to evaluations
+        // (availability is checked at that point)
+        if evaluations.is_empty() {
+            return InvariantResult::Ok;
+        }
+
         // Check if we have availability data
         let has_availability = signals.iter().any(|s| s.id.starts_with("availability:"));
 

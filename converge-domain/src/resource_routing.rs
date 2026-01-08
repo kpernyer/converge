@@ -627,6 +627,11 @@ impl Invariant for RequireValidDefinitions {
     fn check(&self, ctx: &Context) -> InvariantResult {
         let signals = ctx.get(ContextKey::Signals);
 
+        // Only check when signals exist (pipeline has started producing output)
+        if signals.is_empty() {
+            return InvariantResult::Ok;
+        }
+
         let task_count = signals.iter().filter(|s| s.id.starts_with("task:")).count();
         let resource_count = signals
             .iter()
