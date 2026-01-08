@@ -18,12 +18,9 @@
 //! Requires: ANTHROPIC_API_KEY, PERPLEXITY_API_KEY, OPENAI_API_KEY (or subset)
 
 use converge_core::agents::SeedAgent;
-use converge_core::model_selection::ModelSelectorTrait;
 use converge_core::validation::{ValidationAgent, ValidationConfig};
 use converge_core::{Budget, Context, ContextKey, Engine};
-use converge_domain::growth_strategy::{
-    BrandSafetyInvariant, RequireMultipleStrategies, RequireStrategyEvaluations,
-};
+use converge_domain::growth_strategy::BrandSafetyInvariant;
 use converge_domain::growth_strategy_llm::setup_llm_growth_strategy;
 use converge_domain::llm_utils::requirements;
 use converge_provider::ProviderRegistry;

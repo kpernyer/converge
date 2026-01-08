@@ -227,7 +227,6 @@ fn verbose_supply_chain_execution() {
     println!("│ PHASE 7: INVARIANT VERIFICATION (All Passed)                                 │");
     println!("└──────────────────────────────────────────────────────────────────────────────┘");
 
-    let strategies = result.context.get(ContextKey::Strategies);
     let evaluations = result.context.get(ContextKey::Evaluations);
 
     println!("\n  ✓ RequireCompleteAssessments: All assessments complete");

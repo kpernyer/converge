@@ -210,7 +210,6 @@ fn verbose_meeting_scheduler_execution() {
     println!("│ PHASE 7: INVARIANT VERIFICATION (All Passed)                                 │");
     println!("└──────────────────────────────────────────────────────────────────────────────┘");
 
-    let strategies = result.context.get(ContextKey::Strategies);
     let evaluations = result.context.get(ContextKey::Evaluations);
 
     println!("\n  ✓ RequirePositiveDuration: Duration > 0 validated");
