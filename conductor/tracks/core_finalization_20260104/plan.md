@@ -16,7 +16,7 @@
 - [x] Task: Verify that existing property tests in `converge-core` still pass and cover the core invariants. 7be1532
 - [x] Task: Conductor - User Manual Verification 'Convergence' (Protocol in workflow.md)
 
-## Phase 4: Finalizing (Documentation & Release Prep)
-- [ ] Task: Update `converge-core/README.md` (or lib.rs docs) to clearly define its scope and how to use it with the other crates.
-- [ ] Task: Run `cargo doc -p converge-core` to ensure public API documentation is generated and correct.
-- [ ] Task: Conductor - User Manual Verification 'Finalizing' (Protocol in workflow.md)
+## Phase 4: Finalizing (Documentation & Release Prep) [checkpoint: 6aad766]
+- [x] Task: Update `converge-core/README.md` (or lib.rs docs) to clearly define its scope and how to use it with the other crates. 44c3351
+- [x] Task: Run `cargo doc -p converge-core` to ensure public API documentation is generated and correct. 44c3351
+- [x] Task: Conductor - User Manual Verification 'Finalizing' (Protocol in workflow.md)
