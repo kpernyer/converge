@@ -22,3 +22,25 @@ output "service_account_email" {
   description = "The service account email for the runtime"
   value       = module.secrets.service_account_email
 }
+
+# Firestore outputs
+output "firestore_database" {
+  description = "The Firestore database name"
+  value       = module.firestore.database_name
+}
+
+output "firestore_location" {
+  description = "The Firestore location"
+  value       = module.firestore.location
+}
+
+# Service Directory outputs
+output "service_directory_namespace" {
+  description = "The Service Directory namespace"
+  value       = module.service_directory.namespace_name
+}
+
+output "grpc_target" {
+  description = "The gRPC target URI for service discovery"
+  value       = module.service_directory.grpc_target
+}

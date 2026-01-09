@@ -1,5 +1,5 @@
 # Converge Infrastructure
-# Artifact Registry + Cloud Run + Secret Manager
+# Artifact Registry + Cloud Run + Firestore + Service Directory + Secret Manager
 
 # Secrets for LLM API keys
 module "secrets" {
@@ -24,6 +24,31 @@ module "storage" {
   region     = var.region
 }
 
+# Firestore database for user management and runtime state
+module "firestore" {
+  source                = "./modules/firestore"
+  project_id            = var.project_id
+  location              = var.firestore_location
+  service_account_email = module.secrets.service_account_email
+  enable_pitr           = var.enable_firestore_pitr
+  delete_protection     = var.enable_firestore_delete_protection
+
+  depends_on = [module.secrets]
+}
+
+# Service Directory for gRPC service discovery
+module "service_directory" {
+  source                = "./modules/service_directory"
+  project_id            = var.project_id
+  region                = var.region
+  namespace             = var.service_directory_namespace
+  service_account_email = module.secrets.service_account_email
+  service_version       = var.image_tag
+  environment           = var.environment
+
+  depends_on = [module.secrets]
+}
+
 # Cloud Run service
 module "cloud_run" {
   source                = "./modules/cloud_run"
@@ -39,7 +64,7 @@ module "cloud_run" {
   min_instances         = var.min_instances
   max_instances         = var.max_instances
 
-  depends_on = [module.secrets, module.artifact_registry]
+  depends_on = [module.secrets, module.artifact_registry, module.firestore]
 }
 
 # API Gateway for routing and auth (optional)
