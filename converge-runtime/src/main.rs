@@ -26,6 +26,11 @@ mod handlers;
 mod http;
 mod tui;
 
+#[cfg(feature = "gcp")]
+mod db;
+#[cfg(feature = "gcp")]
+mod gcp;
+
 use anyhow::Result;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
