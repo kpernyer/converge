@@ -1,6 +1,8 @@
 # Converge
 ## A Semantic Engine for Intent-Driven Business Systems
 
+**Website:** [converge.zone](https://converge.zone) | **Docs:** [docs.rs](https://docs.rs/converge-core) | **Crates.io:** [converge-core](https://crates.io/crates/converge-core)
+
 Converge is an open-source **semantic convergence engine**.
 
 It enables systems to move from an initial *intent*

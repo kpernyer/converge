@@ -2,6 +2,8 @@
 
 Domain-specific agent implementations and reference architectures for the [Converge](https://crates.io/crates/converge-core) runtime.
 
+**Website:** [converge.zone](https://converge.zone) | **Docs:** [docs.rs](https://docs.rs/converge-domain)
+
 ## Use Cases
 
 ### Business Strategy

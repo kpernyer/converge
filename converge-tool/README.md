@@ -2,6 +2,8 @@
 
 Developer tools for the [Converge](https://crates.io/crates/converge-core) ecosystem.
 
+**Website:** [converge.zone](https://converge.zone) | **Docs:** [docs.rs](https://docs.rs/converge-tool)
+
 ## Gherkin Validation
 
 LLM-powered validation of Gherkin feature specifications.

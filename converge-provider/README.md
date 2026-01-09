@@ -2,6 +2,8 @@
 
 Multi-provider LLM abstraction layer for the [Converge](https://crates.io/crates/converge-core) runtime.
 
+**Website:** [converge.zone](https://converge.zone) | **Docs:** [docs.rs](https://docs.rs/converge-provider)
+
 ## Supported Providers
 
 | Provider | Models |

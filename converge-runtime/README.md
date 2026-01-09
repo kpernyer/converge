@@ -2,6 +2,8 @@
 
 HTTP, gRPC, and TUI server for the Converge Agent OS.
 
+**Website:** [converge.zone](https://converge.zone) | **Docs:** [docs.rs](https://docs.rs/converge-runtime)
+
 ## Features
 
 - **HTTP Server** (Axum) - Fully implemented
