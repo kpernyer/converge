@@ -9,7 +9,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT"
@@ -19,9 +19,9 @@ license = "MIT"
 # Both path (local dev) and version (crates.io) specified
 # Cargo uses path when in workspace, version when published
 converge-core = { path = "converge-core", version = "0.5" }
-converge-provider = { path = "converge-provider", version = "0.1" }
-converge-domain = { path = "converge-domain", version = "0.1" }
-converge-tool = { path = "converge-tool", version = "0.1" }
+converge-provider = { path = "converge-provider", version = "0.2" }
+converge-domain = { path = "converge-domain", version = "0.2" }
+converge-tool = { path = "converge-tool", version = "0.2" }
 
 # Shared dependencies
 thiserror = "2"
