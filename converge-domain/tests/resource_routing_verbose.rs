@@ -51,39 +51,39 @@ fn verbose_resource_routing_execution() {
         "tasks",
         "Delivery A, Delivery B, Delivery C",
     ));
-    println!("    [{}] SeedAgent 'tasks'", seed1_id);
+    println!("    [{seed1_id}] SeedAgent 'tasks'");
     println!("         → Dependencies: [] (runs first cycle)");
     println!("         → Emits: Seeds");
 
     let seed2_id = engine.register(SeedAgent::new("resources", "Vehicle 1, Vehicle 2"));
-    println!("    [{}] SeedAgent 'resources'", seed2_id);
+    println!("    [{seed2_id}] SeedAgent 'resources'");
     println!("         → Dependencies: [] (runs first cycle)");
     println!("         → Emits: Seeds");
 
     println!("\n  Registering Resource Routing Pipeline:");
 
     let task_id = engine.register(TaskRetrievalAgent);
-    println!("    [{}] TaskRetrievalAgent", task_id);
+    println!("    [{task_id}] TaskRetrievalAgent");
     println!("         → Dependencies: [Seeds]");
     println!("         → Emits: Signals (task definitions)");
 
     let resource_id = engine.register(ResourceRetrievalAgent);
-    println!("    [{}] ResourceRetrievalAgent", resource_id);
+    println!("    [{resource_id}] ResourceRetrievalAgent");
     println!("         → Dependencies: [Seeds]");
     println!("         → Emits: Signals (resource definitions)");
 
     let constraint_id = engine.register(ConstraintValidationAgent);
-    println!("    [{}] ConstraintValidationAgent", constraint_id);
+    println!("    [{constraint_id}] ConstraintValidationAgent");
     println!("         → Dependencies: [Signals]");
     println!("         → Emits: Constraints (capacity, time windows)");
 
     let solver_id = engine.register(SolverAgent);
-    println!("    [{}] SolverAgent", solver_id);
+    println!("    [{solver_id}] SolverAgent");
     println!("         → Dependencies: [Signals, Constraints]");
     println!("         → Emits: Strategies (candidate assignments)");
 
     let feasibility_id = engine.register(FeasibilityAgent);
-    println!("    [{}] FeasibilityAgent", feasibility_id);
+    println!("    [{feasibility_id}] FeasibilityAgent");
     println!("         → Dependencies: [Strategies]");
     println!("         → Emits: Evaluations (valid assignments ranked)");
 
@@ -98,19 +98,19 @@ fn verbose_resource_routing_execution() {
 
     println!("\n  Structural Invariants (checked after every merge):");
     let valid_id = engine.register_invariant(RequireValidDefinitions);
-    println!("    [{}] RequireValidDefinitions", valid_id);
+    println!("    [{valid_id}] RequireValidDefinitions");
     println!("         → Tasks and resources must be valid");
     println!("         → Violation = immediate failure");
 
     println!("\n  Semantic Invariants (checked at end of each cycle):");
     let capacity_id = engine.register_invariant(RequireCapacityRespected);
-    println!("    [{}] RequireCapacityRespected", capacity_id);
+    println!("    [{capacity_id}] RequireCapacityRespected");
     println!("         → Capacity constraints must be respected");
     println!("         → Violation = blocks convergence");
 
     println!("\n  Acceptance Invariants (checked before declaring convergence):");
     let assigned_id = engine.register_invariant(RequireAllTasksAssigned);
-    println!("    [{}] RequireAllTasksAssigned", assigned_id);
+    println!("    [{assigned_id}] RequireAllTasksAssigned");
     println!("         → All tasks must be assigned");
     println!("         → Violation = rejects result");
 

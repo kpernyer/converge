@@ -167,11 +167,10 @@ pub struct ChatCompletionResponse {
 #[must_use]
 pub fn parse_finish_reason(reason: Option<&str>) -> FinishReason {
     match reason {
-        Some("stop") => FinishReason::Stop,
         Some("length" | "max_tokens") => FinishReason::MaxTokens,
         Some("content_filter") => FinishReason::ContentFilter,
         Some("stop_sequence") => FinishReason::StopSequence,
-        _ => FinishReason::Stop,
+        _ => FinishReason::Stop, // "stop" or unknown
     }
 }
 
@@ -208,7 +207,7 @@ pub fn chat_response_to_llm_response(
 pub fn make_chat_completion_request(
     config: &HttpProviderConfig,
     endpoint: &str,
-    request: ChatCompletionRequest,
+    request: &ChatCompletionRequest,
 ) -> Result<LlmResponse, LlmError> {
     let url = format!("{}{}", config.base_url, endpoint);
 
@@ -294,9 +293,13 @@ pub trait OpenAiCompatibleProvider {
     /// Makes a completion request.
     ///
     /// Default implementation uses `make_chat_completion_request`.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the HTTP request fails or response cannot be parsed.
     fn complete_openai_compatible(&self, request: &LlmRequest) -> Result<LlmResponse, LlmError> {
         let chat_request =
             ChatCompletionRequest::from_llm_request(self.config().model.clone(), request);
-        make_chat_completion_request(self.config(), self.endpoint(), chat_request)
+        make_chat_completion_request(self.config(), self.endpoint(), &chat_request)
     }
 }

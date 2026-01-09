@@ -40,46 +40,28 @@ fn verbose_inventory_rebalancing_execution() {
     println!("└──────────────────────────────────────────────────────────────────────────────┘");
 
     let seed1_id = engine.register(SeedAgent::new("regions", "North, South, East, West"));
-    println!("\n  [{}] SeedAgent 'regions'", seed1_id);
+    println!("\n  [{seed1_id}] SeedAgent 'regions'");
 
     let sales_id = engine.register(SalesVelocityAgent);
-    println!(
-        "  [{}] SalesVelocityAgent → Signals (sales velocity)",
-        sales_id
-    );
+    println!("  [{sales_id}] SalesVelocityAgent → Signals (sales velocity)");
 
     let inv_id = engine.register(InventoryAgent);
-    println!("  [{}] InventoryAgent → Signals (stock levels)", inv_id);
+    println!("  [{inv_id}] InventoryAgent → Signals (stock levels)");
 
     let forecast_id = engine.register(ForecastAgent);
-    println!(
-        "  [{}] ForecastAgent → Signals (demand forecasts)",
-        forecast_id
-    );
+    println!("  [{forecast_id}] ForecastAgent → Signals (demand forecasts)");
 
     let transfer_id = engine.register(TransferOptimizationAgent);
-    println!(
-        "  [{}] TransferOptimizationAgent → Strategies (transfer plans)",
-        transfer_id
-    );
+    println!("  [{transfer_id}] TransferOptimizationAgent → Strategies (transfer plans)");
 
     let capacity_id = engine.register(CapacityConstraintAgent);
-    println!(
-        "  [{}] CapacityConstraintAgent → Constraints (capacity limits)",
-        capacity_id
-    );
+    println!("  [{capacity_id}] CapacityConstraintAgent → Constraints (capacity limits)");
 
     let financial_id = engine.register(FinancialImpactAgent);
-    println!(
-        "  [{}] FinancialImpactAgent → Strategies (cost analysis)",
-        financial_id
-    );
+    println!("  [{financial_id}] FinancialImpactAgent → Strategies (cost analysis)");
 
     let decision_id = engine.register(RebalanceDecisionAgent);
-    println!(
-        "  [{}] RebalanceDecisionAgent → Evaluations (ranked plans)",
-        decision_id
-    );
+    println!("  [{decision_id}] RebalanceDecisionAgent → Evaluations (ranked plans)");
 
     println!("\n  Total Agents: {}", engine.agent_count());
 

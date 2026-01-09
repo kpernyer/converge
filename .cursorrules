@@ -175,12 +175,47 @@ trait Agent {
 - Never decide termination
 - Never mutate context directly (only emit effects)
 - Declare context dependencies for efficient indexing
+- **Check idempotency via context** — look for existing contributions with agent's ID prefix
+- **LLM agents must check both `Proposals` and `target_key`** for idempotency
 
 **Agents MUST NOT:**
 - Use message passing
-- Maintain internal state across executions
+- Maintain internal state across executions (`has_run` flags, counters, caches)
 - Make decisions about convergence
 - Bypass the engine
+- Use `has_run` flags or other lifecycle state (violates "Context is the Only Shared State" axiom)
+
+**Idempotency Pattern (Canonical):**
+```rust
+fn accepts(&self, ctx: &Context) -> bool {
+    // Preconditions
+    if !ctx.has(ContextKey::Seeds) {
+        return false;
+    }
+
+    // Idempotency: check if we already contributed
+    let my_prefix = format!("{}-", self.name());
+    !ctx.get(self.output_key)
+        .iter()
+        .any(|f| f.id.starts_with(&my_prefix))
+}
+```
+
+**LLM Agent Idempotency (Special Case):**
+LLM agents emit to `Proposals` first, then ValidationAgent promotes to `target_key`. Must check both:
+```rust
+// Check Proposals (pending)
+let has_pending = ctx.get(ContextKey::Proposals)
+    .iter()
+    .any(|f| f.id.contains(&my_prefix));
+
+// Check target_key (validated)
+let has_validated = ctx.get(self.target_key)
+    .iter()
+    .any(|f| f.id.starts_with(&my_prefix));
+
+!has_pending && !has_validated
+```
 
 ---
 
@@ -515,8 +550,13 @@ When implementing the engine:
 - **Eligibility**: Implement dependency index with dirty-key tracking (incremental, not rebuild)
 - **Fact types**: Use separate `ProposedFact` and `Fact` types (NOT enum variants) with explicit `TryFrom`
 - **Convergence**: Use dirty-key tracking (empty dirty_keys = converged), NOT hashing or deep comparison
+- **Idempotency**: Agents must check context for existing contributions, NOT use internal state (`has_run` flags)
+- **LLM Agent Idempotency**: Must check both `ContextKey::Proposals` (pending) and `target_key` (validated) for existing contributions
 
 **Core principle**: Conservative — correctness over cleverness. Favor clarity over optimization.
+
+**Known Issues:**
+- `LlmAgent.accepts()` currently only checks `target_key` for idempotency, not `Proposals`. This can cause agents to miss execution opportunities in multi-step pipelines. See `docs/use-cases/GROWTH_STRATEGY_FLOW_ANALYSIS.md` for details and fix.
 
 When in doubt, refer to the architecture documents and prioritize **correctness over convenience**.
 

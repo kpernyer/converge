@@ -116,6 +116,7 @@ struct QwenChoiceMessage {
 }
 
 #[derive(Deserialize)]
+#[allow(clippy::struct_field_names)] // Fields match Qwen API JSON
 struct QwenUsage {
     input_tokens: u32,
     output_tokens: u32,
@@ -210,9 +211,8 @@ impl LlmProvider for QwenProvider {
             .first()
             .and_then(|c| c.finish_reason.as_deref())
         {
-            Some("stop") => FinishReason::Stop,
             Some("length") => FinishReason::MaxTokens,
-            _ => FinishReason::Stop,
+            _ => FinishReason::Stop, // "stop" or unknown
         };
 
         Ok(LlmResponse {

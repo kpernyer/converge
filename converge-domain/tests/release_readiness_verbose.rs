@@ -49,46 +49,46 @@ fn verbose_release_readiness_execution() {
     println!("\n  Registering Seed Agents (provide initial context):");
 
     let seed1_id = engine.register(SeedAgent::new("release:v1.2.0", "Release candidate v1.2.0"));
-    println!("    [{}] SeedAgent 'release:v1.2.0'", seed1_id);
+    println!("    [{seed1_id}] SeedAgent 'release:v1.2.0'");
     println!("         → Dependencies: [] (runs first cycle)");
     println!("         → Emits: Seeds");
 
     println!("\n  Registering Parallel Quality Gate Agents:");
 
     let dep_id = engine.register(DependencyGraphAgent);
-    println!("    [{}] DependencyGraphAgent", dep_id);
+    println!("    [{dep_id}] DependencyGraphAgent");
     println!("         → Dependencies: [Seeds]");
     println!("         → Emits: Signals (dependency analysis)");
 
     let coverage_id = engine.register(TestCoverageAgent);
-    println!("    [{}] TestCoverageAgent", coverage_id);
+    println!("    [{coverage_id}] TestCoverageAgent");
     println!("         → Dependencies: [Seeds]");
     println!("         → Emits: Signals (coverage metrics)");
 
     let security_id = engine.register(SecurityScanAgent);
-    println!("    [{}] SecurityScanAgent", security_id);
+    println!("    [{security_id}] SecurityScanAgent");
     println!("         → Dependencies: [Seeds]");
     println!("         → Emits: Signals (vulnerability reports)");
 
     let perf_id = engine.register(PerformanceRegressionAgent);
-    println!("    [{}] PerformanceRegressionAgent", perf_id);
+    println!("    [{perf_id}] PerformanceRegressionAgent");
     println!("         → Dependencies: [Seeds]");
     println!("         → Emits: Signals (performance metrics)");
 
     let docs_id = engine.register(DocumentationAgent);
-    println!("    [{}] DocumentationAgent", docs_id);
+    println!("    [{docs_id}] DocumentationAgent");
     println!("         → Dependencies: [Seeds]");
     println!("         → Emits: Signals (docs status)");
 
     println!("\n  Registering Consolidation & Decision Agents:");
 
     let risk_id = engine.register(RiskSummaryAgent);
-    println!("    [{}] RiskSummaryAgent", risk_id);
+    println!("    [{risk_id}] RiskSummaryAgent");
     println!("         → Dependencies: [Signals] (waits for all checks)");
     println!("         → Emits: Strategies (risk assessments)");
 
     let release_id = engine.register(ReleaseReadyAgent);
-    println!("    [{}] ReleaseReadyAgent", release_id);
+    println!("    [{release_id}] ReleaseReadyAgent");
     println!("         → Dependencies: [Strategies]");
     println!("         → Emits: Evaluations (go/no-go decision)");
 
@@ -103,19 +103,19 @@ fn verbose_release_readiness_execution() {
 
     println!("\n  Structural Invariants (checked after every merge):");
     let vuln_id = engine.register_invariant(RequireNoCriticalVulnerabilities);
-    println!("    [{}] RequireNoCriticalVulnerabilities", vuln_id);
+    println!("    [{vuln_id}] RequireNoCriticalVulnerabilities");
     println!("         → No critical vulnerabilities allowed");
     println!("         → Violation = immediate failure");
 
     println!("\n  Semantic Invariants (checked at end of each cycle):");
     let coverage_inv_id = engine.register_invariant(RequireMinimumCoverage);
-    println!("    [{}] RequireMinimumCoverage", coverage_inv_id);
+    println!("    [{coverage_inv_id}] RequireMinimumCoverage");
     println!("         → Minimum coverage threshold must be met");
     println!("         → Violation = blocks convergence");
 
     println!("\n  Acceptance Invariants (checked before declaring convergence):");
     let complete_id = engine.register_invariant(RequireAllChecksComplete);
-    println!("    [{}] RequireAllChecksComplete", complete_id);
+    println!("    [{complete_id}] RequireAllChecksComplete");
     println!("         → All quality gate checks must be complete");
     println!("         → Violation = rejects result");
 

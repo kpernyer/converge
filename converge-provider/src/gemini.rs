@@ -112,6 +112,7 @@ struct GeminiCandidatePart {
 }
 
 #[derive(Deserialize)]
+#[allow(clippy::struct_field_names)] // Fields match Gemini API JSON
 struct GeminiUsageMetadata {
     prompt_token_count: u32,
     candidates_token_count: u32,
@@ -211,18 +212,18 @@ impl LlmProvider for GeminiProvider {
             _ => FinishReason::Stop,
         };
 
-        let usage = api_response
-            .usage_metadata
-            .map(|u| TokenUsage {
-                prompt_tokens: u.prompt_token_count,
-                completion_tokens: u.candidates_token_count,
-                total_tokens: u.total_token_count,
-            })
-            .unwrap_or_else(|| TokenUsage {
+        let usage = api_response.usage_metadata.map_or_else(
+            || TokenUsage {
                 prompt_tokens: 0,
                 completion_tokens: 0,
                 total_tokens: 0,
-            });
+            },
+            |u| TokenUsage {
+                prompt_tokens: u.prompt_token_count,
+                completion_tokens: u.candidates_token_count,
+                total_tokens: u.total_token_count,
+            },
+        );
 
         Ok(LlmResponse {
             content,

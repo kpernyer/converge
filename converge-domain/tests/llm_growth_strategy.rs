@@ -8,7 +8,7 @@
 //! This test demonstrates a realistic scenario where:
 //! 1. Human provides initial seeds (trusted)
 //! 2. LLM agents propose hypotheses and signals (untrusted)
-//! 3. ValidationAgent filters LLM outputs
+//! 3. `ValidationAgent` filters LLM outputs
 //! 4. Growth strategy agents use validated facts
 //! 5. Final strategies are evaluated and ranked
 //!
@@ -33,7 +33,7 @@ use converge_domain::growth_strategy::{
 struct LlmSignalAgent;
 
 impl Agent for LlmSignalAgent {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "LlmSignalAgent"
     }
 
@@ -114,7 +114,7 @@ impl Agent for LlmSignalAgent {
 struct LlmHypothesisAgent;
 
 impl Agent for LlmHypothesisAgent {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "LlmHypothesisAgent"
     }
 
@@ -165,7 +165,7 @@ impl Agent for LlmHypothesisAgent {
             id: "llm-hyp-anonymous".into(),
             content: "We should pivot to crypto".into(),
             confidence: 0.60,
-            provenance: "".into(), // Bug: missing provenance
+            provenance: String::new(), // Bug: missing provenance
         }));
 
         AgentEffect::with_facts(facts)
@@ -181,7 +181,7 @@ impl Agent for LlmHypothesisAgent {
 struct SignalToCompetitorAgent;
 
 impl Agent for SignalToCompetitorAgent {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "SignalToCompetitorAgent"
     }
 
@@ -252,22 +252,19 @@ fn llm_powered_growth_strategy_verbose() {
     // Human-provided seeds (trusted)
     println!("\n  TRUSTED AGENTS (Human Input):");
     let s1 = engine.register(SeedAgent::new("market:nordic-b2b", "Nordic B2B market"));
-    println!("    [{}] SeedAgent: market:nordic-b2b", s1);
+    println!("    [{s1}] SeedAgent: market:nordic-b2b");
     let s2 = engine.register(SeedAgent::new(
         "product:saas-platform",
         "Enterprise SaaS Platform",
     ));
-    println!("    [{}] SeedAgent: product:saas-platform", s2);
+    println!("    [{s2}] SeedAgent: product:saas-platform");
 
     // LLM agents (untrusted - outputs go to Proposals)
     println!("\n  UNTRUSTED AGENTS (LLM Output → Proposals):");
     let llm1 = engine.register(LlmSignalAgent);
-    println!("    [{}] LlmSignalAgent: Proposes market signals", llm1);
+    println!("    [{llm1}] LlmSignalAgent: Proposes market signals");
     let llm2 = engine.register(LlmHypothesisAgent);
-    println!(
-        "    [{}] LlmHypothesisAgent: Proposes strategic hypotheses",
-        llm2
-    );
+    println!("    [{llm2}] LlmHypothesisAgent: Proposes strategic hypotheses");
 
     // Validation gateway
     println!("\n  VALIDATION GATEWAY:");
@@ -278,7 +275,7 @@ fn llm_powered_growth_strategy_verbose() {
         require_provenance: true,
     };
     let val = engine.register(ValidationAgent::new(val_config));
-    println!("    [{}] ValidationAgent", val);
+    println!("    [{val}] ValidationAgent");
     println!("         → min_confidence: 0.6");
     println!("         → forbidden: [guaranteed, definitely, 100%]");
     println!("         → require_provenance: true");
@@ -286,14 +283,11 @@ fn llm_powered_growth_strategy_verbose() {
     // Strategy pipeline (operates on validated facts)
     println!("\n  STRATEGY PIPELINE (Uses Validated Facts Only):");
     let comp = engine.register(SignalToCompetitorAgent);
-    println!(
-        "    [{}] SignalToCompetitorAgent: Signals → Competitors",
-        comp
-    );
+    println!("    [{comp}] SignalToCompetitorAgent: Signals → Competitors");
     let strat = engine.register(StrategyAgent);
-    println!("    [{}] StrategyAgent: Competitors → Strategies", strat);
+    println!("    [{strat}] StrategyAgent: Competitors → Strategies");
     let eval = engine.register(EvaluationAgent);
-    println!("    [{}] EvaluationAgent: Strategies → Evaluations", eval);
+    println!("    [{eval}] EvaluationAgent: Strategies → Evaluations");
 
     // Invariants
     println!("\n  INVARIANTS:");
@@ -357,7 +351,7 @@ fn llm_powered_growth_strategy_verbose() {
     println!("  ───────────────────────────────────────────────────────────────────────────");
     for p in proposals {
         let short_id = p.id.strip_prefix("proposal:").unwrap_or(&p.id);
-        println!("    • {}", short_id);
+        println!("    • {short_id}");
     }
 
     println!("\n  Validation Results:");
@@ -384,8 +378,8 @@ fn llm_powered_growth_strategy_verbose() {
     for r in &rejections {
         let reason = r.content.split("rejected: ").nth(1).unwrap_or(&r.content);
         let id = r.id.strip_prefix("validation:rejected:").unwrap_or(&r.id);
-        println!("    ✗ [{}]", id);
-        println!("      Reason: {}", reason);
+        println!("    ✗ [{id}]");
+        println!("      Reason: {reason}");
         println!();
     }
 

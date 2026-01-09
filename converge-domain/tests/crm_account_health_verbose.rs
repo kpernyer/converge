@@ -39,43 +39,25 @@ fn verbose_crm_account_health_execution() {
     println!("└──────────────────────────────────────────────────────────────────────────────┘");
 
     let seed1_id = engine.register(SeedAgent::new("account", "Account123"));
-    println!("\n  [{}] SeedAgent 'account'", seed1_id);
+    println!("\n  [{seed1_id}] SeedAgent 'account'");
 
     let usage_id = engine.register(UsageSignalAgent);
-    println!(
-        "  [{}] UsageSignalAgent → Signals (usage metrics)",
-        usage_id
-    );
+    println!("  [{usage_id}] UsageSignalAgent → Signals (usage metrics)");
 
     let support_id = engine.register(SupportTicketAgent);
-    println!(
-        "  [{}] SupportTicketAgent → Signals (support activity)",
-        support_id
-    );
+    println!("  [{support_id}] SupportTicketAgent → Signals (support activity)");
 
     let revenue_id = engine.register(RevenueTrendAgent);
-    println!(
-        "  [{}] RevenueTrendAgent → Signals (revenue trends)",
-        revenue_id
-    );
+    println!("  [{revenue_id}] RevenueTrendAgent → Signals (revenue trends)");
 
     let churn_id = engine.register(ChurnRiskAgent);
-    println!(
-        "  [{}] ChurnRiskAgent → Strategies (risk assessments)",
-        churn_id
-    );
+    println!("  [{churn_id}] ChurnRiskAgent → Strategies (risk assessments)");
 
     let upsell_id = engine.register(UpsellOpportunityAgent);
-    println!(
-        "  [{}] UpsellOpportunityAgent → Strategies (opportunities)",
-        upsell_id
-    );
+    println!("  [{upsell_id}] UpsellOpportunityAgent → Strategies (opportunities)");
 
     let action_id = engine.register(ActionPrioritizationAgent);
-    println!(
-        "  [{}] ActionPrioritizationAgent → Evaluations (ranked actions)",
-        action_id
-    );
+    println!("  [{action_id}] ActionPrioritizationAgent → Evaluations (ranked actions)");
 
     println!("\n  Total Agents: {}", engine.agent_count());
 

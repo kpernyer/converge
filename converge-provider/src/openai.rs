@@ -102,6 +102,7 @@ struct ChoiceMessage {
 }
 
 #[derive(Deserialize)]
+#[allow(clippy::struct_field_names)] // Fields match OpenAI API JSON
 struct OpenAiUsage {
     prompt_tokens: u32,
     completion_tokens: u32,

@@ -54,9 +54,5 @@ http = []
 grpc = ["tonic", "prost"]
 tui = ["ratatui", "crossterm"]
 
-[lints.rust]
-unsafe_code = "forbid"
-
-[lints.clippy]
-all = "warn"
-pedantic = "warn"
+[lints]
+workspace = true

@@ -87,6 +87,7 @@ impl BaiduProvider {
         );
 
         #[derive(Deserialize)]
+        #[allow(clippy::items_after_statements)] // Local struct for response parsing
         struct TokenResponse {
             access_token: String,
         }

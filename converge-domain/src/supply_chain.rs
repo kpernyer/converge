@@ -770,7 +770,7 @@ mod tests {
 
         let result = engine.run(Context::new());
 
-        assert!(result.is_ok(), "Engine run failed: {:?}", result);
+        assert!(result.is_ok(), "Engine run failed: {result:?}");
         let result = result.unwrap();
         assert!(result.converged);
     }

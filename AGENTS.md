@@ -96,6 +96,8 @@ pub trait Agent: Send + Sync {
 - `execute()` is **read-only** — cannot mutate context directly
 - Agents **never call other agents** — only read context and emit effects
 - Effects are merged by the engine in deterministic order
+- **Idempotency must be context-based** — check for existing contributions in context, not internal state
+- **LLM agents must check both `Proposals` and `target_key`** for idempotency (see LLM Integration Pattern below)
 
 ### Context Keys
 
@@ -156,6 +158,49 @@ let agent = create_llm_agent(
     &registry,
 )?;
 ```
+
+**Critical: LlmAgent Idempotency Pattern**
+
+`LlmAgent` uses context-based idempotency following the canonical pattern from `ENGINE_EXECUTION_MODEL.md`. However, **LLM agents emit to `Proposals` first**, so the idempotency check must check **both** places:
+
+```rust
+fn accepts(&self, ctx: &Context) -> bool {
+    // Precondition: at least one input dependency has data
+    let has_input = self.config.dependencies.iter().any(|k| ctx.has(*k));
+    if !has_input {
+        return false;
+    }
+
+    // Idempotency: check if we've already contributed
+    let my_prefix = format!("{}-", self.name);
+    
+    // Check Proposals (pending contributions before validation)
+    let has_pending_proposal = ctx
+        .get(ContextKey::Proposals)
+        .iter()
+        .any(|f| {
+            // Proposal IDs are: "proposal:{target_key}:{agent_name}-{uuid}"
+            f.id.contains(&my_prefix)
+        });
+    
+    // Check target_key (validated contributions after validation)
+    let has_validated_fact = ctx
+        .get(self.config.target_key)
+        .iter()
+        .any(|f| f.id.starts_with(&my_prefix));
+
+    // Run if we haven't contributed (no pending proposal AND no validated fact)
+    !has_pending_proposal && !has_validated_fact
+}
+```
+
+**Why both checks are needed:**
+- Agent emits to `Proposals` (encoded as `proposal:{target_key}:{agent_name}-{uuid}`)
+- ValidationAgent promotes to `target_key` (with ID `{agent_name}-{uuid}`)
+- Agent must check both to avoid duplicate execution
+- This ensures idempotency throughout the proposal → validation → fact pipeline
+
+**Known Issue**: Current implementation only checks `target_key`. This can cause agents to miss execution opportunities in multi-step pipelines. See `docs/use-cases/GROWTH_STRATEGY_FLOW_ANALYSIS.md` for details.
 
 ---
 
@@ -371,6 +416,13 @@ let agent = create_llm_agent(
 )?;
 ```
 
+**Important Notes:**
+- LLM agents automatically select appropriate models based on requirements
+- Agents emit proposals to `ContextKey::Proposals` (not directly to target key)
+- Requires `ValidationAgent` to promote proposals to facts
+- Uses context-based idempotency (must check both `Proposals` and `target_key`)
+- See "LLM Integration Pattern" section above for idempotency details
+
 ### Creating an Invariant
 
 ```rust
@@ -420,8 +472,17 @@ impl Invariant for RequireValidStrategy {
 - ❌ Use `unwrap()` or `expect()` in production code
 - ❌ Mix async runtimes (only Tokio allowed)
 - ❌ Store secrets in code or `.env` files
+- ❌ Use `has_run` flags or internal state for idempotency (violates "Context is the Only Shared State" axiom)
 
 These violate semantic guarantees by introducing implicit control flow or hidden state.
+
+### Known Issues
+
+**LlmAgent Idempotency Check Bug** (converge-core):
+- Current implementation only checks `target_key` for idempotency
+- Should check both `ContextKey::Proposals` (pending) and `target_key` (validated)
+- Impact: Causes cascading failures in multi-step LLM pipelines
+- See `docs/use-cases/GROWTH_STRATEGY_FLOW_ANALYSIS.md` for details and fix
 
 ### converge-core is PRIVATE
 

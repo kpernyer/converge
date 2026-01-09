@@ -49,7 +49,7 @@ fn verbose_supply_chain_execution() {
     println!("\n  Registering Seed Agents (provide initial context):");
 
     let seed1_id = engine.register(SeedAgent::new("orders", "Order A, Order B, Order C"));
-    println!("    [{}] SeedAgent 'orders'", seed1_id);
+    println!("    [{seed1_id}] SeedAgent 'orders'");
     println!("         → Dependencies: [] (runs first cycle)");
     println!("         → Emits: Seeds");
 
@@ -57,53 +57,53 @@ fn verbose_supply_chain_execution() {
         "supplier:delay",
         "Supplier X delayed 3 days",
     ));
-    println!("    [{}] SeedAgent 'supplier:delay'", seed2_id);
+    println!("    [{seed2_id}] SeedAgent 'supplier:delay'");
     println!("         → Dependencies: [] (runs first cycle)");
     println!("         → Emits: Seeds");
 
     println!("\n  Registering Data Collection Agents (Parallel Track 1):");
 
     let demand_id = engine.register(DemandSnapshotAgent);
-    println!("    [{}] DemandSnapshotAgent", demand_id);
+    println!("    [{demand_id}] DemandSnapshotAgent");
     println!("         → Dependencies: [Seeds]");
     println!("         → Emits: Signals (order requirements)");
 
     let inventory_id = engine.register(InventoryStateAgent);
-    println!("    [{}] InventoryStateAgent", inventory_id);
+    println!("    [{inventory_id}] InventoryStateAgent");
     println!("         → Dependencies: [Seeds]");
     println!("         → Emits: Signals (stock levels)");
 
     let supplier_id = engine.register(SupplierStatusAgent);
-    println!("    [{}] SupplierStatusAgent", supplier_id);
+    println!("    [{supplier_id}] SupplierStatusAgent");
     println!("         → Dependencies: [Seeds]");
     println!("         → Emits: Signals (supplier availability)");
 
     println!("\n  Registering Optimization Agents (Parallel Track 2):");
 
     let route_id = engine.register(RouteGenerationAgent);
-    println!("    [{}] RouteGenerationAgent", route_id);
+    println!("    [{route_id}] RouteGenerationAgent");
     println!("         → Dependencies: [Signals]");
     println!("         → Emits: Strategies (alternative routes)");
 
     let cost_id = engine.register(CostEstimationAgent);
-    println!("    [{}] CostEstimationAgent", cost_id);
+    println!("    [{cost_id}] CostEstimationAgent");
     println!("         → Dependencies: [Signals]");
     println!("         → Emits: Strategies (cost analysis)");
 
     let risk_id = engine.register(RiskAssessmentAgent);
-    println!("    [{}] RiskAssessmentAgent", risk_id);
+    println!("    [{risk_id}] RiskAssessmentAgent");
     println!("         → Dependencies: [Signals]");
     println!("         → Emits: Strategies (risk scores)");
 
     let sla_id = engine.register(SLAValidationAgent);
-    println!("    [{}] SLAValidationAgent", sla_id);
+    println!("    [{sla_id}] SLAValidationAgent");
     println!("         → Dependencies: [Signals]");
     println!("         → Emits: Constraints (SLA requirements)");
 
     println!("\n  Registering Consolidation Agent:");
 
     let consolidation_id = engine.register(ConsolidationAgent);
-    println!("    [{}] ConsolidationAgent", consolidation_id);
+    println!("    [{consolidation_id}] ConsolidationAgent");
     println!("         → Dependencies: [Strategies, Constraints]");
     println!("         → Emits: Evaluations (feasible plans ranked)");
 
@@ -118,19 +118,19 @@ fn verbose_supply_chain_execution() {
 
     println!("\n  Structural Invariants (checked after every merge):");
     let complete_id = engine.register_invariant(RequireCompleteAssessments);
-    println!("    [{}] RequireCompleteAssessments", complete_id);
+    println!("    [{complete_id}] RequireCompleteAssessments");
     println!("         → All required assessments must be complete");
     println!("         → Violation = immediate failure");
 
     println!("\n  Semantic Invariants (checked at end of each cycle):");
     let sla_inv_id = engine.register_invariant(RequireSLACompliance);
-    println!("    [{}] RequireSLACompliance", sla_inv_id);
+    println!("    [{sla_inv_id}] RequireSLACompliance");
     println!("         → Plans must satisfy SLA requirements");
     println!("         → Violation = blocks convergence");
 
     println!("\n  Acceptance Invariants (checked before declaring convergence):");
     let feasible_id = engine.register_invariant(RequireFeasiblePlan);
-    println!("    [{}] RequireFeasiblePlan", feasible_id);
+    println!("    [{feasible_id}] RequireFeasiblePlan");
     println!("         → At least one feasible plan must exist");
     println!("         → Violation = rejects result");
 

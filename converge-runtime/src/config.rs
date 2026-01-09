@@ -68,19 +68,13 @@ impl Default for GrpcConfig {
 
 /// TUI configuration (prepared, not implemented).
 #[cfg(feature = "tui")]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct TuiConfig {
     /// Enable TUI mode.
     pub enabled: bool,
 }
 
 #[cfg(feature = "tui")]
-impl Default for TuiConfig {
-    fn default() -> Self {
-        Self { enabled: false }
-    }
-}
-
 impl Config {
     /// Load configuration from environment and files.
     pub fn load() -> anyhow::Result<Self> {

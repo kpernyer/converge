@@ -49,44 +49,44 @@ fn verbose_meeting_scheduler_execution() {
     println!("\n  Registering Seed Agents (provide initial context):");
 
     let seed1_id = engine.register(SeedAgent::new("participants", "Alice, Bob, Carol"));
-    println!("    [{}] SeedAgent 'participants'", seed1_id);
+    println!("    [{seed1_id}] SeedAgent 'participants'");
     println!("         → Dependencies: [] (runs first cycle)");
     println!("         → Emits: Seeds");
 
     let seed2_id = engine.register(SeedAgent::new("duration", "60"));
-    println!("    [{}] SeedAgent 'duration'", seed2_id);
+    println!("    [{seed2_id}] SeedAgent 'duration'");
     println!("         → Dependencies: [] (runs first cycle)");
     println!("         → Emits: Seeds");
 
     let seed3_id = engine.register(SeedAgent::new("window", "next week"));
-    println!("    [{}] SeedAgent 'window'", seed3_id);
+    println!("    [{seed3_id}] SeedAgent 'window'");
     println!("         → Dependencies: [] (runs first cycle)");
     println!("         → Emits: Seeds");
 
     println!("\n  Registering Meeting Scheduler Pipeline:");
 
     let avail_id = engine.register(AvailabilityRetrievalAgent);
-    println!("    [{}] AvailabilityRetrievalAgent", avail_id);
+    println!("    [{avail_id}] AvailabilityRetrievalAgent");
     println!("         → Dependencies: [Seeds]");
     println!("         → Emits: Signals (availability data)");
 
     let tz_id = engine.register(TimeZoneNormalizationAgent);
-    println!("    [{}] TimeZoneNormalizationAgent", tz_id);
+    println!("    [{tz_id}] TimeZoneNormalizationAgent");
     println!("         → Dependencies: [Signals]");
     println!("         → Emits: Signals (normalized times)");
 
     let hours_id = engine.register(WorkingHoursConstraintAgent);
-    println!("    [{}] WorkingHoursConstraintAgent", hours_id);
+    println!("    [{hours_id}] WorkingHoursConstraintAgent");
     println!("         → Dependencies: [Signals]");
     println!("         → Emits: Constraints (working hours)");
 
     let slot_id = engine.register(SlotOptimizationAgent);
-    println!("    [{}] SlotOptimizationAgent", slot_id);
+    println!("    [{slot_id}] SlotOptimizationAgent");
     println!("         → Dependencies: [Signals, Constraints]");
     println!("         → Emits: Strategies (candidate slots)");
 
     let conflict_id = engine.register(ConflictDetectionAgent);
-    println!("    [{}] ConflictDetectionAgent", conflict_id);
+    println!("    [{conflict_id}] ConflictDetectionAgent");
     println!("         → Dependencies: [Strategies]");
     println!("         → Emits: Evaluations (valid slots ranked)");
 
@@ -101,19 +101,19 @@ fn verbose_meeting_scheduler_execution() {
 
     println!("\n  Structural Invariants (checked after every merge):");
     let duration_id = engine.register_invariant(RequirePositiveDuration);
-    println!("    [{}] RequirePositiveDuration", duration_id);
+    println!("    [{duration_id}] RequirePositiveDuration");
     println!("         → Duration must be > 0");
     println!("         → Violation = immediate failure");
 
     println!("\n  Semantic Invariants (checked at end of each cycle):");
     let avail_inv_id = engine.register_invariant(RequireParticipantAvailability);
-    println!("    [{}] RequireParticipantAvailability", avail_inv_id);
+    println!("    [{avail_inv_id}] RequireParticipantAvailability");
     println!("         → All participants must be available");
     println!("         → Violation = blocks convergence");
 
     println!("\n  Acceptance Invariants (checked before declaring convergence):");
     let slot_inv_id = engine.register_invariant(RequireValidSlot);
-    println!("    [{}] RequireValidSlot", slot_inv_id);
+    println!("    [{slot_inv_id}] RequireValidSlot");
     println!("         → At least one valid slot must exist");
     println!("         → Violation = rejects result");
 

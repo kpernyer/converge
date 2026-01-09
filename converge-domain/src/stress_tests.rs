@@ -18,22 +18,18 @@ use converge_core::{Context, Engine};
 
 // Import all use case agents and invariants from lib.rs exports
 use crate::{
-    ActionPrioritizationAgent,
     AttributeNormalizationAgent,
     // Meeting Scheduler
     AvailabilityRetrievalAgent,
     CapacityConstraintAgent,
-    CategoryInferenceAgent,
     ChurnRiskAgent,
     CompetitorAgent,
     ComplianceAgent,
     ConflictDetectionAgent,
-    ConstraintValidationAgent,
     DeduplicationAgent,
     ESGScoringAgent,
     EvaluationAgent,
     EvidenceCollectorAgent,
-    FeasibilityAgent,
     // Catalog Enrichment
     FeedIngestionAgent,
     FinancialImpactAgent,
@@ -52,23 +48,18 @@ use crate::{
     RequireBudgetCompliance,
     RequireCompleteForecasts,
     RequireSafetyStock,
-    ResourceRetrievalAgent,
     RevenueTrendAgent,
     RiskModelAgent,
     // Inventory Rebalancing
     SalesVelocityAgent,
     SlotOptimizationAgent,
-    SolverAgent,
     SourcingStrategyAgent,
     StrategyAgent,
     // Strategic Sourcing
     SupplierDiscoveryAgent,
     SupportTicketAgent,
-    // Resource Routing
-    TaskRetrievalAgent,
     TimeZoneNormalizationAgent,
     TransferOptimizationAgent,
-    UpsellOpportunityAgent,
     // CRM Account Health
     UsageSignalAgent,
     VendorRankingAgent,
@@ -196,8 +187,8 @@ mod tests {
             Err(e) => {
                 // Invariant violation is acceptable if properly reported
                 assert!(
-                    format!("{:?}", e).contains("invariant")
-                        || format!("{:?}", e).contains("violation")
+                    format!("{e:?}").contains("invariant")
+                        || format!("{e:?}").contains("violation")
                 );
             }
         }
@@ -355,11 +346,10 @@ mod tests {
         let result = engine.run(Context::new());
 
         // Should either converge or fail gracefully
-        match result {
-            Ok(r) => assert!(r.converged || !r.converged),
-            Err(_) => {
-                // Graceful failure is acceptable
-            }
+        if let Ok(r) = result {
+            assert!(r.converged || !r.converged)
+        } else {
+            // Graceful failure is acceptable
         }
     }
 

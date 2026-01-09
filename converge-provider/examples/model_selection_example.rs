@@ -18,42 +18,42 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 1: Fast, cheap agent (many instances)
     println!("=== Fast, Cheap Agent ===");
     let fast_reqs = AgentRequirements::fast_cheap();
-    println!("Requirements: {:?}", fast_reqs);
+    println!("Requirements: {fast_reqs:?}");
 
     match selector.select(&fast_reqs) {
         Ok((provider, model)) => {
-            println!("Selected: {} / {}", provider, model);
+            println!("Selected: {provider} / {model}");
         }
         Err(e) => {
-            println!("Error: {}", e);
+            println!("Error: {e}");
         }
     }
 
     // Example 2: Deep research agent
     println!("\n=== Deep Research Agent ===");
     let research_reqs = AgentRequirements::deep_research();
-    println!("Requirements: {:?}", research_reqs);
+    println!("Requirements: {research_reqs:?}");
 
     match selector.select(&research_reqs) {
         Ok((provider, model)) => {
-            println!("Selected: {} / {}", provider, model);
+            println!("Selected: {provider} / {model}");
         }
         Err(e) => {
-            println!("Error: {}", e);
+            println!("Error: {e}");
         }
     }
 
     // Example 3: Balanced agent with web search
     println!("\n=== Balanced Agent with Web Search ===");
     let balanced_reqs = AgentRequirements::balanced().with_web_search(true);
-    println!("Requirements: {:?}", balanced_reqs);
+    println!("Requirements: {balanced_reqs:?}");
 
     match selector.select(&balanced_reqs) {
         Ok((provider, model)) => {
-            println!("Selected: {} / {}", provider, model);
+            println!("Selected: {provider} / {model}");
         }
         Err(e) => {
-            println!("Error: {}", e);
+            println!("Error: {e}");
         }
     }
 
@@ -65,14 +65,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         true, // requires reasoning
     )
     .with_min_quality(0.85);
-    println!("Requirements: {:?}", custom_reqs);
+    println!("Requirements: {custom_reqs:?}");
 
     match selector.select(&custom_reqs) {
         Ok((provider, model)) => {
-            println!("Selected: {} / {}", provider, model);
+            println!("Selected: {provider} / {model}");
         }
         Err(e) => {
-            println!("Error: {}", e);
+            println!("Error: {e}");
         }
     }
 
@@ -110,10 +110,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let reqs = AgentRequirements::new(CostClass::Low, 5000, false);
     match custom_selector.select(&reqs) {
         Ok((provider, model)) => {
-            println!("Selected: {} / {}", provider, model);
+            println!("Selected: {provider} / {model}");
         }
         Err(e) => {
-            println!("Error: {}", e);
+            println!("Error: {e}");
         }
     }
 

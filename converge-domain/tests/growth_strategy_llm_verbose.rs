@@ -7,7 +7,7 @@
 //!
 //! This test demonstrates:
 //! 1. Provider selection based on agent requirements
-//! 2. Real LLM calls to multiple providers (Anthropic, Perplexity, OpenAI)
+//! 2. Real LLM calls to multiple providers (Anthropic, Perplexity, `OpenAI`)
 //! 3. How different models are selected for different tasks:
 //!    - Fast/cheap models for high-volume extraction
 //!    - Web search models for competitor research
@@ -15,7 +15,7 @@
 //! 4. Complete execution flow with verbose output
 //!
 //! Run with: `cargo test --test growth_strategy_llm_verbose -- --ignored --nocapture`
-//! Requires: ANTHROPIC_API_KEY, PERPLEXITY_API_KEY, OPENAI_API_KEY (or subset)
+//! Requires: `ANTHROPIC_API_KEY`, `PERPLEXITY_API_KEY`, `OPENAI_API_KEY` (or subset)
 
 use converge_core::agents::SeedAgent;
 use converge_core::validation::{ValidationAgent, ValidationConfig};
@@ -33,14 +33,17 @@ fn load_env_if_exists() {
         eprintln!("   ✓ Loaded .env from: {}", env_path.display());
         return;
     }
-    
+
     // Try workspace root relative to test file (../../.env from tests/ directory)
     let workspace_env = std::path::Path::new("../../.env");
     if workspace_env.exists() {
         if let Err(e) = dotenv::from_path(workspace_env) {
-            eprintln!("   ⚠️  Warning: Failed to load .env from workspace root: {}", e);
+            eprintln!("   ⚠️  Warning: Failed to load .env from workspace root: {e}");
         } else {
-            eprintln!("   ✓ Loaded .env from workspace root: {}", workspace_env.display());
+            eprintln!(
+                "   ✓ Loaded .env from workspace root: {}",
+                workspace_env.display()
+            );
         }
     }
 }
@@ -49,9 +52,9 @@ fn load_env_if_exists() {
 fn create_registry_with_logging() -> ProviderRegistry {
     eprintln!("\n🔧 Creating Provider Registry from Environment...");
     load_env_if_exists();
-    
+
     let registry = ProviderRegistry::from_env();
-    
+
     eprintln!("\n📋 Available Providers:");
     let available = registry.available_providers();
     if available.is_empty() {
@@ -62,23 +65,32 @@ fn create_registry_with_logging() -> ProviderRegistry {
         eprintln!("      - GEMINI_API_KEY (for Gemini models)");
     } else {
         for provider in &available {
-            eprintln!("   ✓ {}", provider);
+            eprintln!("   ✓ {provider}");
         }
     }
-    
+
     registry
 }
 
 /// Shows which model was selected for given requirements with detailed breakdown.
-fn show_model_selection(agent_name: &str, requirements: &converge_core::model_selection::AgentRequirements) {
+fn show_model_selection(
+    agent_name: &str,
+    requirements: &converge_core::model_selection::AgentRequirements,
+) {
     let registry = ProviderRegistry::from_env();
 
-    eprintln!("\n🎯 Model Selection for {}:", agent_name);
+    eprintln!("\n🎯 Model Selection for {agent_name}:");
     eprintln!("   Requirements:");
     eprintln!("     • Max Cost: {:?}", requirements.max_cost_class);
     eprintln!("     • Max Latency: {}ms", requirements.max_latency_ms);
-    eprintln!("     • Requires Reasoning: {}", requirements.requires_reasoning);
-    eprintln!("     • Requires Web Search: {}", requirements.requires_web_search);
+    eprintln!(
+        "     • Requires Reasoning: {}",
+        requirements.requires_reasoning
+    );
+    eprintln!(
+        "     • Requires Web Search: {}",
+        requirements.requires_web_search
+    );
     eprintln!("     • Min Quality: {:.2}", requirements.min_quality);
 
     match registry.select_with_details(requirements) {
@@ -87,16 +99,31 @@ fn show_model_selection(agent_name: &str, requirements: &converge_core::model_se
             let f = &result.fitness;
 
             eprintln!("   ✅ Selected: {} / {}", s.provider, s.model);
-            eprintln!("   📊 Fitness: {}", f);
-            eprintln!("      • Cost: {:?} (score: {:.2})", s.cost_class, f.cost_score);
-            eprintln!("      • Latency: {}ms (score: {:.2})", s.typical_latency_ms, f.latency_score);
-            eprintln!("      • Quality: {:.2} (score: {:.2})", s.quality, f.quality_score);
+            eprintln!("   📊 Fitness: {f}");
+            eprintln!(
+                "      • Cost: {:?} (score: {:.2})",
+                s.cost_class, f.cost_score
+            );
+            eprintln!(
+                "      • Latency: {}ms (score: {:.2})",
+                s.typical_latency_ms, f.latency_score
+            );
+            eprintln!(
+                "      • Quality: {:.2} (score: {:.2})",
+                s.quality, f.quality_score
+            );
 
             // Show other candidates considered
             if result.candidates.len() > 1 {
-                eprintln!("   📋 Also considered ({} alternatives):", result.candidates.len() - 1);
+                eprintln!(
+                    "   📋 Also considered ({} alternatives):",
+                    result.candidates.len() - 1
+                );
                 for (model, breakdown) in result.candidates.iter().skip(1).take(3) {
-                    eprintln!("      • {}/{}: {:.3}", model.provider, model.model, breakdown.total);
+                    eprintln!(
+                        "      • {}/{}: {:.3}",
+                        model.provider, model.model, breakdown.total
+                    );
                 }
                 if result.candidates.len() > 4 {
                     eprintln!("      • ... and {} more", result.candidates.len() - 4);
@@ -105,15 +132,23 @@ fn show_model_selection(agent_name: &str, requirements: &converge_core::model_se
 
             // Show rejection summary
             if !result.rejected.is_empty() {
-                let unavailable = result.rejected.iter()
-                    .filter(|(_, r)| matches!(r, converge_provider::RejectionReason::ProviderUnavailable))
+                let unavailable = result
+                    .rejected
+                    .iter()
+                    .filter(|(_, r)| {
+                        matches!(r, converge_provider::RejectionReason::ProviderUnavailable)
+                    })
                     .count();
                 let requirements_mismatch = result.rejected.len() - unavailable;
 
                 if requirements_mismatch > 0 {
-                    eprintln!("   🚫 Rejected ({} models):", requirements_mismatch);
-                    for (model, reason) in result.rejected.iter()
-                        .filter(|(_, r)| !matches!(r, converge_provider::RejectionReason::ProviderUnavailable))
+                    eprintln!("   🚫 Rejected ({requirements_mismatch} models):");
+                    for (model, reason) in result
+                        .rejected
+                        .iter()
+                        .filter(|(_, r)| {
+                            !matches!(r, converge_provider::RejectionReason::ProviderUnavailable)
+                        })
                         .take(3)
                     {
                         eprintln!("      • {}/{}: {}", model.provider, model.model, reason);
@@ -122,8 +157,10 @@ fn show_model_selection(agent_name: &str, requirements: &converge_core::model_se
             }
         }
         Err(e) => {
-            eprintln!("   ❌ Selection Failed: {}", e);
-            eprintln!("   💡 Tip: Make sure you have API keys for providers that match these requirements");
+            eprintln!("   ❌ Selection Failed: {e}");
+            eprintln!(
+                "   💡 Tip: Make sure you have API keys for providers that match these requirements"
+            );
         }
     }
 }
@@ -135,7 +172,9 @@ fn verbose_llm_growth_strategy_multi_provider() {
     println!("╔══════════════════════════════════════════════════════════════════════════════╗");
     println!("║     CONVERGE GROWTH STRATEGY - LLM MULTI-PROVIDER INTEGRATION TEST           ║");
     println!("╚══════════════════════════════════════════════════════════════════════════════╝");
-    println!("\n🎯 Objective: Demonstrate intelligent provider selection based on agent requirements");
+    println!(
+        "\n🎯 Objective: Demonstrate intelligent provider selection based on agent requirements"
+    );
     println!("   and show real LLM-powered growth strategy generation.");
 
     // =========================================================================
@@ -144,9 +183,9 @@ fn verbose_llm_growth_strategy_multi_provider() {
     println!("\n┌──────────────────────────────────────────────────────────────────────────────┐");
     println!("│ PHASE 1: PROVIDER REGISTRY SETUP                                              │");
     println!("└──────────────────────────────────────────────────────────────────────────────┘");
-    
+
     let registry = create_registry_with_logging();
-    
+
     // Show model selection for each agent type
     let mut competitor_reqs = requirements::analysis();
     competitor_reqs.requires_web_search = true;
@@ -182,14 +221,14 @@ fn verbose_llm_growth_strategy_multi_provider() {
         "market:nordic-b2b",
         "Nordic B2B SaaS market - targeting enterprise customers",
     ));
-    println!("\n  [{}] SeedAgent 'market:nordic-b2b'", seed1_id);
+    println!("\n  [{seed1_id}] SeedAgent 'market:nordic-b2b'");
     println!("       Content: Nordic B2B SaaS market - targeting enterprise customers");
 
     let seed2_id = engine.register(SeedAgent::new(
         "product:converge-platform",
         "Converge - A correctness-first multi-agent runtime system for building AI-powered business applications",
     ));
-    println!("  [{}] SeedAgent 'product:converge-platform'", seed2_id);
+    println!("  [{seed2_id}] SeedAgent 'product:converge-platform'");
     println!("       Content: Converge - A correctness-first multi-agent runtime system...");
 
     // =========================================================================
@@ -200,7 +239,7 @@ fn verbose_llm_growth_strategy_multi_provider() {
     println!("└──────────────────────────────────────────────────────────────────────────────┘");
 
     println!("\n  Setting up LLM agents with requirements-based model selection...");
-    
+
     match setup_llm_growth_strategy(&mut engine, &registry) {
         Ok(()) => {
             println!("  ✅ All LLM agents registered successfully");
@@ -211,9 +250,11 @@ fn verbose_llm_growth_strategy_multi_provider() {
             println!("    4. EvaluationAgent (deep_research) → Evaluations");
         }
         Err(e) => {
-            eprintln!("\n  ❌ Failed to set up LLM agents: {}", e);
-            eprintln!("  💡 Make sure you have API keys for at least one provider that matches the requirements");
-            panic!("Cannot proceed without LLM agents: {}", e);
+            eprintln!("\n  ❌ Failed to set up LLM agents: {e}");
+            eprintln!(
+                "  💡 Make sure you have API keys for at least one provider that matches the requirements"
+            );
+            panic!("Cannot proceed without LLM agents: {e}");
         }
     }
 
@@ -230,10 +271,10 @@ fn verbose_llm_growth_strategy_multi_provider() {
         forbidden_terms: vec![],
         require_provenance: true,
     };
-    
+
     let validation_agent = ValidationAgent::new(validation_config);
     let validation_id = engine.register(validation_agent);
-    println!("\n  [{}] ValidationAgent", validation_id);
+    println!("\n  [{validation_id}] ValidationAgent");
     println!("       • Min Confidence: 0.7");
     println!("       • Requires Rationale: true");
     println!("       • Promotes: Proposals → Facts (if validated)");
@@ -296,14 +337,14 @@ fn verbose_llm_growth_strategy_multi_provider() {
     let result = match engine.run(context) {
         Ok(r) => r,
         Err(e) => {
-            eprintln!("\n❌ Engine execution failed: {}", e);
+            eprintln!("\n❌ Engine execution failed: {e}");
             eprintln!("\n  Debugging Info:");
             eprintln!("    This might indicate:");
             eprintln!("    - LLM API calls failed (check API keys and network)");
             eprintln!("    - Validation rejected all proposals");
             eprintln!("    - Invariants blocked convergence");
             eprintln!("\n  Try running with RUST_LOG=debug to see detailed execution");
-            panic!("Engine execution failed: {}", e);
+            panic!("Engine execution failed: {e}");
         }
     };
     let elapsed = start.elapsed();
@@ -318,7 +359,7 @@ fn verbose_llm_growth_strategy_multi_provider() {
     println!("\n  Execution Summary:");
     println!("    • Converged: {}", result.converged);
     println!("    • Cycles: {}", result.cycles);
-    println!("    • Duration: {:?}", elapsed);
+    println!("    • Duration: {elapsed:?}");
     println!("    • Context Version: {}", result.context.version());
 
     println!("\n  📦 SEEDS (Initial Inputs):");
@@ -386,18 +427,32 @@ fn verbose_llm_growth_strategy_multi_provider() {
     println!("\n╔══════════════════════════════════════════════════════════════════════════════╗");
     println!("║                              EXECUTION SUMMARY                                ║");
     println!("╠══════════════════════════════════════════════════════════════════════════════╣");
-    println!("║  Agents Registered:    {}                                                     ║", engine.agent_count());
+    println!(
+        "║  Agents Registered:    {}                                                     ║",
+        engine.agent_count()
+    );
     println!("║  Invariants Enforced: 3                                                       ║");
-    println!("║  Cycles Executed:    {}                                                     ║", result.cycles);
-    println!("║  Convergence:        {}                                                       ║", 
-             if result.converged { "✓ ACHIEVED" } else { "✗ NOT ACHIEVED" });
-    println!("║  Duration:           {:?}                                                    ║", elapsed);
+    println!(
+        "║  Cycles Executed:    {}                                                     ║",
+        result.cycles
+    );
+    println!(
+        "║  Convergence:        {}                                                       ║",
+        if result.converged {
+            "✓ ACHIEVED"
+        } else {
+            "✗ NOT ACHIEVED"
+        }
+    );
+    println!(
+        "║  Duration:           {elapsed:?}                                                    ║"
+    );
     println!("╚══════════════════════════════════════════════════════════════════════════════╝");
     println!();
 
     // Basic assertions
     assert!(result.cycles > 0, "Should have executed at least one cycle");
-    
+
     // Check that we got some proposals (LLM agents should have run)
     let proposals = result.context.get(ContextKey::Proposals);
     if proposals.is_empty() {
@@ -406,6 +461,9 @@ fn verbose_llm_growth_strategy_multi_provider() {
         eprintln!("   - Agents didn't run (check dependencies)");
         eprintln!("   - Validation rejected all proposals");
     } else {
-        println!("✅ Success: Generated {} proposals from LLM agents", proposals.len());
+        println!(
+            "✅ Success: Generated {} proposals from LLM agents",
+            proposals.len()
+        );
     }
 }

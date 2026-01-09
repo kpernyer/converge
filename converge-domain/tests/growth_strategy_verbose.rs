@@ -49,7 +49,7 @@ fn verbose_growth_strategy_execution() {
     println!("\n  Registering Seed Agents (provide initial context):");
 
     let seed1_id = engine.register(SeedAgent::new("market:nordic-b2b", "Nordic B2B market"));
-    println!("    [{}] SeedAgent 'market:nordic-b2b'", seed1_id);
+    println!("    [{seed1_id}] SeedAgent 'market:nordic-b2b'");
     println!("         → Dependencies: [] (runs first cycle)");
     println!("         → Emits: Seeds");
 
@@ -57,29 +57,29 @@ fn verbose_growth_strategy_execution() {
         "product:product-x",
         "Product X - SaaS platform",
     ));
-    println!("    [{}] SeedAgent 'product:product-x'", seed2_id);
+    println!("    [{seed2_id}] SeedAgent 'product:product-x'");
     println!("         → Dependencies: [] (runs first cycle)");
     println!("         → Emits: Seeds");
 
     println!("\n  Registering Growth Strategy Pipeline:");
 
     let market_id = engine.register(MarketSignalAgent);
-    println!("    [{}] MarketSignalAgent", market_id);
+    println!("    [{market_id}] MarketSignalAgent");
     println!("         → Dependencies: [Seeds]");
     println!("         → Emits: Signals (market observations)");
 
     let competitor_id = engine.register(CompetitorAgent);
-    println!("    [{}] CompetitorAgent", competitor_id);
+    println!("    [{competitor_id}] CompetitorAgent");
     println!("         → Dependencies: [Signals]");
     println!("         → Emits: Competitors (competitor profiles)");
 
     let strategy_id = engine.register(StrategyAgent);
-    println!("    [{}] StrategyAgent", strategy_id);
+    println!("    [{strategy_id}] StrategyAgent");
     println!("         → Dependencies: [Competitors, Signals]");
     println!("         → Emits: Strategies (growth strategies)");
 
     let eval_id = engine.register(EvaluationAgent);
-    println!("    [{}] EvaluationAgent", eval_id);
+    println!("    [{eval_id}] EvaluationAgent");
     println!("         → Dependencies: [Strategies]");
     println!("         → Emits: Evaluations (ranked scores)");
 
@@ -94,24 +94,24 @@ fn verbose_growth_strategy_execution() {
 
     println!("\n  Structural Invariants (checked after every merge):");
     let brand_id = engine.register_invariant(BrandSafetyInvariant::default());
-    println!("    [{}] BrandSafetyInvariant", brand_id);
+    println!("    [{brand_id}] BrandSafetyInvariant");
     println!("         → Forbids: spam, misleading, aggressive, deceptive, unethical");
     println!("         → Violation = immediate failure");
 
     println!("\n  Semantic Invariants (checked at end of each cycle):");
     let rationale_id = engine.register_invariant(RequireEvaluationRationale);
-    println!("    [{}] RequireEvaluationRationale", rationale_id);
+    println!("    [{rationale_id}] RequireEvaluationRationale");
     println!("         → All evaluations must contain 'Rationale:'");
     println!("         → Violation = blocks convergence");
 
     println!("\n  Acceptance Invariants (checked before declaring convergence):");
     let multi_id = engine.register_invariant(RequireMultipleStrategies);
-    println!("    [{}] RequireMultipleStrategies", multi_id);
+    println!("    [{multi_id}] RequireMultipleStrategies");
     println!("         → At least 2 distinct strategies required");
     println!("         → Violation = rejects result");
 
     let eval_inv_id = engine.register_invariant(RequireStrategyEvaluations);
-    println!("    [{}] RequireStrategyEvaluations", eval_inv_id);
+    println!("    [{eval_inv_id}] RequireStrategyEvaluations");
     println!("         → Every strategy must have an evaluation");
     println!("         → Violation = rejects result");
 

@@ -21,7 +21,7 @@ pub struct FitnessBreakdown {
     /// VeryLow=1.0, Low=0.8, Medium=0.6, High=0.4, VeryHigh=0.2
     pub cost_score: f64,
     /// Latency efficiency score (0.0-1.0, higher = faster).
-    /// Calculated as: 1.0 - (typical_latency / max_allowed_latency)
+    /// Calculated as: 1.0 - (`typical_latency` / `max_allowed_latency`)
     pub latency_score: f64,
     /// Quality score (0.0-1.0, model's quality rating).
     pub quality_score: f64,
@@ -59,19 +59,34 @@ pub enum RejectionReason {
     /// Provider not available (no API key).
     ProviderUnavailable,
     /// Cost class exceeds budget.
-    CostTooHigh { model_cost: CostClass, max_allowed: CostClass },
+    CostTooHigh {
+        model_cost: CostClass,
+        max_allowed: CostClass,
+    },
     /// Latency exceeds limit.
-    LatencyTooHigh { model_latency_ms: u32, max_allowed_ms: u32 },
+    LatencyTooHigh {
+        model_latency_ms: u32,
+        max_allowed_ms: u32,
+    },
     /// Quality below threshold.
-    QualityTooLow { model_quality: f64, min_required: f64 },
+    QualityTooLow {
+        model_quality: f64,
+        min_required: f64,
+    },
     /// Reasoning required but not supported.
     ReasoningRequired,
     /// Web search required but not supported.
     WebSearchRequired,
     /// Data sovereignty mismatch.
-    DataSovereigntyMismatch { required: DataSovereignty, model_has: DataSovereignty },
+    DataSovereigntyMismatch {
+        required: DataSovereignty,
+        model_has: DataSovereignty,
+    },
     /// Compliance level mismatch.
-    ComplianceMismatch { required: ComplianceLevel, model_has: ComplianceLevel },
+    ComplianceMismatch {
+        required: ComplianceLevel,
+        model_has: ComplianceLevel,
+    },
     /// Multilingual required but not supported.
     MultilingualRequired,
 }
@@ -80,22 +95,40 @@ impl std::fmt::Display for RejectionReason {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::ProviderUnavailable => write!(f, "provider unavailable (no API key)"),
-            Self::CostTooHigh { model_cost, max_allowed } => {
-                write!(f, "cost {:?} exceeds max {:?}", model_cost, max_allowed)
+            Self::CostTooHigh {
+                model_cost,
+                max_allowed,
+            } => {
+                write!(f, "cost {model_cost:?} exceeds max {max_allowed:?}")
             }
-            Self::LatencyTooHigh { model_latency_ms, max_allowed_ms } => {
-                write!(f, "latency {}ms exceeds max {}ms", model_latency_ms, max_allowed_ms)
+            Self::LatencyTooHigh {
+                model_latency_ms,
+                max_allowed_ms,
+            } => {
+                write!(
+                    f,
+                    "latency {model_latency_ms}ms exceeds max {max_allowed_ms}ms"
+                )
             }
-            Self::QualityTooLow { model_quality, min_required } => {
-                write!(f, "quality {:.2} below min {:.2}", model_quality, min_required)
+            Self::QualityTooLow {
+                model_quality,
+                min_required,
+            } => {
+                write!(f, "quality {model_quality:.2} below min {min_required:.2}")
             }
             Self::ReasoningRequired => write!(f, "reasoning required but not supported"),
             Self::WebSearchRequired => write!(f, "web search required but not supported"),
-            Self::DataSovereigntyMismatch { required, model_has } => {
-                write!(f, "data sovereignty {:?} != required {:?}", model_has, required)
+            Self::DataSovereigntyMismatch {
+                required,
+                model_has,
+            } => {
+                write!(f, "data sovereignty {model_has:?} != required {required:?}")
             }
-            Self::ComplianceMismatch { required, model_has } => {
-                write!(f, "compliance {:?} != required {:?}", model_has, required)
+            Self::ComplianceMismatch {
+                required,
+                model_has,
+            } => {
+                write!(f, "compliance {model_has:?} != required {required:?}")
             }
             Self::MultilingualRequired => write!(f, "multilingual required but not supported"),
         }
@@ -454,6 +487,7 @@ impl ModelSelectorTrait for ModelSelector {
 }
 
 impl Default for ModelSelector {
+    #[allow(clippy::too_many_lines)] // Default model catalog is comprehensive by design
     fn default() -> Self {
         // Default models with realistic metadata
         Self {

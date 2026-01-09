@@ -39,37 +39,22 @@ fn verbose_compliance_monitoring_execution() {
     println!("└──────────────────────────────────────────────────────────────────────────────┘");
 
     let seed1_id = engine.register(SeedAgent::new("regulations", "GDPR, SOC2, HIPAA"));
-    println!("\n  [{}] SeedAgent 'regulations'", seed1_id);
+    println!("\n  [{seed1_id}] SeedAgent 'regulations'");
 
     let parser_id = engine.register(RegulationParserAgent);
-    println!(
-        "  [{}] RegulationParserAgent → Signals (parsed regulations)",
-        parser_id
-    );
+    println!("  [{parser_id}] RegulationParserAgent → Signals (parsed regulations)");
 
     let policy_id = engine.register(PolicyRuleAgent);
-    println!(
-        "  [{}] PolicyRuleAgent → Constraints (policy rules)",
-        policy_id
-    );
+    println!("  [{policy_id}] PolicyRuleAgent → Constraints (policy rules)");
 
     let evidence_id = engine.register(EvidenceCollectorAgent);
-    println!(
-        "  [{}] EvidenceCollectorAgent → Signals (evidence data)",
-        evidence_id
-    );
+    println!("  [{evidence_id}] EvidenceCollectorAgent → Signals (evidence data)");
 
     let violation_id = engine.register(ViolationDetectorAgent);
-    println!(
-        "  [{}] ViolationDetectorAgent → Strategies (violation reports)",
-        violation_id
-    );
+    println!("  [{violation_id}] ViolationDetectorAgent → Strategies (violation reports)");
 
     let remediation_id = engine.register(RemediationProposalAgent);
-    println!(
-        "  [{}] RemediationProposalAgent → Evaluations (remediation plans)",
-        remediation_id
-    );
+    println!("  [{remediation_id}] RemediationProposalAgent → Evaluations (remediation plans)");
 
     println!("\n  Total Agents: {}", engine.agent_count());
 

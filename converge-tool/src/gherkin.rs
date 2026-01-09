@@ -165,7 +165,7 @@ impl GherkinValidator {
     /// # Errors
     ///
     /// Returns error if the specification cannot be parsed or validated.
-    /// LLM API errors are wrapped as ValidationError::LlmError with "NOT_RELATED_ERROR:" prefix
+    /// LLM API errors are wrapped as `ValidationError::LlmError` with "`NOT_RELATED_ERROR`:" prefix
     /// to distinguish them from Gherkin validation issues.
     pub fn validate(
         &self,
@@ -224,8 +224,8 @@ impl GherkinValidator {
     ///
     /// # Errors
     ///
-    /// Returns ValidationError if LLM API calls fail (wrapped as NOT_RELATED_ERROR).
-    /// Gherkin validation issues are returned as ValidationIssue items, not errors.
+    /// Returns `ValidationError` if LLM API calls fail (wrapped as `NOT_RELATED_ERROR`).
+    /// Gherkin validation issues are returned as `ValidationIssue` items, not errors.
     fn validate_scenario(
         &self,
         feature: &gherkin::Feature,
@@ -334,35 +334,36 @@ Respond with ONLY one of:
 
         eprintln!("\n📤 Business Sense Check - Sending to LLM:");
         eprintln!("   Scenario: {}", scenario.name);
-        eprintln!("   System Prompt: {}", system_prompt);
-        eprintln!("   User Prompt (first 200 chars): {}...", 
-                 prompt.chars().take(200).collect::<String>());
+        eprintln!("   System Prompt: {system_prompt}");
+        eprintln!(
+            "   User Prompt (first 200 chars): {}...",
+            prompt.chars().take(200).collect::<String>()
+        );
         eprintln!("   Request params: max_tokens=200, temperature=0.3");
 
-        let response = self
-            .provider
-            .complete(&request)
-            .map_err(|e| {
-                // LLM API errors are not Gherkin validation issues
-                ValidationError::LlmError(format!("NOT_RELATED_ERROR: LLM API call failed: {e}"))
-            })?;
+        let response = self.provider.complete(&request).map_err(|e| {
+            // LLM API errors are not Gherkin validation issues
+            ValidationError::LlmError(format!("NOT_RELATED_ERROR: LLM API call failed: {e}"))
+        })?;
 
         eprintln!("\n📥 Business Sense Check - Response from LLM:");
         eprintln!("   Raw response: {}", response.content);
         eprintln!("   Model: {}", response.model);
-        eprintln!("   Token usage: prompt={}, completion={}, total={}", 
-                 response.usage.prompt_tokens, 
-                 response.usage.completion_tokens, 
-                 response.usage.total_tokens);
+        eprintln!(
+            "   Token usage: prompt={}, completion={}, total={}",
+            response.usage.prompt_tokens,
+            response.usage.completion_tokens,
+            response.usage.total_tokens
+        );
         eprintln!("   Finish reason: {:?}", response.finish_reason);
 
         let content = response.content.trim();
         eprintln!("\n🔍 Business Sense Check - Reasoning:");
-        
+
         if content.starts_with("INVALID:") {
             let reason = content.strip_prefix("INVALID:").unwrap_or("").trim();
             eprintln!("   → Detected: INVALID");
-            eprintln!("   → Reason: {}", reason);
+            eprintln!("   → Reason: {reason}");
             eprintln!("   → Action: Creating Error-level ValidationIssue");
             Ok(Some(ValidationIssue {
                 location: format!("Scenario: {}", scenario.name),
@@ -374,7 +375,7 @@ Respond with ONLY one of:
         } else if content.starts_with("UNCLEAR:") {
             let question = content.strip_prefix("UNCLEAR:").unwrap_or("").trim();
             eprintln!("   → Detected: UNCLEAR");
-            eprintln!("   → Question: {}", question);
+            eprintln!("   → Question: {question}");
             eprintln!("   → Action: Creating Warning-level ValidationIssue with suggestion");
             Ok(Some(ValidationIssue {
                 location: format!("Scenario: {}", scenario.name),
@@ -426,7 +427,8 @@ Respond with ONLY one of:
             format_steps(&scenario.steps)
         );
 
-        let system_prompt = "You are a Rust expert. Be precise about what can be checked at runtime.";
+        let system_prompt =
+            "You are a Rust expert. Be precise about what can be checked at runtime.";
         let request = LlmRequest::new(prompt.clone())
             .with_system(system_prompt)
             .with_max_tokens(200)
@@ -434,35 +436,36 @@ Respond with ONLY one of:
 
         eprintln!("\n📤 Compilability Check - Sending to LLM:");
         eprintln!("   Scenario: {}", scenario.name);
-        eprintln!("   System Prompt: {}", system_prompt);
-        eprintln!("   User Prompt (first 200 chars): {}...", 
-                 prompt.chars().take(200).collect::<String>());
+        eprintln!("   System Prompt: {system_prompt}");
+        eprintln!(
+            "   User Prompt (first 200 chars): {}...",
+            prompt.chars().take(200).collect::<String>()
+        );
         eprintln!("   Request params: max_tokens=200, temperature=0.3");
 
-        let response = self
-            .provider
-            .complete(&request)
-            .map_err(|e| {
-                // LLM API errors are not Gherkin validation issues
-                ValidationError::LlmError(format!("NOT_RELATED_ERROR: LLM API call failed: {e}"))
-            })?;
+        let response = self.provider.complete(&request).map_err(|e| {
+            // LLM API errors are not Gherkin validation issues
+            ValidationError::LlmError(format!("NOT_RELATED_ERROR: LLM API call failed: {e}"))
+        })?;
 
         eprintln!("\n📥 Compilability Check - Response from LLM:");
         eprintln!("   Raw response: {}", response.content);
         eprintln!("   Model: {}", response.model);
-        eprintln!("   Token usage: prompt={}, completion={}, total={}", 
-                 response.usage.prompt_tokens, 
-                 response.usage.completion_tokens, 
-                 response.usage.total_tokens);
+        eprintln!(
+            "   Token usage: prompt={}, completion={}, total={}",
+            response.usage.prompt_tokens,
+            response.usage.completion_tokens,
+            response.usage.total_tokens
+        );
         eprintln!("   Finish reason: {:?}", response.finish_reason);
 
         let content = response.content.trim();
         eprintln!("\n🔍 Compilability Check - Reasoning:");
-        
+
         if content.starts_with("NOT_COMPILABLE:") {
             let reason = content.strip_prefix("NOT_COMPILABLE:").unwrap_or("").trim();
             eprintln!("   → Detected: NOT_COMPILABLE");
-            eprintln!("   → Reason: {}", reason);
+            eprintln!("   → Reason: {reason}");
             eprintln!("   → Action: Creating Error-level ValidationIssue");
             Ok(Some(ValidationIssue {
                 location: format!("Scenario: {}", scenario.name),
@@ -474,8 +477,10 @@ Respond with ONLY one of:
         } else if content.starts_with("NEEDS_REFACTOR:") {
             let suggestion = content.strip_prefix("NEEDS_REFACTOR:").unwrap_or("").trim();
             eprintln!("   → Detected: NEEDS_REFACTOR");
-            eprintln!("   → Suggestion: {}", suggestion);
-            eprintln!("   → Action: Creating Warning-level ValidationIssue with refactoring suggestion");
+            eprintln!("   → Suggestion: {suggestion}");
+            eprintln!(
+                "   → Action: Creating Warning-level ValidationIssue with refactoring suggestion"
+            );
             Ok(Some(ValidationIssue {
                 location: format!("Scenario: {}", scenario.name),
                 category: IssueCategory::Compilability,
@@ -486,12 +491,12 @@ Respond with ONLY one of:
         } else if content.starts_with("COMPILABLE:") {
             let details = content.strip_prefix("COMPILABLE:").unwrap_or("").trim();
             eprintln!("   → Detected: COMPILABLE");
-            eprintln!("   → Details: {}", details);
+            eprintln!("   → Details: {details}");
             eprintln!("   → Action: No issue created (scenario is compilable)");
             Ok(None) // COMPILABLE
         } else {
             eprintln!("   → Warning: Response doesn't match expected format");
-            eprintln!("   → Raw response: {}", content);
+            eprintln!("   → Raw response: {content}");
             eprintln!("   → Action: Treating as COMPILABLE (no issue created)");
             Ok(None) // Default to compilable if format doesn't match
         }
@@ -615,12 +620,12 @@ mod tests {
 
     #[test]
     fn validates_simple_feature() {
-        let content = r#"
+        let content = r"
 Feature: Growth Strategy Validation
   Scenario: Multiple strategies required
     When the system converges
     Then at least two distinct growth strategies exist
-"#;
+";
 
         let validator = GherkinValidator::new(mock_valid_provider(), ValidationConfig::default());
 
@@ -632,12 +637,12 @@ Feature: Growth Strategy Validation
 
     #[test]
     fn detects_missing_then() {
-        let content = r#"
+        let content = r"
 Feature: Bad Spec
   Scenario: No assertions
     Given some precondition
     When something happens
-"#;
+";
 
         let validator = GherkinValidator::new(
             mock_valid_provider(),
@@ -662,12 +667,12 @@ Feature: Bad Spec
 
     #[test]
     fn detects_uncertain_language() {
-        let content = r#"
+        let content = r"
 Feature: Uncertain Spec
   Scenario: Maybe works
     When something happens
     Then it might succeed
-"#;
+";
 
         let validator = GherkinValidator::new(
             mock_valid_provider(),
@@ -692,12 +697,12 @@ Feature: Uncertain Spec
             MockResponse::success("COMPILABLE: Acceptance", 0.9),
         ]));
 
-        let content = r#"
+        let content = r"
 Feature: Test
   Scenario: Bad business logic
     When magic happens
     Then everything is perfect forever
-"#;
+";
 
         let validator = GherkinValidator::new(provider, ValidationConfig::default());
 

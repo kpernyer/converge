@@ -250,7 +250,7 @@ impl Agent for TransferOptimizationAgent {
             let stock: u32 = signal
                 .content
                 .split_whitespace()
-                .nth(2)  // "Region" "North:" "30" <- this one
+                .nth(2) // "Region" "North:" "30" <- this one
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(50);
 

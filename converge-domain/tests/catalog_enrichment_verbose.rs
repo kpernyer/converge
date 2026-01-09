@@ -43,49 +43,28 @@ fn verbose_catalog_enrichment_execution() {
         "feeds",
         "ProductA:Widget:99.99|ProductB:Gadget:149.99",
     ));
-    println!("\n  [{}] SeedAgent 'feeds'", seed1_id);
+    println!("\n  [{seed1_id}] SeedAgent 'feeds'");
 
     let feed_id = engine.register(FeedIngestionAgent);
-    println!(
-        "  [{}] FeedIngestionAgent → Signals (raw products)",
-        feed_id
-    );
+    println!("  [{feed_id}] FeedIngestionAgent → Signals (raw products)");
 
     let dedup_id = engine.register(DeduplicationAgent);
-    println!(
-        "  [{}] DeduplicationAgent → Signals (deduplicated)",
-        dedup_id
-    );
+    println!("  [{dedup_id}] DeduplicationAgent → Signals (deduplicated)");
 
     let norm_id = engine.register(AttributeNormalizationAgent);
-    println!(
-        "  [{}] AttributeNormalizationAgent → Signals (normalized)",
-        norm_id
-    );
+    println!("  [{norm_id}] AttributeNormalizationAgent → Signals (normalized)");
 
     let cat_id = engine.register(CategoryInferenceAgent);
-    println!(
-        "  [{}] CategoryInferenceAgent → Signals (categories)",
-        cat_id
-    );
+    println!("  [{cat_id}] CategoryInferenceAgent → Signals (categories)");
 
     let price_id = engine.register(PricingValidationAgent);
-    println!(
-        "  [{}] PricingValidationAgent → Signals (validated prices)",
-        price_id
-    );
+    println!("  [{price_id}] PricingValidationAgent → Signals (validated prices)");
 
     let schema_id = engine.register(SchemaInvariantAgent);
-    println!(
-        "  [{}] SchemaInvariantAgent → Constraints (schema rules)",
-        schema_id
-    );
+    println!("  [{schema_id}] SchemaInvariantAgent → Constraints (schema rules)");
 
     let ready_id = engine.register(ProductReadyAgent);
-    println!(
-        "  [{}] ProductReadyAgent → Evaluations (ready products)",
-        ready_id
-    );
+    println!("  [{ready_id}] ProductReadyAgent → Evaluations (ready products)");
 
     println!("\n  Total Agents: {}", engine.agent_count());
 

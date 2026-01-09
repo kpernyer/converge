@@ -41,46 +41,28 @@ fn verbose_strategic_sourcing_execution() {
     println!("└──────────────────────────────────────────────────────────────────────────────┘");
 
     let seed1_id = engine.register(SeedAgent::new("suppliers", "VendorA, VendorB, VendorC"));
-    println!("\n  [{}] SeedAgent 'suppliers'", seed1_id);
+    println!("\n  [{seed1_id}] SeedAgent 'suppliers'");
 
     let discovery_id = engine.register(SupplierDiscoveryAgent);
-    println!(
-        "  [{}] SupplierDiscoveryAgent → Signals (supplier profiles)",
-        discovery_id
-    );
+    println!("  [{discovery_id}] SupplierDiscoveryAgent → Signals (supplier profiles)");
 
     let compliance_id = engine.register(ComplianceAgent);
-    println!(
-        "  [{}] ComplianceAgent → Signals (compliance status)",
-        compliance_id
-    );
+    println!("  [{compliance_id}] ComplianceAgent → Signals (compliance status)");
 
     let esg_id = engine.register(ESGScoringAgent);
-    println!("  [{}] ESGScoringAgent → Signals (ESG scores)", esg_id);
+    println!("  [{esg_id}] ESGScoringAgent → Signals (ESG scores)");
 
     let price_id = engine.register(PriceBenchmarkAgent);
-    println!(
-        "  [{}] PriceBenchmarkAgent → Signals (price comparisons)",
-        price_id
-    );
+    println!("  [{price_id}] PriceBenchmarkAgent → Signals (price comparisons)");
 
     let risk_id = engine.register(RiskModelAgent);
-    println!(
-        "  [{}] RiskModelAgent → Signals (risk assessments)",
-        risk_id
-    );
+    println!("  [{risk_id}] RiskModelAgent → Signals (risk assessments)");
 
     let strategy_id = engine.register(SourcingStrategyAgent);
-    println!(
-        "  [{}] SourcingStrategyAgent → Strategies (shortlist)",
-        strategy_id
-    );
+    println!("  [{strategy_id}] SourcingStrategyAgent → Strategies (shortlist)");
 
     let ranking_id = engine.register(VendorRankingAgent);
-    println!(
-        "  [{}] VendorRankingAgent → Evaluations (ranked vendors)",
-        ranking_id
-    );
+    println!("  [{ranking_id}] VendorRankingAgent → Evaluations (ranked vendors)");
 
     println!("\n  Total Agents: {}", engine.agent_count());
 

@@ -29,26 +29,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    println!("   ✅ Available providers: {:?}", available);
+    println!("   ✅ Available providers: {available:?}");
 
     // Step 2: Define requirements
     println!("\n2. Defining requirements...");
     let reqs = AgentRequirements::fast_cheap();
-    println!("   Requirements: {:?}", reqs);
+    println!("   Requirements: {reqs:?}");
 
     // Step 3: Select model (only from available providers)
     println!("\n3. Selecting model from available providers...");
     match registry.select(&reqs) {
         Ok((provider_name, model_id)) => {
-            println!("   ✅ Selected: {} / {}", provider_name, model_id);
+            println!("   ✅ Selected: {provider_name} / {model_id}");
 
             // Step 4: Create provider instance
             println!("\n4. Creating provider instance...");
             println!("   (In real code, use: create_provider(&provider_name, &model_id))");
-            println!("   Provider would be: {} / {}", provider_name, model_id);
+            println!("   Provider would be: {provider_name} / {model_id}");
         }
         Err(e) => {
-            println!("   ❌ No suitable model: {}", e);
+            println!("   ❌ No suitable model: {e}");
         }
     }
 

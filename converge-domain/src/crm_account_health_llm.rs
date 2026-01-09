@@ -39,8 +39,8 @@ pub fn setup_mock_llm_crm_account_health(engine: &mut Engine) -> Vec<Arc<MockPro
 #[cfg(test)]
 mod tests {
     use super::*;
-    use converge_core::agents::SeedAgent;
     use converge_core::Context;
+    use converge_core::agents::SeedAgent;
 
     #[test]
     fn mock_llm_crm_account_health_converges() {

@@ -71,8 +71,8 @@ pub fn setup_mock_llm_meeting_scheduler(engine: &mut Engine) -> Vec<Arc<MockProv
 #[cfg(test)]
 mod tests {
     use super::*;
-    use converge_core::agents::SeedAgent;
     use converge_core::Context;
+    use converge_core::agents::SeedAgent;
 
     #[test]
     fn mock_llm_meeting_scheduler_converges() {

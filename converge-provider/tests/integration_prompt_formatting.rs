@@ -12,7 +12,7 @@
 //! 4. Token efficiency: EDN format saves tokens vs plain text
 //!
 //! Run with: `cargo test --test integration_prompt_formatting -- --ignored`
-//! Requires: ANTHROPIC_API_KEY environment variable
+//! Requires: `ANTHROPIC_API_KEY` environment variable
 
 use converge_core::llm::{LlmProvider, LlmRequest};
 use converge_core::prompt::{AgentRole, Constraint, OutputContract, PromptContext, PromptFormat};
@@ -72,7 +72,7 @@ fn extract_key_info(response: &str) -> Vec<String> {
 
 /// Helper to check if API error is due to credit balance.
 fn is_credit_error(error: &converge_core::llm::LlmError) -> bool {
-    let msg = format!("{}", error).to_lowercase();
+    let msg = format!("{error}").to_lowercase();
     msg.contains("credit balance") || msg.contains("too low")
 }
 
@@ -86,12 +86,12 @@ fn make_request_or_skip(
         Ok(response) => Ok(response),
         Err(e) => {
             if is_credit_error(&e) {
-                eprintln!("\n⚠️  Skipping {}: API credit balance too low", test_name);
+                eprintln!("\n⚠️  Skipping {test_name}: API credit balance too low");
                 eprintln!("   Please add credits to your Anthropic account to run this test.");
-                eprintln!("   Error: {}", e);
+                eprintln!("   Error: {e}");
                 return Err("API_CREDIT_ERROR".to_string());
             }
-            Err(format!("API request failed: {}", e))
+            Err(format!("API request failed: {e}"))
         }
     }
 }
@@ -120,13 +120,12 @@ fn response_similarity(response1: &str, response2: &str) -> f64 {
 #[test]
 #[ignore]
 fn test_format_correctness_edn_vs_plain() {
-    let api_key = match std::env::var("ANTHROPIC_API_KEY") {
-        Ok(key) => key,
-        Err(_) => {
-            eprintln!("\n⚠️  Skipping test: ANTHROPIC_API_KEY not set");
-            eprintln!("   Set the environment variable to run this test.");
-            return;
-        }
+    let api_key = if let Ok(key) = std::env::var("ANTHROPIC_API_KEY") {
+        key
+    } else {
+        eprintln!("\n⚠️  Skipping test: ANTHROPIC_API_KEY not set");
+        eprintln!("   Set the environment variable to run this test.");
+        return;
     };
 
     let provider = AnthropicProvider::new(api_key, "claude-3-5-haiku-20241022");
@@ -146,13 +145,12 @@ fn test_format_correctness_edn_vs_plain() {
     );
 
     // Plain format (manually constructed for comparison)
-    let plain_prompt = format!(
-        "Analyze the following market signals and propose strategies:\n\n\
+    let plain_prompt = "Analyze the following market signals and propose strategies:\n\n\
         Signal 1: Nordic B2B SaaS market growing 15% annually\n\
         Signal 2: Enterprise segment shows strong demand\n\
         Signal 3: LinkedIn is primary B2B channel in region\n\n\
         Provide strategic recommendations based on these signals."
-    );
+        .to_string();
 
     println!("\n=== Format Correctness Test ===");
     println!("EDN prompt length: {} chars", edn_prompt.len());
@@ -170,7 +168,7 @@ fn test_format_correctness_edn_vs_plain() {
             println!("\n⚠️  Skipping test due to API credit issues");
             return;
         }
-        Err(e) => panic!("EDN request failed: {}", e),
+        Err(e) => panic!("EDN request failed: {e}"),
     };
     let edn_time = start.elapsed();
 
@@ -185,7 +183,7 @@ fn test_format_correctness_edn_vs_plain() {
             println!("\n⚠️  Skipping test due to API credit issues");
             return;
         }
-        Err(e) => panic!("Plain request failed: {}", e),
+        Err(e) => panic!("Plain request failed: {e}"),
     };
     let plain_time = start.elapsed();
 
@@ -235,13 +233,14 @@ fn test_format_correctness_edn_vs_plain() {
     );
 
     let token_savings = if plain_response.usage.prompt_tokens > 0 {
-        (1.0 - edn_response.usage.prompt_tokens as f64 / plain_response.usage.prompt_tokens as f64)
+        (1.0 - f64::from(edn_response.usage.prompt_tokens)
+            / f64::from(plain_response.usage.prompt_tokens))
             * 100.0
     } else {
         0.0
     };
 
-    println!("  Token savings: {:.1}%", token_savings);
+    println!("  Token savings: {token_savings:.1}%");
 
     // Note: EDN with XML wrapping may use MORE input tokens due to:
     // 1. XML tags and structure (<prompt>, <instructions>, etc.)
@@ -253,13 +252,14 @@ fn test_format_correctness_edn_vs_plain() {
     // - Better total token efficiency
 
     let total_savings = if plain_response.usage.total_tokens > 0 {
-        (1.0 - edn_response.usage.total_tokens as f64 / plain_response.usage.total_tokens as f64)
+        (1.0 - f64::from(edn_response.usage.total_tokens)
+            / f64::from(plain_response.usage.total_tokens))
             * 100.0
     } else {
         0.0
     };
 
-    println!("  Total token savings: {:.1}%", total_savings);
+    println!("  Total token savings: {total_savings:.1}%");
 
     // Check total tokens - EDN should be similar or better overall
     // (XML wrapping adds input tokens but often reduces output tokens)
@@ -270,8 +270,8 @@ fn test_format_correctness_edn_vs_plain() {
             edn_response.usage.completion_tokens,
             plain_response.usage.completion_tokens,
             if plain_response.usage.completion_tokens > 0 {
-                (1.0 - edn_response.usage.completion_tokens as f64
-                    / plain_response.usage.completion_tokens as f64)
+                (1.0 - f64::from(edn_response.usage.completion_tokens)
+                    / f64::from(plain_response.usage.completion_tokens))
                     * 100.0
             } else {
                 0.0
@@ -294,13 +294,12 @@ fn test_format_correctness_edn_vs_plain() {
 #[test]
 #[ignore]
 fn test_edn_with_vs_without_xml() {
-    let api_key = match std::env::var("ANTHROPIC_API_KEY") {
-        Ok(key) => key,
-        Err(_) => {
-            eprintln!("\n⚠️  Skipping test: ANTHROPIC_API_KEY not set");
-            eprintln!("   Set the environment variable to run this test.");
-            return;
-        }
+    let api_key = if let Ok(key) = std::env::var("ANTHROPIC_API_KEY") {
+        key
+    } else {
+        eprintln!("\n⚠️  Skipping test: ANTHROPIC_API_KEY not set");
+        eprintln!("   Set the environment variable to run this test.");
+        return;
     };
 
     let provider = AnthropicProvider::new(api_key, "claude-3-5-haiku-20241022");
@@ -347,7 +346,7 @@ fn test_edn_with_vs_without_xml() {
             println!("\n⚠️  Skipping test due to API credit issues");
             return;
         }
-        Err(e) => panic!("XML request failed: {}", e),
+        Err(e) => panic!("XML request failed: {e}"),
     };
     let xml_time = start.elapsed();
 
@@ -362,7 +361,7 @@ fn test_edn_with_vs_without_xml() {
             println!("\n⚠️  Skipping test due to API credit issues");
             return;
         }
-        Err(e) => panic!("EDN-only request failed: {}", e),
+        Err(e) => panic!("EDN-only request failed: {e}"),
     };
     let edn_only_time = start.elapsed();
 
@@ -404,7 +403,8 @@ fn test_edn_with_vs_without_xml() {
     println!("  Total:  {} tokens", edn_only_response.usage.total_tokens);
 
     let input_overhead = if edn_only_response.usage.prompt_tokens > 0 {
-        ((xml_response.usage.prompt_tokens as f64 / edn_only_response.usage.prompt_tokens as f64)
+        ((f64::from(xml_response.usage.prompt_tokens)
+            / f64::from(edn_only_response.usage.prompt_tokens))
             - 1.0)
             * 100.0
     } else {
@@ -412,7 +412,8 @@ fn test_edn_with_vs_without_xml() {
     };
 
     let total_overhead = if edn_only_response.usage.total_tokens > 0 {
-        ((xml_response.usage.total_tokens as f64 / edn_only_response.usage.total_tokens as f64)
+        ((f64::from(xml_response.usage.total_tokens)
+            / f64::from(edn_only_response.usage.total_tokens))
             - 1.0)
             * 100.0
     } else {
@@ -420,8 +421,8 @@ fn test_edn_with_vs_without_xml() {
     };
 
     println!("\n=== Overhead Analysis ===");
-    println!("Input token overhead: {:.1}%", input_overhead);
-    println!("Total token overhead: {:.1}%", total_overhead);
+    println!("Input token overhead: {input_overhead:.1}%");
+    println!("Total token overhead: {total_overhead:.1}%");
     println!(
         "Response time difference: {:.1}ms ({:.1}%)",
         (xml_time.as_millis() as f64 - edn_only_time.as_millis() as f64).abs(),
@@ -442,12 +443,12 @@ fn test_edn_with_vs_without_xml() {
     let edn_has_structure = edn_only_response.content.contains("<response>")
         || edn_only_response.content.contains("<proposal")
         || edn_only_response.content.contains("</proposal>")
-        || edn_only_response.content.contains("{")
-        || edn_only_response.content.contains(":");
+        || edn_only_response.content.contains('{')
+        || edn_only_response.content.contains(':');
 
     println!("\n=== Structure Analysis ===");
-    println!("XML-wrapped has structure: {}", xml_has_structure);
-    println!("EDN-only has structure: {}", edn_has_structure);
+    println!("XML-wrapped has structure: {xml_has_structure}");
+    println!("EDN-only has structure: {edn_has_structure}");
 
     // Try parsing XML response
     let xml_proposals = StructuredResponseParser::parse_claude_xml(
@@ -463,19 +464,16 @@ fn test_edn_with_vs_without_xml() {
 
     println!("\n=== Summary ===");
     if input_overhead > 0.0 {
-        println!(
-            "XML wrapping adds {:.1}% input token overhead",
-            input_overhead
-        );
+        println!("XML wrapping adds {input_overhead:.1}% input token overhead");
     }
-    if xml_has_structure && xml_proposals.len() > 0 {
+    if xml_has_structure && !xml_proposals.is_empty() {
         println!(
             "✓ XML wrapping enables structured parsing ({} proposals)",
             xml_proposals.len()
         );
     }
     if total_overhead < 5.0 {
-        println!("✓ Total token overhead is minimal ({:.1}%)", total_overhead);
+        println!("✓ Total token overhead is minimal ({total_overhead:.1}%)");
     }
 }
 
@@ -483,13 +481,12 @@ fn test_edn_with_vs_without_xml() {
 #[test]
 #[ignore]
 fn test_claude_xml_preference() {
-    let api_key = match std::env::var("ANTHROPIC_API_KEY") {
-        Ok(key) => key,
-        Err(_) => {
-            eprintln!("\n⚠️  Skipping test: ANTHROPIC_API_KEY not set");
-            eprintln!("   Set the environment variable to run this test.");
-            return;
-        }
+    let api_key = if let Ok(key) = std::env::var("ANTHROPIC_API_KEY") {
+        key
+    } else {
+        eprintln!("\n⚠️  Skipping test: ANTHROPIC_API_KEY not set");
+        eprintln!("   Set the environment variable to run this test.");
+        return;
     };
 
     let provider = AnthropicProvider::new(api_key, "claude-3-5-haiku-20241022");
@@ -532,7 +529,7 @@ fn test_claude_xml_preference() {
             println!("\n⚠️  Skipping test due to API credit issues");
             return;
         }
-        Err(e) => panic!("XML request failed: {}", e),
+        Err(e) => panic!("XML request failed: {e}"),
     };
     let xml_time = start.elapsed();
 
@@ -548,7 +545,7 @@ fn test_claude_xml_preference() {
             println!("\n⚠️  Skipping test due to API credit issues");
             return;
         }
-        Err(e) => panic!("Plain EDN request failed: {}", e),
+        Err(e) => panic!("Plain EDN request failed: {e}"),
     };
     let plain_edn_time = start.elapsed();
 
@@ -571,7 +568,7 @@ fn test_claude_xml_preference() {
         || xml_response.content.contains("<proposal")
         || xml_response.content.contains("</proposal>");
 
-    println!("\nXML response has structure: {}", xml_has_structure);
+    println!("\nXML response has structure: {xml_has_structure}");
 
     // XML should be at least as good (response time and structure)
     println!("\nPerformance:");
@@ -587,13 +584,12 @@ fn test_claude_xml_preference() {
 #[test]
 #[ignore]
 fn test_response_time_comparison() {
-    let api_key = match std::env::var("ANTHROPIC_API_KEY") {
-        Ok(key) => key,
-        Err(_) => {
-            eprintln!("\n⚠️  Skipping test: ANTHROPIC_API_KEY not set");
-            eprintln!("   Set the environment variable to run this test.");
-            return;
-        }
+    let api_key = if let Ok(key) = std::env::var("ANTHROPIC_API_KEY") {
+        key
+    } else {
+        eprintln!("\n⚠️  Skipping test: ANTHROPIC_API_KEY not set");
+        eprintln!("   Set the environment variable to run this test.");
+        return;
     };
 
     let provider = AnthropicProvider::new(api_key, "claude-3-5-haiku-20241022");
@@ -612,13 +608,12 @@ fn test_response_time_comparison() {
     );
 
     // Plain text format
-    let plain_prompt = format!(
-        "Analyze these market signals:\n\
+    let plain_prompt = "Analyze these market signals:\n\
         - Nordic B2B SaaS market growing 15% annually\n\
         - Enterprise segment shows strong demand\n\
         - LinkedIn is primary B2B channel in region\n\n\
         Propose strategic recommendations."
-    );
+        .to_string();
 
     println!("\n=== Response Time Comparison ===");
 
@@ -644,7 +639,7 @@ fn test_response_time_comparison() {
                 println!("\n⚠️  Skipping test due to API credit issues");
                 return;
             }
-            Err(e) => panic!("EDN request failed: {}", e),
+            Err(e) => panic!("EDN request failed: {e}"),
         };
         let edn_time = start.elapsed();
         edn_times.push(edn_time);
@@ -662,7 +657,7 @@ fn test_response_time_comparison() {
                 println!("\n⚠️  Skipping test due to API credit issues");
                 return;
             }
-            Err(e) => panic!("Plain request failed: {}", e),
+            Err(e) => panic!("Plain request failed: {e}"),
         };
         let plain_time = start.elapsed();
         plain_times.push(plain_time);
@@ -682,20 +677,21 @@ fn test_response_time_comparison() {
 
     // Calculate averages
     let avg_edn_time: f64 =
-        edn_times.iter().map(|t| t.as_millis() as f64).sum::<f64>() / iterations as f64;
+        edn_times.iter().map(|t| t.as_millis() as f64).sum::<f64>() / f64::from(iterations);
     let avg_plain_time: f64 = plain_times
         .iter()
         .map(|t| t.as_millis() as f64)
         .sum::<f64>()
-        / iterations as f64;
-    let avg_edn_tokens: f64 = edn_tokens.iter().map(|&t| t as f64).sum::<f64>() / iterations as f64;
+        / f64::from(iterations);
+    let avg_edn_tokens: f64 =
+        edn_tokens.iter().map(|&t| f64::from(t)).sum::<f64>() / f64::from(iterations);
     let avg_plain_tokens: f64 =
-        plain_tokens.iter().map(|&t| t as f64).sum::<f64>() / iterations as f64;
+        plain_tokens.iter().map(|&t| f64::from(t)).sum::<f64>() / f64::from(iterations);
 
     println!("\n=== Summary ===");
     println!("Average Response Time:");
-    println!("  EDN:   {:.1}ms", avg_edn_time);
-    println!("  Plain: {:.1}ms", avg_plain_time);
+    println!("  EDN:   {avg_edn_time:.1}ms");
+    println!("  Plain: {avg_plain_time:.1}ms");
     println!(
         "  Difference: {:.1}ms ({:.1}%)",
         avg_plain_time - avg_edn_time,
@@ -703,8 +699,8 @@ fn test_response_time_comparison() {
     );
 
     println!("\nAverage Token Usage:");
-    println!("  EDN:   {:.1} tokens", avg_edn_tokens);
-    println!("  Plain: {:.1} tokens", avg_plain_tokens);
+    println!("  EDN:   {avg_edn_tokens:.1} tokens");
+    println!("  Plain: {avg_plain_tokens:.1} tokens");
     println!(
         "  Savings: {:.1} tokens ({:.1}%)",
         avg_plain_tokens - avg_edn_tokens,
@@ -714,7 +710,7 @@ fn test_response_time_comparison() {
     // EDN should generally be more efficient
     if avg_plain_tokens > 0.0 {
         let token_savings = (avg_plain_tokens - avg_edn_tokens) / avg_plain_tokens * 100.0;
-        println!("\n✓ Token savings: {:.1}%", token_savings);
+        println!("\n✓ Token savings: {token_savings:.1}%");
 
         // We expect some token savings, but don't fail if it's small (network variance)
         if token_savings > 5.0 {
@@ -727,13 +723,12 @@ fn test_response_time_comparison() {
 #[test]
 #[ignore]
 fn test_token_compaction() {
-    let api_key = match std::env::var("ANTHROPIC_API_KEY") {
-        Ok(key) => key,
-        Err(_) => {
-            eprintln!("\n⚠️  Skipping test: ANTHROPIC_API_KEY not set");
-            eprintln!("   Set the environment variable to run this test.");
-            return;
-        }
+    let api_key = if let Ok(key) = std::env::var("ANTHROPIC_API_KEY") {
+        key
+    } else {
+        eprintln!("\n⚠️  Skipping test: ANTHROPIC_API_KEY not set");
+        eprintln!("   Set the environment variable to run this test.");
+        return;
     };
 
     let provider = AnthropicProvider::new(api_key, "claude-3-5-haiku-20241022");
@@ -752,8 +747,7 @@ fn test_token_compaction() {
     );
 
     // Plain markdown format
-    let markdown_prompt = format!(
-        "# Market Analysis Request\n\n\
+    let markdown_prompt = "# Market Analysis Request\n\n\
         ## Objective\n\
         Analyze the market signals and propose strategic recommendations.\n\n\
         ## Market Signals\n\n\
@@ -768,24 +762,21 @@ fn test_token_compaction() {
         - Do not invent facts\n\n\
         ## Output Format\n\
         Provide proposed facts with strategic recommendations."
-    );
+        .to_string();
 
     println!("\n=== Token Compaction Test ===");
     println!("EDN prompt length: {} chars", edn_prompt.len());
     println!("Markdown prompt length: {} chars", markdown_prompt.len());
 
     let char_diff = markdown_prompt.len().saturating_sub(edn_prompt.len());
-    let char_savings_pct = if markdown_prompt.len() > 0 {
+    let char_savings_pct = if !markdown_prompt.is_empty() {
         (1.0 - edn_prompt.len() as f64 / markdown_prompt.len() as f64) * 100.0
     } else {
         0.0
     };
 
     if edn_prompt.len() < markdown_prompt.len() {
-        println!(
-            "Character savings: {} ({:.1}%)",
-            char_diff, char_savings_pct
-        );
+        println!("Character savings: {char_diff} ({char_savings_pct:.1}%)");
     } else {
         println!(
             "EDN is longer by {} chars ({:.1}% overhead) - but may still save tokens due to structure",
@@ -805,7 +796,7 @@ fn test_token_compaction() {
             println!("\n⚠️  Skipping test due to API credit issues");
             return;
         }
-        Err(e) => panic!("EDN request failed: {}", e),
+        Err(e) => panic!("EDN request failed: {e}"),
     };
 
     let markdown_response = match make_request_or_skip(
@@ -818,7 +809,7 @@ fn test_token_compaction() {
             println!("\n⚠️  Skipping test due to API credit issues");
             return;
         }
-        Err(e) => panic!("Markdown request failed: {}", e),
+        Err(e) => panic!("Markdown request failed: {e}"),
     };
 
     println!("\nToken Usage:");
@@ -836,23 +827,24 @@ fn test_token_compaction() {
     );
 
     let input_savings = if markdown_response.usage.prompt_tokens > 0 {
-        (1.0 - edn_response.usage.prompt_tokens as f64
-            / markdown_response.usage.prompt_tokens as f64)
+        (1.0 - f64::from(edn_response.usage.prompt_tokens)
+            / f64::from(markdown_response.usage.prompt_tokens))
             * 100.0
     } else {
         0.0
     };
 
     let total_savings = if markdown_response.usage.total_tokens > 0 {
-        (1.0 - edn_response.usage.total_tokens as f64 / markdown_response.usage.total_tokens as f64)
+        (1.0 - f64::from(edn_response.usage.total_tokens)
+            / f64::from(markdown_response.usage.total_tokens))
             * 100.0
     } else {
         0.0
     };
 
     println!("\nToken Savings:");
-    println!("  Input tokens: {:.1}%", input_savings);
-    println!("  Total tokens: {:.1}%", total_savings);
+    println!("  Input tokens: {input_savings:.1}%");
+    println!("  Total tokens: {total_savings:.1}%");
 
     // EDN should ideally use fewer input tokens, but allow for API variance
     // (Sometimes tokenization can vary slightly between requests)
@@ -864,12 +856,9 @@ fn test_token_compaction() {
         println!("   This may be due to API tokenization variance or XML wrapping overhead.");
         println!("   In practice, EDN structure should still provide parsing benefits.");
     } else if input_savings > 10.0 {
-        println!(
-            "\n✓ Significant token savings achieved ({:.1}%)!",
-            input_savings
-        );
+        println!("\n✓ Significant token savings achieved ({input_savings:.1}%)!");
     } else if input_savings > 0.0 {
-        println!("\n✓ Token savings achieved ({:.1}%)", input_savings);
+        println!("\n✓ Token savings achieved ({input_savings:.1}%)");
     }
 
     // Don't fail the test if EDN uses more tokens - this can happen due to:
@@ -883,13 +872,12 @@ fn test_token_compaction() {
 #[test]
 #[ignore]
 fn test_structured_response_parsing() {
-    let api_key = match std::env::var("ANTHROPIC_API_KEY") {
-        Ok(key) => key,
-        Err(_) => {
-            eprintln!("\n⚠️  Skipping test: ANTHROPIC_API_KEY not set");
-            eprintln!("   Set the environment variable to run this test.");
-            return;
-        }
+    let api_key = if let Ok(key) = std::env::var("ANTHROPIC_API_KEY") {
+        key
+    } else {
+        eprintln!("\n⚠️  Skipping test: ANTHROPIC_API_KEY not set");
+        eprintln!("   Set the environment variable to run this test.");
+        return;
     };
 
     let provider = AnthropicProvider::new(api_key, "claude-3-5-haiku-20241022");
@@ -919,7 +907,7 @@ fn test_structured_response_parsing() {
             println!("\n⚠️  Skipping test due to API credit issues");
             return;
         }
-        Err(e) => panic!("Request failed: {}", e),
+        Err(e) => panic!("Request failed: {e}"),
     };
 
     println!("Raw Response:\n{}", response.content);
@@ -941,7 +929,10 @@ fn test_structured_response_parsing() {
 
     // Should have at least some proposals if XML parsing worked
     // (Note: if response isn't XML, parser will return empty, which is OK)
-    if !proposals.is_empty() {
+    if proposals.is_empty() {
+        println!("\n⚠ No structured proposals found (response may not be XML)");
+        println!("  This is OK - the response may be plain text instead of XML");
+    } else {
         println!(
             "\n✓ Successfully parsed {} structured proposals",
             proposals.len()
@@ -956,9 +947,6 @@ fn test_structured_response_parsing() {
                 "Confidence should be between 0 and 1"
             );
         }
-    } else {
-        println!("\n⚠ No structured proposals found (response may not be XML)");
-        println!("  This is OK - the response may be plain text instead of XML");
     }
 
     // Response should not be empty

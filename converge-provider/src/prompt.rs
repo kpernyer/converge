@@ -237,6 +237,10 @@ impl StructuredResponseParser {
     ///   ]
     /// }
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns error if JSON parsing fails or expected fields are missing.
     pub fn parse_openai_json(
         response: &LlmResponse,
         target_key: ContextKey,
@@ -358,6 +362,7 @@ pub fn build_openai_prompt(
 }
 
 #[cfg(test)]
+#[allow(clippy::float_cmp)] // Known constant values in tests
 mod tests {
     use super::*;
     use converge_core::Fact;

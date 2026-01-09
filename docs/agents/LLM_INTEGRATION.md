@@ -188,6 +188,29 @@ The context remains correct.
 
 ---
 
+## LLM Agent Idempotency
+
+LLM agents must follow the canonical idempotency pattern from `ENGINE_EXECUTION_MODEL.md`, but with a special case: they emit to `Proposals` first, so must check **both** `Proposals` and `target_key` for existing contributions.
+
+**Pattern:**
+```rust
+// Check Proposals (pending)
+let has_pending = ctx.get(ContextKey::Proposals)
+    .iter()
+    .any(|f| f.id.contains(&format!("{}-", agent_name)));
+
+// Check target_key (validated)
+let has_validated = ctx.get(target_key)
+    .iter()
+    .any(|f| f.id.starts_with(&format!("{}-", agent_name)));
+
+!has_pending && !has_validated  // Run if neither exists
+```
+
+**Known Issue**: Current `LlmAgent` implementation only checks `target_key`. This can cause cascading failures in multi-step pipelines. See `docs/use-cases/GROWTH_STRATEGY_FLOW_ANALYSIS.md` for details.
+
+---
+
 ## One-sentence takeaway
 
 > In Converge, LLMs are creative interns — every output is checked before it becomes law.
