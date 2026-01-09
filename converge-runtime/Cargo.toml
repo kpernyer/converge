@@ -13,6 +13,8 @@ categories = ["web-programming::http-server", "network-programming"]
 [dependencies]
 # Core library
 converge-core = { workspace = true }
+converge-provider = { workspace = true }
+converge-tool = { workspace = true }
 
 # HTTP server (Axum)
 axum = { version = "0.7", features = ["macros"] }

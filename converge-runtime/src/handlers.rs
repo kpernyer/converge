@@ -11,10 +11,13 @@ use axum::{
     routing::{get, post},
 };
 use converge_core::{Context, ContextKey, Engine};
+use converge_provider::AnthropicProvider;
+use converge_tool::gherkin::{GherkinValidator, IssueCategory, Severity, ValidationConfig};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use strum::IntoEnumIterator;
 use tokio::task;
-use tracing::{info, info_span};
+use tracing::{info, info_span, warn};
 use utoipa::ToSchema;
 
 use crate::error::RuntimeError;
@@ -185,10 +188,152 @@ pub async fn handle_job(
     }))
 }
 
+/// Request to validate Converge Rules.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ValidateRulesRequest {
+    /// The Converge Rules content (Gherkin format).
+    #[schema(example = "Feature: Test\n  Scenario: Example\n    When something\n    Then result")]
+    pub content: String,
+    /// Optional file name for reporting.
+    #[schema(example = "rules.feature")]
+    pub file_name: Option<String>,
+    /// Whether to use LLM for deep validation.
+    #[serde(default)]
+    #[schema(example = false)]
+    pub use_llm: bool,
+}
+
+/// A single validation issue.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ValidationIssueResponse {
+    /// Location of the issue.
+    pub location: String,
+    /// Issue category.
+    pub category: String,
+    /// Severity level.
+    pub severity: String,
+    /// Issue message.
+    pub message: String,
+    /// Suggested fix.
+    pub suggestion: Option<String>,
+}
+
+/// Response from rules validation.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ValidateRulesResponse {
+    /// Whether the rules are valid.
+    pub is_valid: bool,
+    /// Number of scenarios checked.
+    pub scenario_count: usize,
+    /// Validation issues found.
+    pub issues: Vec<ValidationIssueResponse>,
+    /// Confidence score (0.0 - 1.0).
+    pub confidence: f64,
+}
+
+/// Validate Converge Rules.
+///
+/// Validates Gherkin-format business rules for convention compliance,
+/// compilability, and business sense.
+#[utoipa::path(
+    post,
+    path = "/api/v1/validate-rules",
+    tag = "validation",
+    request_body = ValidateRulesRequest,
+    responses(
+        (status = 200, description = "Validation completed", body = ValidateRulesResponse),
+        (status = 400, description = "Invalid request", body = RuntimeError),
+        (status = 500, description = "Internal server error", body = RuntimeError)
+    )
+)]
+#[axum::debug_handler]
+pub async fn validate_rules(
+    Json(request): Json<ValidateRulesRequest>,
+) -> Result<Json<ValidateRulesResponse>, RuntimeError> {
+    let _span = info_span!("validate_rules");
+    let _guard = _span.enter();
+    info!(use_llm = request.use_llm, "Validating Converge Rules");
+
+    let content = request.content.clone();
+    let file_name = request.file_name.clone().unwrap_or_else(|| "rules.feature".to_string());
+    let use_llm = request.use_llm;
+
+    // Drop the span guard before await
+    drop(_guard);
+
+    let result = task::spawn_blocking(move || {
+        // Create validation config
+        let config = ValidationConfig {
+            check_business_sense: use_llm,
+            check_compilability: use_llm,
+            check_conventions: true,
+            min_confidence: 0.7,
+        };
+
+        // Create provider if LLM validation is requested
+        let provider: Arc<dyn converge_core::llm::LlmProvider> = if use_llm {
+            match AnthropicProvider::from_env("claude-3-5-haiku-20241022") {
+                Ok(p) => Arc::new(p),
+                Err(e) => {
+                    warn!("Failed to create LLM provider, falling back to convention-only: {e}");
+                    Arc::new(converge_core::llm::MockProvider::new(vec![]))
+                }
+            }
+        } else {
+            // Use mock provider for convention-only validation
+            Arc::new(converge_core::llm::MockProvider::new(vec![]))
+        };
+
+        let validator = GherkinValidator::new(provider, config);
+        validator.validate(&content, &file_name)
+    })
+    .await
+    .map_err(|e| RuntimeError::Config(format!("Task join error: {e}")))?
+    .map_err(|e| RuntimeError::Config(format!("Validation error: {e}")))?;
+
+    let issues: Vec<ValidationIssueResponse> = result
+        .issues
+        .into_iter()
+        .map(|i| ValidationIssueResponse {
+            location: i.location,
+            category: match i.category {
+                IssueCategory::BusinessSense => "business_sense",
+                IssueCategory::Compilability => "compilability",
+                IssueCategory::Convention => "convention",
+                IssueCategory::Syntax => "syntax",
+                IssueCategory::NotRelatedError => "internal_error",
+            }
+            .to_string(),
+            severity: match i.severity {
+                Severity::Info => "info",
+                Severity::Warning => "warning",
+                Severity::Error => "error",
+            }
+            .to_string(),
+            message: i.message,
+            suggestion: i.suggestion,
+        })
+        .collect();
+
+    info!(
+        is_valid = result.is_valid,
+        issue_count = issues.len(),
+        "Validation completed"
+    );
+
+    Ok(Json(ValidateRulesResponse {
+        is_valid: result.is_valid,
+        scenario_count: result.scenario_count,
+        issues,
+        confidence: result.confidence,
+    }))
+}
+
 /// Build the HTTP router.
 pub fn router() -> Router<()> {
     Router::new()
         .route("/health", get(health))
         .route("/ready", get(ready))
         .route("/api/v1/jobs", post(handle_job))
+        .route("/api/v1/validate-rules", post(validate_rules))
 }

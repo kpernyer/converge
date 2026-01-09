@@ -1,20 +1,44 @@
 variable "project_id" {
-  type = string
+  description = "The GCP project ID"
+  type        = string
 }
 
 variable "region" {
-  type = string
+  description = "The region to deploy resources"
+  type        = string
 }
 
 variable "service_name" {
-  type = string
+  description = "The name of the Cloud Run service"
+  type        = string
 }
 
 variable "image_url" {
-  type = string
+  description = "The container image URL"
+  type        = string
 }
 
 variable "snapshot_bucket" {
-  type        = string
   description = "Name of the GCS bucket for snapshots"
+  type        = string
+}
+
+variable "service_account_email" {
+  description = "The service account email for Cloud Run"
+  type        = string
+}
+
+variable "anthropic_secret_id" {
+  description = "The ID of the Anthropic API key secret"
+  type        = string
+}
+
+variable "openai_secret_id" {
+  description = "The ID of the OpenAI API key secret"
+  type        = string
+}
+
+variable "google_ai_secret_id" {
+  description = "The ID of the Google AI API key secret"
+  type        = string
 }

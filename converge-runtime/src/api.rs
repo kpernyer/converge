@@ -8,7 +8,10 @@
 use utoipa::OpenApi;
 
 use crate::error::RuntimeErrorResponse;
-use crate::handlers::{ContextSummary, JobMetadata, JobRequest, JobResponse};
+use crate::handlers::{
+    ContextSummary, JobMetadata, JobRequest, JobResponse,
+    ValidateRulesRequest, ValidateRulesResponse, ValidationIssueResponse,
+};
 
 /// `OpenAPI` schema for Converge Runtime API.
 #[derive(OpenApi)]
@@ -17,17 +20,22 @@ use crate::handlers::{ContextSummary, JobMetadata, JobRequest, JobResponse};
         crate::handlers::health,
         crate::handlers::ready,
         crate::handlers::handle_job,
+        crate::handlers::validate_rules,
     ),
     components(schemas(
         JobRequest,
         JobResponse,
         JobMetadata,
         ContextSummary,
+        ValidateRulesRequest,
+        ValidateRulesResponse,
+        ValidationIssueResponse,
         RuntimeErrorResponse,
     )),
     tags(
         (name = "health", description = "Health check endpoints"),
         (name = "jobs", description = "Job execution endpoints"),
+        (name = "validation", description = "Converge Rules validation"),
     ),
     info(
         title = "Converge Runtime API",
