@@ -15,8 +15,8 @@ resource "google_cloud_run_v2_service" "default" {
 
       resources {
         limits = {
-          cpu    = "1"
-          memory = "512Mi"
+          cpu    = var.cpu
+          memory = var.memory
         }
       }
 
@@ -28,36 +28,19 @@ resource "google_cloud_run_v2_service" "default" {
 
       env {
         name  = "RUST_LOG"
-        value = "info,converge=debug"
+        value = "info"
       }
 
       # Secrets from Secret Manager
-      env {
-        name = "ANTHROPIC_API_KEY"
-        value_source {
-          secret_key_ref {
-            secret  = var.anthropic_secret_id
-            version = "latest"
-          }
-        }
-      }
-
-      env {
-        name = "OPENAI_API_KEY"
-        value_source {
-          secret_key_ref {
-            secret  = var.openai_secret_id
-            version = "latest"
-          }
-        }
-      }
-
-      env {
-        name = "GOOGLE_AI_API_KEY"
-        value_source {
-          secret_key_ref {
-            secret  = var.google_ai_secret_id
-            version = "latest"
+      dynamic "env" {
+        for_each = var.secret_ids
+        content {
+          name = upper(env.value)
+          value_source {
+            secret_key_ref {
+              secret  = env.value
+              version = "latest"
+            }
           }
         }
       }
@@ -84,8 +67,8 @@ resource "google_cloud_run_v2_service" "default" {
     }
 
     scaling {
-      min_instance_count = 0
-      max_instance_count = 10
+      min_instance_count = var.min_instances
+      max_instance_count = var.max_instances
     }
   }
 

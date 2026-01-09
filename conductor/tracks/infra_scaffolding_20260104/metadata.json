@@ -1,8 +1,0 @@
-{
-  "track_id": "infra_scaffolding_20260104",
-  "type": "infrastructure",
-  "status": "new",
-  "created_at": "2026-01-04T17:00:00Z",
-  "updated_at": "2026-01-04T17:00:00Z",
-  "description": "Establish the infrastructure foundation with Docker for containerization and Terraform for Cloud Run deployment, including snapshot persistence and a GKE placeholder."
-}

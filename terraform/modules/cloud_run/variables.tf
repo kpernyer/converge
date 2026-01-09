@@ -28,17 +28,31 @@ variable "service_account_email" {
   type        = string
 }
 
-variable "anthropic_secret_id" {
-  description = "The ID of the Anthropic API key secret"
-  type        = string
+variable "secret_ids" {
+  description = "Map of secret IDs by provider name"
+  type        = map(string)
 }
 
-variable "openai_secret_id" {
-  description = "The ID of the OpenAI API key secret"
+variable "cpu" {
+  description = "CPU allocation"
   type        = string
+  default     = "1"
 }
 
-variable "google_ai_secret_id" {
-  description = "The ID of the Google AI API key secret"
+variable "memory" {
+  description = "Memory allocation"
   type        = string
+  default     = "512Mi"
+}
+
+variable "min_instances" {
+  description = "Minimum number of instances"
+  type        = number
+  default     = 0
+}
+
+variable "max_instances" {
+  description = "Maximum number of instances"
+  type        = number
+  default     = 10
 }

@@ -9,34 +9,22 @@ resource "google_project_service" "secretmanager" {
   disable_on_destroy = false
 }
 
-# Anthropic API Key
-resource "google_secret_manager_secret" "anthropic_api_key" {
-  project   = var.project_id
-  secret_id = "anthropic-api-key"
-
-  replication {
-    auto {}
+locals {
+  secrets = {
+    anthropic  = "ANTHROPIC_API_KEY"
+    openai     = "OPENAI_API_KEY"
+    google_ai  = "GOOGLE_API_KEY"
+    mistral    = "MISTRAL_API_KEY"
+    deepseek   = "DEEPSEEK_API_KEY"
+    openrouter = "OPENROUTER_API_KEY"
   }
-
-  depends_on = [google_project_service.secretmanager]
 }
 
-# OpenAI API Key
-resource "google_secret_manager_secret" "openai_api_key" {
+# Create all secrets
+resource "google_secret_manager_secret" "llm_keys" {
+  for_each  = local.secrets
   project   = var.project_id
-  secret_id = "openai-api-key"
-
-  replication {
-    auto {}
-  }
-
-  depends_on = [google_project_service.secretmanager]
-}
-
-# Google AI API Key (for Gemini)
-resource "google_secret_manager_secret" "google_ai_api_key" {
-  project   = var.project_id
-  secret_id = "google-ai-api-key"
+  secret_id = each.value
 
   replication {
     auto {}
@@ -52,24 +40,11 @@ resource "google_service_account" "runtime" {
   display_name = "Converge Runtime Service Account"
 }
 
-# Grant secret accessor role
-resource "google_secret_manager_secret_iam_member" "anthropic_accessor" {
+# Grant secret accessor role for all secrets
+resource "google_secret_manager_secret_iam_member" "accessor" {
+  for_each  = local.secrets
   project   = var.project_id
-  secret_id = google_secret_manager_secret.anthropic_api_key.secret_id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.runtime.email}"
-}
-
-resource "google_secret_manager_secret_iam_member" "openai_accessor" {
-  project   = var.project_id
-  secret_id = google_secret_manager_secret.openai_api_key.secret_id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.runtime.email}"
-}
-
-resource "google_secret_manager_secret_iam_member" "google_ai_accessor" {
-  project   = var.project_id
-  secret_id = google_secret_manager_secret.google_ai_api_key.secret_id
+  secret_id = google_secret_manager_secret.llm_keys[each.key].secret_id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.runtime.email}"
 }

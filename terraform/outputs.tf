@@ -5,7 +5,12 @@ output "cloud_run_url" {
 
 output "api_gateway_url" {
   description = "The URL of the API Gateway"
-  value       = module.api_gateway.gateway_url
+  value       = var.enable_api_gateway ? module.api_gateway[0].gateway_url : null
+}
+
+output "artifact_registry_url" {
+  description = "The Artifact Registry repository URL"
+  value       = module.artifact_registry.repository_url
 }
 
 output "snapshot_bucket_name" {
