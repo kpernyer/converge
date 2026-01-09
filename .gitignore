@@ -32,3 +32,9 @@ Thumbs.db
 # Use-case tracker (local development only)
 converge-domain/USE_CASE_TRACKER.md
 
+# Terraform
+terraform/.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+

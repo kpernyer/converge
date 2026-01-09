@@ -1,0 +1,7 @@
+target/
+.git/
+conductor/
+README.md
+docs/
+.DS_Store
+**/*.swp
