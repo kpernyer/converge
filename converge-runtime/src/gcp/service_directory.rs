@@ -2,11 +2,14 @@
 //!
 //! Provides service registration and discovery using GCP Service Directory.
 //! This enables gRPC clients to discover services by name.
+//!
+//! In local development mode (`LOCAL_DEV=true`), Service Directory operations
+//! are mocked and return success without making real API calls.
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
 use super::GcpConfig;
 
@@ -120,7 +123,18 @@ impl ServiceDirectory {
     /// Register this service with Service Directory
     ///
     /// Call this on startup to register the service endpoint.
+    /// In local development mode, this is a no-op.
     pub async fn register(&self, endpoint_url: &str) -> Result<(), ServiceDirectoryError> {
+        // Skip in local development mode
+        if self.config.is_local() {
+            debug!(
+                service = %self.config.service_name,
+                endpoint = %endpoint_url,
+                "Skipping Service Directory registration (local dev mode)"
+            );
+            return Ok(());
+        }
+
         let token = self.get_access_token().await?;
 
         // Create or update the endpoint
@@ -203,7 +217,17 @@ impl ServiceDirectory {
     /// Deregister this service from Service Directory
     ///
     /// Call this on shutdown (optional - endpoints can be left for health checks).
+    /// In local development mode, this is a no-op.
     pub async fn deregister(&self) -> Result<(), ServiceDirectoryError> {
+        // Skip in local development mode
+        if self.config.is_local() {
+            debug!(
+                service = %self.config.service_name,
+                "Skipping Service Directory deregistration (local dev mode)"
+            );
+            return Ok(());
+        }
+
         let token = self.get_access_token().await?;
 
         let url = format!(
@@ -230,7 +254,33 @@ impl ServiceDirectory {
     /// Resolve a service by name
     ///
     /// Returns the service information including endpoints.
+    /// In local development mode, returns localhost endpoints.
     pub async fn resolve(&self, service_name: &str) -> Result<ServiceInfo, ServiceDirectoryError> {
+        // Return mock data in local development mode
+        if self.config.is_local() {
+            debug!(
+                service = %service_name,
+                "Returning mock service info (local dev mode)"
+            );
+            return Ok(ServiceInfo {
+                name: service_name.to_string(),
+                metadata: [
+                    ("version".to_string(), "local".to_string()),
+                    ("environment".to_string(), "development".to_string()),
+                ]
+                .into_iter()
+                .collect(),
+                endpoints: vec![ServiceEndpoint {
+                    name: "primary".to_string(),
+                    address: Some("127.0.0.1".to_string()),
+                    port: Some(8080),
+                    metadata: [("url".to_string(), "http://localhost:8080".to_string())]
+                        .into_iter()
+                        .collect(),
+                }],
+            });
+        }
+
         let token = self.get_access_token().await?;
 
         let url = format!("{}/services/{}", self.base_url, service_name);
@@ -282,6 +332,11 @@ impl ServiceDirectory {
 
 /// Register service on startup and deregister on shutdown
 pub async fn register_on_startup(config: &GcpConfig, service_url: &str) {
+    if config.is_local() {
+        info!("Running in local development mode - skipping Service Directory registration");
+        return;
+    }
+
     let sd = ServiceDirectory::new(config.clone());
 
     match sd.register(service_url).await {
