@@ -74,7 +74,6 @@ pub struct TuiConfig {
     pub enabled: bool,
 }
 
-#[cfg(feature = "tui")]
 impl Config {
     /// Load configuration from environment and files.
     pub fn load() -> anyhow::Result<Self> {

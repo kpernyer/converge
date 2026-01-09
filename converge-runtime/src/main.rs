@@ -30,8 +30,8 @@ use anyhow::Result;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
-use config::Config;
-use http::HttpServer;
+use self::config::Config;
+use self::http::HttpServer;
 
 #[tokio::main]
 async fn main() -> Result<()> {
