@@ -15,22 +15,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
-
-      # converge-core is a private submodule - skip it, use crates.io version
-      - name: Remove submodule (use crates.io version)
-        run: |
-          rm -rf converge-core
-          # Remove converge-core from workspace members (line starts with spaces and quotes)
-          sed -i '/^[[:space:]]*"converge-core",$/d' Cargo.toml
-          # Remove the path from converge-core dependency (keep version only)
-          sed -i 's/{ path = "converge-core", version/{ version/' Cargo.toml
-          # Show result for debugging
-          head -25 Cargo.toml
 
       - name: Cache cargo
         uses: actions/cache@v4
@@ -47,30 +38,24 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Clippy
-        run: cargo clippy --workspace
+        run: cargo clippy --workspace -- -D warnings
 
       - name: Build
         run: cargo build --workspace
 
-      # Tests skipped - they require converge-core internals not in published crate
-      # Run tests locally: cargo test --workspace
-      # - name: Test
-      #   run: cargo test --workspace
+      - name: Test
+        run: cargo test --workspace
 
   # Separate job for docs to catch doc errors
   docs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Remove submodule
-        run: |
-          rm -rf converge-core
-          sed -i '/^[[:space:]]*"converge-core",$/d' Cargo.toml
-          sed -i 's/{ path = "converge-core", version/{ version/' Cargo.toml
 
       - name: Build docs
         run: cargo doc --workspace --no-deps
