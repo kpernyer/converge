@@ -1,0 +1,29 @@
+# Development Dockerfile with cargo-watch for hot reloading
+FROM rust:1.85-slim
+
+WORKDIR /app
+
+# Install development tools
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install cargo-watch for hot reloading
+RUN cargo install cargo-watch
+
+# Copy workspace files (volumes will override in dev)
+COPY Cargo.toml Cargo.lock ./
+COPY converge-core ./converge-core
+COPY converge-domain ./converge-domain
+COPY converge-provider ./converge-provider
+COPY converge-runtime ./converge-runtime
+COPY converge-tool ./converge-tool
+
+# Build dependencies first (cached layer)
+RUN cargo build -p converge-runtime --features gcp 2>/dev/null || true
+
+# Default: run with cargo-watch for hot reloading
+# Watches for changes and rebuilds automatically
+CMD ["cargo", "watch", "-x", "run -p converge-runtime --features gcp"]

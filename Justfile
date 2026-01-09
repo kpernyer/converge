@@ -12,7 +12,54 @@ default:
     @just --list
 
 # ============================================
-# Development
+# Local Development (Docker Compose)
+# ============================================
+
+# Start local development environment (Firestore emulator)
+dev-up:
+    docker compose up -d firebase
+    @echo "✓ Firestore emulator running at http://localhost:8080"
+    @echo "✓ Emulator UI at http://localhost:4000"
+
+# Start full local environment (emulator + runtime)
+dev-up-full:
+    docker compose --profile full up -d
+    @echo "✓ Full development environment running"
+    @echo "✓ Firestore: http://localhost:8080"
+    @echo "✓ Runtime: http://localhost:3000"
+    @echo "✓ Emulator UI: http://localhost:4000"
+
+# Stop local development environment
+dev-down:
+    docker compose --profile full down
+
+# View development logs
+dev-logs:
+    docker compose logs -f
+
+# Run runtime locally with emulator
+dev-run:
+    FIRESTORE_EMULATOR_HOST=localhost:8080 \
+    LOCAL_DEV=true \
+    GCP_PROJECT_ID=demo-converge \
+    RUST_LOG=debug \
+    cargo run -p converge-runtime --features gcp
+
+# Run runtime with hot reload (requires cargo-watch)
+dev-watch:
+    FIRESTORE_EMULATOR_HOST=localhost:8080 \
+    LOCAL_DEV=true \
+    GCP_PROJECT_ID=demo-converge \
+    RUST_LOG=debug \
+    cargo watch -x "run -p converge-runtime --features gcp"
+
+# Clean up development volumes
+dev-clean:
+    docker compose --profile full down -v
+    @echo "✓ Development volumes removed"
+
+# ============================================
+# Development Checks
 # ============================================
 
 # Run all pre-push checks (fmt, clippy, test, doc)
