@@ -76,11 +76,24 @@ pub struct TuiConfig {
 
 impl Config {
     /// Load configuration from environment and files.
+    ///
+    /// Environment variables:
+    /// - `HTTP_PORT` or `PORT` - HTTP server port (default: 8080)
+    /// - `HTTP_BIND` - Full bind address (default: 0.0.0.0:8080)
     pub fn load() -> anyhow::Result<Self> {
-        // TODO: Use config crate for layered configuration
-        // For now, use defaults
+        let http_bind = if let Ok(bind) = std::env::var("HTTP_BIND") {
+            bind.parse()?
+        } else if let Ok(port) = std::env::var("HTTP_PORT").or_else(|_| std::env::var("PORT")) {
+            format!("0.0.0.0:{}", port).parse()?
+        } else {
+            "0.0.0.0:8080".parse()?
+        };
+
         Ok(Self {
-            http: HttpConfig::default(),
+            http: HttpConfig {
+                bind: http_bind,
+                ..HttpConfig::default()
+            },
         })
     }
 }
