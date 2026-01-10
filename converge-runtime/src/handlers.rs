@@ -652,6 +652,91 @@ pub async fn run_job(
     }
 }
 
+/// Response from cancelling a job.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct CancelJobResponse {
+    /// Job ID.
+    pub id: String,
+    /// Final job status.
+    pub status: String,
+    /// Cancelled timestamp.
+    pub cancelled_at: String,
+}
+
+/// Cancel a pending or running job.
+///
+/// Cancels a job that hasn't completed yet.
+#[utoipa::path(
+    post,
+    path = "/api/v1/store/jobs/{job_id}/cancel",
+    tag = "store",
+    params(
+        ("job_id" = String, Path, description = "Job ID to cancel")
+    ),
+    responses(
+        (status = 200, description = "Job cancelled", body = CancelJobResponse),
+        (status = 404, description = "Job not found", body = RuntimeError),
+        (status = 409, description = "Job already completed", body = RuntimeError),
+        (status = 503, description = "Database not available", body = RuntimeError),
+        (status = 500, description = "Internal server error", body = RuntimeError)
+    )
+)]
+#[axum::debug_handler]
+pub async fn cancel_job(
+    State(state): State<AppState>,
+    Path(job_id): Path<String>,
+) -> Result<Json<CancelJobResponse>, RuntimeError> {
+    info!(job_id = %job_id, "Cancelling job");
+
+    #[cfg(feature = "gcp")]
+    {
+        use crate::db::JobStatus;
+
+        let db = state.db.as_ref().ok_or_else(|| {
+            RuntimeError::Config("Database not available".to_string())
+        })?;
+
+        // Get the job
+        let mut job = db.jobs.get(&job_id).await.map_err(|e| {
+            RuntimeError::Config(format!("Failed to get job: {e}"))
+        })?.ok_or_else(|| RuntimeError::NotFound(format!("Job {job_id} not found")))?;
+
+        // Check job can be cancelled (pending or running)
+        match job.status {
+            JobStatus::Pending | JobStatus::Running => {}
+            _ => {
+                return Err(RuntimeError::Conflict(format!(
+                    "Job {} cannot be cancelled (status: {:?})",
+                    job_id, job.status
+                )));
+            }
+        }
+
+        // Cancel the job
+        job.cancel();
+        db.jobs.update(&job_id, &job).await.map_err(|e| {
+            RuntimeError::Config(format!("Failed to update job: {e}"))
+        })?;
+
+        info!(job_id = %job_id, "Job cancelled");
+
+        Ok(Json(CancelJobResponse {
+            id: job_id,
+            status: "cancelled".to_string(),
+            cancelled_at: job.completed_at.map(|t| t.to_rfc3339()).unwrap_or_default(),
+        }))
+    }
+
+    #[cfg(not(feature = "gcp"))]
+    {
+        let _ = state;
+        let _ = job_id;
+        Err(RuntimeError::Config(
+            "Firestore not available (compile with --features gcp)".to_string(),
+        ))
+    }
+}
+
 /// List jobs for a user.
 ///
 /// Lists recent jobs for a user from Firestore.
@@ -724,6 +809,7 @@ pub fn router(state: AppState) -> Router<()> {
         .route("/api/v1/store/jobs", post(create_job))
         .route("/api/v1/store/jobs/:job_id", get(get_job))
         .route("/api/v1/store/jobs/:job_id/run", post(run_job))
+        .route("/api/v1/store/jobs/:job_id/cancel", post(cancel_job))
         .route("/api/v1/store/users/:user_id/jobs", get(list_user_jobs))
         .with_state(state)
 }
