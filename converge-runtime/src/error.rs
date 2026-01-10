@@ -33,6 +33,10 @@ pub enum RuntimeError {
     /// Configuration error.
     #[error("configuration error: {0}")]
     Config(String),
+
+    /// Resource not found.
+    #[error("not found: {0}")]
+    NotFound(String),
 }
 
 /// Error response for API.
@@ -80,6 +84,10 @@ impl axum::response::IntoResponse for RuntimeError {
             RuntimeError::Config(msg) => (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Configuration error: {msg}"),
+            ),
+            RuntimeError::NotFound(msg) => (
+                axum::http::StatusCode::NOT_FOUND,
+                format!("Not found: {msg}"),
             ),
         };
 

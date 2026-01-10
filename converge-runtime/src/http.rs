@@ -18,16 +18,18 @@ use crate::api::ApiDoc;
 use crate::config::HttpConfig;
 use crate::error::RuntimeError;
 use crate::handlers;
+use crate::state::AppState;
 
 /// HTTP server for Converge Runtime.
 pub struct HttpServer {
     config: HttpConfig,
+    state: AppState,
 }
 
 impl HttpServer {
     /// Create a new HTTP server.
-    pub fn new(config: HttpConfig) -> Self {
-        Self { config }
+    pub fn new(config: HttpConfig, state: AppState) -> Self {
+        Self { config, state }
     }
 
     /// Start the HTTP server.
@@ -37,7 +39,7 @@ impl HttpServer {
 
         // Build router with middleware and OpenAPI docs
         let app = Router::new()
-            .merge(handlers::router())
+            .merge(handlers::router(self.state))
             .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
             .layer(
                 ServiceBuilder::new()

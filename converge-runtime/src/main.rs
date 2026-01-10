@@ -24,6 +24,7 @@ mod error;
 mod grpc;
 mod handlers;
 mod http;
+mod state;
 mod tui;
 
 #[cfg(feature = "gcp")]
@@ -32,11 +33,12 @@ mod db;
 mod gcp;
 
 use anyhow::Result;
-use tracing::info;
+use tracing::{info, warn};
 use tracing_subscriber::EnvFilter;
 
 use self::config::Config;
 use self::http::HttpServer;
+use self::state::AppState;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -54,8 +56,29 @@ async fn main() -> Result<()> {
     let config = Config::load()?;
     info!(?config, "Configuration loaded");
 
+    // Initialize application state
+    #[cfg(feature = "gcp")]
+    let app_state = {
+        let gcp_config = gcp::GcpConfig::from_env();
+        info!(local_dev = gcp_config.is_local(), "GCP configuration loaded");
+
+        match db::Database::new(gcp_config).await {
+            Ok(database) => {
+                info!("Database connection established");
+                AppState::with_database(database)
+            }
+            Err(e) => {
+                warn!(error = %e, "Failed to connect to database, running without persistence");
+                AppState::new()
+            }
+        }
+    };
+
+    #[cfg(not(feature = "gcp"))]
+    let app_state = AppState::new();
+
     // Start HTTP server (always enabled)
-    let http_server = HttpServer::new(config.http.clone());
+    let http_server = HttpServer::new(config.http.clone(), app_state);
     let http_handle = tokio::spawn(async move {
         if let Err(e) = http_server.start().await {
             tracing::error!(error = %e, "HTTP server failed");
