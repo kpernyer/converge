@@ -41,7 +41,7 @@ services:
       dockerfile: docker/Dockerfile.dev
     container_name: converge-runtime
     ports:
-      - "3000:3000"
+      - "3000:3000"   # Runtime API
     environment:
       - RUST_LOG=debug
       - LOCAL_DEV=true

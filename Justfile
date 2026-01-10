@@ -37,11 +37,12 @@ dev-down:
 dev-logs:
     docker compose logs -f
 
-# Run runtime locally with emulator
+# Run runtime locally with emulator (port 3000 to avoid conflict with Firestore on 8080)
 dev-run:
     FIRESTORE_EMULATOR_HOST=localhost:8080 \
     LOCAL_DEV=true \
     GCP_PROJECT_ID=demo-converge \
+    HTTP_PORT=3000 \
     RUST_LOG=debug \
     cargo run -p converge-runtime --features gcp
 
@@ -50,6 +51,7 @@ dev-watch:
     FIRESTORE_EMULATOR_HOST=localhost:8080 \
     LOCAL_DEV=true \
     GCP_PROJECT_ID=demo-converge \
+    HTTP_PORT=3000 \
     RUST_LOG=debug \
     cargo watch -x "run -p converge-runtime --features gcp"
 
