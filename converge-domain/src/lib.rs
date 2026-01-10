@@ -20,25 +20,33 @@
 //! - [`catalog_enrichment`]: Catalog update and enrichment from multiple feeds
 //! - [`crm_account_health`]: CRM account health and growth strategy
 //! - [`compliance_monitoring`]: Continuous compliance monitoring
+//! - [`hr_policy_alignment`]: HR policy alignment and organizational understanding
+//! - [`sdr_sales`]: SDR sales qualification and outreach
 
 pub mod catalog_enrichment;
 pub mod compliance_monitoring;
 pub mod crm_account_health;
+pub mod eval_agent;
+pub mod evals;
 pub mod growth_strategy;
+pub mod hr_policy_alignment;
 pub mod inventory_rebalancing;
 pub mod meeting_scheduler;
 pub mod release_readiness;
 pub mod resource_routing;
+pub mod sdr_sales;
 pub mod strategic_sourcing;
 pub mod supply_chain;
 
 pub mod llm_utils;
+pub mod retrieval;
 
 // LLM-enabled versions of use cases
 pub mod catalog_enrichment_llm;
 pub mod compliance_monitoring_llm;
 pub mod crm_account_health_llm;
 pub mod growth_strategy_llm;
+pub mod hr_policy_alignment_llm;
 pub mod inventory_rebalancing_llm;
 pub mod meeting_scheduler_llm;
 pub mod strategic_sourcing_llm;
@@ -184,4 +192,37 @@ pub use compliance_monitoring::{
     RequireEvidenceForAllRegulations,
     RequireRemediationPlans,
     ViolationDetectorAgent,
+};
+
+pub use hr_policy_alignment::{
+    // Agents
+    AcknowledgementTrackingAgent,
+    AlignmentStatusAgent,
+    EscalationAgent,
+    ManagerFollowUpAgent,
+    MeetingCompletionAgent,
+    PolicyDistributionAgent,
+    UnderstandingSignalAgent,
+    // Invariants
+    RequireAllAcknowledgements,
+    RequireHighRiskRoleConfirmation,
+    RequireManagerFollowUp,
+};
+
+pub use sdr_sales::{
+    // Agents
+    ChannelDecisionAgent,
+    FitEvidenceAgent,
+    MarketScanAgent,
+    MessageHypothesisAgent,
+    NeedEvidenceAgent,
+    RiskEvidenceAgent,
+    SignalExtractionAgent,
+    TimingEvidenceAgent,
+    // Note: DeduplicationAgent is exported from catalog_enrichment, not sdr_sales
+    // Invariants
+    RequireExplicitQualification,
+    RequireMessageStrategy,
+    RequireQualificationEvidence,
+    RequireValidICP,
 };
