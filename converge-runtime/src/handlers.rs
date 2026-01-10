@@ -497,6 +497,161 @@ pub async fn get_job(
     }
 }
 
+/// Response from running a job.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct RunJobResponse {
+    /// Job ID.
+    pub id: String,
+    /// Final job status.
+    pub status: String,
+    /// Number of cycles executed.
+    pub cycles: u32,
+    /// Whether convergence was reached.
+    pub converged: bool,
+    /// Execution duration in milliseconds.
+    pub duration_ms: Option<u64>,
+    /// Error message (if failed).
+    pub error: Option<String>,
+}
+
+/// Run a pending job.
+///
+/// Executes a pending job through the Converge engine and updates its status.
+#[utoipa::path(
+    post,
+    path = "/api/v1/store/jobs/{job_id}/run",
+    tag = "store",
+    params(
+        ("job_id" = String, Path, description = "Job ID to run")
+    ),
+    responses(
+        (status = 200, description = "Job completed", body = RunJobResponse),
+        (status = 404, description = "Job not found", body = RuntimeError),
+        (status = 409, description = "Job not in pending state", body = RuntimeError),
+        (status = 503, description = "Database not available", body = RuntimeError),
+        (status = 500, description = "Internal server error", body = RuntimeError)
+    )
+)]
+#[axum::debug_handler]
+pub async fn run_job(
+    State(state): State<AppState>,
+    Path(job_id): Path<String>,
+) -> Result<Json<RunJobResponse>, RuntimeError> {
+    info!(job_id = %job_id, "Running job");
+
+    #[cfg(feature = "gcp")]
+    {
+        use crate::db::JobStatus;
+
+        let db = state.db.as_ref().ok_or_else(|| {
+            RuntimeError::Config("Database not available".to_string())
+        })?;
+
+        // Get the job
+        let mut job = db.jobs.get(&job_id).await.map_err(|e| {
+            RuntimeError::Config(format!("Failed to get job: {e}"))
+        })?.ok_or_else(|| RuntimeError::NotFound(format!("Job {job_id} not found")))?;
+
+        // Check job is pending
+        if job.status != JobStatus::Pending {
+            return Err(RuntimeError::Conflict(format!(
+                "Job {} is not pending (status: {:?})",
+                job_id, job.status
+            )));
+        }
+
+        // Mark as running
+        job.start();
+        db.jobs.update(&job_id, &job).await.map_err(|e| {
+            RuntimeError::Config(format!("Failed to update job: {e}"))
+        })?;
+
+        info!(job_id = %job_id, "Job started");
+
+        // Run the engine
+        let seeds = job.seeds.clone();
+        let max_cycles = job.max_cycles;
+
+        let result = task::spawn_blocking(move || {
+            use converge_core::Budget;
+
+            let budget = Budget {
+                max_cycles,
+                ..Budget::default()
+            };
+            let mut engine = Engine::with_budget(budget);
+
+            // TODO: Register agents based on job configuration
+            // For now, create a minimal engine
+
+            // Create context from seeds
+            let _seeds = seeds;
+            let context = Context::new();
+
+            // Run engine
+            engine.run(context)
+        })
+        .await
+        .map_err(|e| RuntimeError::Config(format!("Task join error: {e}")))?;
+
+        // Update job based on result
+        match result {
+            Ok(run_result) => {
+                // Build context summary for storage
+                let context_summary: std::collections::HashMap<String, usize> = ContextKey::iter()
+                    .map(|key| {
+                        let count = run_result.context.get(key).len();
+                        (format!("{key:?}"), count)
+                    })
+                    .collect();
+
+                job.complete(serde_json::to_value(&context_summary).unwrap_or_default(), run_result.cycles);
+                db.jobs.update(&job_id, &job).await.map_err(|e| {
+                    RuntimeError::Config(format!("Failed to update job: {e}"))
+                })?;
+
+                info!(job_id = %job_id, cycles = run_result.cycles, "Job converged");
+
+                Ok(Json(RunJobResponse {
+                    id: job_id,
+                    status: "converged".to_string(),
+                    cycles: run_result.cycles,
+                    converged: run_result.converged,
+                    duration_ms: job.duration_ms,
+                    error: None,
+                }))
+            }
+            Err(e) => {
+                let error_msg = format!("{e}");
+                job.fail(&error_msg);
+                db.jobs.update(&job_id, &job).await.map_err(|e| {
+                    RuntimeError::Config(format!("Failed to update job: {e}"))
+                })?;
+
+                warn!(job_id = %job_id, error = %error_msg, "Job failed");
+
+                Ok(Json(RunJobResponse {
+                    id: job_id,
+                    status: "failed".to_string(),
+                    cycles: job.cycles,
+                    converged: false,
+                    duration_ms: job.duration_ms,
+                    error: Some(error_msg),
+                }))
+            }
+        }
+    }
+
+    #[cfg(not(feature = "gcp"))]
+    {
+        let _ = state;
+        let _ = job_id;
+        Err(RuntimeError::Config(
+            "Firestore not available (compile with --features gcp)".to_string(),
+        ))
+    }
+}
+
 /// List jobs for a user.
 ///
 /// Lists recent jobs for a user from Firestore.
@@ -568,6 +723,7 @@ pub fn router(state: AppState) -> Router<()> {
         // Firestore-backed endpoints
         .route("/api/v1/store/jobs", post(create_job))
         .route("/api/v1/store/jobs/:job_id", get(get_job))
+        .route("/api/v1/store/jobs/:job_id/run", post(run_job))
         .route("/api/v1/store/users/:user_id/jobs", get(list_user_jobs))
         .with_state(state)
 }

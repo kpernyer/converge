@@ -37,6 +37,10 @@ pub enum RuntimeError {
     /// Resource not found.
     #[error("not found: {0}")]
     NotFound(String),
+
+    /// Conflict (e.g., job not in expected state).
+    #[error("conflict: {0}")]
+    Conflict(String),
 }
 
 /// Error response for API.
@@ -88,6 +92,10 @@ impl axum::response::IntoResponse for RuntimeError {
             RuntimeError::NotFound(msg) => (
                 axum::http::StatusCode::NOT_FOUND,
                 format!("Not found: {msg}"),
+            ),
+            RuntimeError::Conflict(msg) => (
+                axum::http::StatusCode::CONFLICT,
+                format!("Conflict: {msg}"),
             ),
         };
 
