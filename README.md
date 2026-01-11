@@ -31,6 +31,43 @@ Converge replaces:
 
 ---
 
+## Repository Structure
+
+This repository uses git submodules for clean separation of concerns:
+
+```
+converge/
+├── converge-core/      → github.com/kpernyer/converge-core
+├── converge-provider/  → github.com/kpernyer/converge-provider
+├── converge-domain/    → github.com/kpernyer/converge-domain
+├── converge-runtime/   (inline - HTTP API server)
+└── converge-tool/      (inline - development tools)
+```
+
+### Clone with Submodules
+
+```bash
+git clone --recurse-submodules https://github.com/kpernyer/converge.git
+```
+
+Or if already cloned:
+
+```bash
+git submodule update --init --recursive
+```
+
+---
+
+## Crates
+
+| Crate | Version | Description |
+|-------|---------|-------------|
+| [converge-core](https://crates.io/crates/converge-core) | 0.6.0 | Runtime engine, agent traits, capability abstractions |
+| [converge-provider](https://crates.io/crates/converge-provider) | 0.2.2 | 14+ LLM providers, model selection, vector stores |
+| [converge-domain](https://crates.io/crates/converge-domain) | 0.2.2 | 12 business use cases with deterministic + LLM variants |
+
+---
+
 ## Core Concepts
 
 - **Root Intent:** the scope and goal of execution
@@ -80,21 +117,17 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-converge-core = "0.4"
+converge-core = "0.6"
+converge-provider = "0.2"  # Optional: LLM providers
+converge-domain = "0.2"    # Optional: Business use cases
 ```
 
 Or use cargo:
 
 ```bash
 cargo add converge-core
-```
-
-### Additional Crates
-
-```bash
 cargo add converge-provider  # LLM providers (Anthropic, OpenAI, etc.)
-cargo add converge-domain    # Domain-specific agents
-cargo add converge-tool      # Development tools (Gherkin validation)
+cargo add converge-domain    # Domain-specific agents (12 use cases)
 ```
 
 ---
@@ -102,24 +135,94 @@ cargo add converge-tool      # Development tools (Gherkin validation)
 ## Quick Start
 
 ```rust
-use converge_core::{Context, ContextKey, Fact};
+use converge_core::{Context, ContextKey, Fact, Engine, Agent, AgentEffect};
 
-fn main() {
-    let mut ctx = Context::new();
+// Define a simple agent
+struct GreetingAgent;
 
-    // Create a fact using the new() constructor
-    let fact = Fact::new(ContextKey::Seeds, "greeting", "Hello from Converge!");
+impl Agent for GreetingAgent {
+    fn name(&self) -> &str { "greeting" }
+    fn dependencies(&self) -> &[ContextKey] { &[ContextKey::Seeds] }
 
-    ctx.add_fact(fact).expect("should add");
-
-    let facts = ctx.get(ContextKey::Seeds);
-    for f in facts {
-        println!("Content: {}", f.content);
+    fn accepts(&self, ctx: &Context) -> bool {
+        ctx.has(ContextKey::Seeds) && !ctx.has(ContextKey::Signals)
     }
 
-    println!("Context version: {}", ctx.version());
+    fn execute(&self, _ctx: &Context) -> AgentEffect {
+        AgentEffect::with_fact(Fact::new(
+            ContextKey::Signals,
+            "greeting-response",
+            "Hello from Converge!",
+        ))
+    }
+}
+
+fn main() {
+    // Create engine and register agent
+    let mut engine = Engine::new();
+    engine.register(GreetingAgent);
+
+    // Create initial context with seed
+    let mut ctx = Context::new();
+    ctx.add_fact(Fact::new(ContextKey::Seeds, "input", "Start")).unwrap();
+
+    // Run to convergence
+    let result = engine.run(ctx).expect("should converge");
+
+    println!("Converged in {} cycles", result.cycles);
+    for fact in result.context.get(ContextKey::Signals) {
+        println!("Signal: {}", fact.content);
+    }
 }
 ```
+
+---
+
+## Business Use Cases (converge-domain)
+
+The domain crate includes 12 production-ready use cases:
+
+1. **Growth Strategy** - Market analysis and strategy development
+2. **Meeting Scheduler** - Calendar coordination with constraints
+3. **Resource Routing** - Task-resource matching and optimization
+4. **Release Readiness** - Engineering quality gates
+5. **Supply Chain** - Multi-warehouse routing and forecasting
+6. **Inventory Rebalancing** - Cross-region transfers
+7. **Strategic Sourcing** - Vendor assessment and negotiation
+8. **Catalog Enrichment** - Product deduplication and validation
+9. **CRM Account Health** - Churn risk and upsell identification
+10. **Compliance Monitoring** - Regulation parsing and violation detection
+11. **HR Policy Alignment** - Policy distribution with understanding signals
+12. **SDR Sales** - Sales qualification funnel
+
+Each use case includes:
+- Deterministic base agents
+- Optional LLM-enhanced variants
+- Invariant definitions
+- Comprehensive tests
+
+---
+
+## LLM Providers (converge-provider)
+
+Supported providers:
+- **Anthropic** (Claude)
+- **OpenAI** (GPT-4)
+- **Google Gemini**
+- **Alibaba Qwen**
+- **DeepSeek**
+- **Mistral**
+- **xAI Grok**
+- **Perplexity**
+- **OpenRouter**
+- **Ollama** (local)
+- And more...
+
+Features:
+- Cost/latency/quality-aware model selection
+- YAML-based model registry
+- Vector stores (in-memory, LanceDB)
+- Embedding and reranking capabilities
 
 ---
 
