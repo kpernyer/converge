@@ -203,7 +203,8 @@ impl JobRepository {
 
     /// Get a job by ID
     pub async fn get(&self, id: &str) -> Result<Option<Job>, FirestoreError> {
-        Ok(self.db
+        Ok(self
+            .db
             .fluent()
             .select()
             .by_id_in(&self.collection)
@@ -217,7 +218,8 @@ impl JobRepository {
         let mut updated = job.clone();
         updated.updated_at = Utc::now();
 
-        let _: Job = self.db
+        let _: Job = self
+            .db
             .fluent()
             .update()
             .in_col(&self.collection)
@@ -246,7 +248,8 @@ impl JobRepository {
         user_id: &str,
         limit: u32,
     ) -> Result<Vec<Job>, FirestoreError> {
-        Ok(self.db
+        Ok(self
+            .db
             .fluent()
             .select()
             .from(self.collection.as_str())
@@ -272,7 +275,8 @@ impl JobRepository {
             JobStatus::Cancelled => "cancelled",
         };
 
-        Ok(self.db
+        Ok(self
+            .db
             .fluent()
             .select()
             .from(self.collection.as_str())

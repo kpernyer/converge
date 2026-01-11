@@ -4,7 +4,7 @@
 //! authentication using Application Default Credentials.
 
 use firestore::*;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 use super::GcpConfig;
@@ -77,7 +77,8 @@ impl FirestoreClient {
         collection: &str,
         id: &str,
     ) -> Result<T, FirestoreError> {
-        let doc: Option<T> = self.db
+        let doc: Option<T> = self
+            .db
             .fluent()
             .select()
             .by_id_in(collection)
@@ -97,7 +98,8 @@ impl FirestoreClient {
         collection: &str,
         id: &str,
     ) -> Result<Option<T>, FirestoreError> {
-        Ok(self.db
+        Ok(self
+            .db
             .fluent()
             .select()
             .by_id_in(collection)
@@ -113,7 +115,8 @@ impl FirestoreClient {
         id: &str,
         data: &T,
     ) -> Result<(), FirestoreError> {
-        let _: T = self.db
+        let _: T = self
+            .db
             .fluent()
             .update()
             .in_col(collection)
@@ -131,7 +134,8 @@ impl FirestoreClient {
         id: &str,
         data: &T,
     ) -> Result<(), FirestoreError> {
-        let _: T = self.db
+        let _: T = self
+            .db
             .fluent()
             .update()
             .in_col(collection)
@@ -168,7 +172,6 @@ impl FirestoreClient {
 
         Ok(query.obj().query().await?)
     }
-
 }
 
 #[cfg(test)]

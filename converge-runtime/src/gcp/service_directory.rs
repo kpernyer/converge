@@ -115,7 +115,8 @@ impl ServiceDirectory {
             Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
         } else {
             Err(ServiceDirectoryError::Auth(
-                "Failed to get access token. Run 'gcloud auth application-default login'".to_string(),
+                "Failed to get access token. Run 'gcloud auth application-default login'"
+                    .to_string(),
             ))
         }
     }
@@ -156,7 +157,8 @@ impl ServiceDirectory {
             self.base_url, self.config.service_name
         );
 
-        let response = self.client
+        let response = self
+            .client
             .patch(&url)
             .bearer_auth(&token)
             .json(&endpoint)
@@ -192,7 +194,8 @@ impl ServiceDirectory {
             self.base_url, self.config.service_name
         );
 
-        let response = self.client
+        let response = self
+            .client
             .post(&url)
             .bearer_auth(token)
             .json(endpoint)
@@ -235,11 +238,7 @@ impl ServiceDirectory {
             self.base_url, self.config.service_name
         );
 
-        let response = self.client
-            .delete(&url)
-            .bearer_auth(&token)
-            .send()
-            .await?;
+        let response = self.client.delete(&url).bearer_auth(&token).send().await?;
 
         if response.status().is_success() || response.status().as_u16() == 404 {
             info!(service = %self.config.service_name, "Deregistered from Service Directory");
@@ -285,11 +284,7 @@ impl ServiceDirectory {
 
         let url = format!("{}/services/{}", self.base_url, service_name);
 
-        let response = self.client
-            .get(&url)
-            .bearer_auth(&token)
-            .send()
-            .await?;
+        let response = self.client.get(&url).bearer_auth(&token).send().await?;
 
         if response.status().is_success() {
             let info: ServiceInfo = response.json().await?;
@@ -309,11 +304,7 @@ impl ServiceDirectory {
 
         let url = format!("{}/services", self.base_url);
 
-        let response = self.client
-            .get(&url)
-            .bearer_auth(&token)
-            .send()
-            .await?;
+        let response = self.client.get(&url).bearer_auth(&token).send().await?;
 
         if response.status().is_success() {
             #[derive(Deserialize)]

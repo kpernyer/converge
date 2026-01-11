@@ -93,10 +93,9 @@ impl axum::response::IntoResponse for RuntimeError {
                 axum::http::StatusCode::NOT_FOUND,
                 format!("Not found: {msg}"),
             ),
-            RuntimeError::Conflict(msg) => (
-                axum::http::StatusCode::CONFLICT,
-                format!("Conflict: {msg}"),
-            ),
+            RuntimeError::Conflict(msg) => {
+                (axum::http::StatusCode::CONFLICT, format!("Conflict: {msg}"))
+            }
         };
 
         let body = RuntimeErrorResponse {

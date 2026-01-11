@@ -60,7 +60,10 @@ async fn main() -> Result<()> {
     #[cfg(feature = "gcp")]
     let app_state = {
         let gcp_config = gcp::GcpConfig::from_env();
-        info!(local_dev = gcp_config.is_local(), "GCP configuration loaded");
+        info!(
+            local_dev = gcp_config.is_local(),
+            "GCP configuration loaded"
+        );
 
         match db::Database::new(gcp_config).await {
             Ok(database) => {

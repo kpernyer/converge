@@ -9,8 +9,8 @@ use utoipa::OpenApi;
 
 use crate::error::RuntimeErrorResponse;
 use crate::handlers::{
-    ContextSummary, JobMetadata, JobRequest, JobResponse,
-    ValidateRulesRequest, ValidateRulesResponse, ValidationIssueResponse,
+    ContextSummary, JobMetadata, JobRequest, JobResponse, ValidateRulesRequest,
+    ValidateRulesResponse, ValidationIssueResponse,
 };
 
 /// `OpenAPI` schema for Converge Runtime API.

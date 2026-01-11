@@ -256,7 +256,10 @@ pub async fn validate_rules(
     info!(use_llm = request.use_llm, "Validating Converge Rules");
 
     let content = request.content.clone();
-    let file_name = request.file_name.clone().unwrap_or_else(|| "rules.feature".to_string());
+    let file_name = request
+        .file_name
+        .clone()
+        .unwrap_or_else(|| "rules.feature".to_string());
     let use_llm = request.use_llm;
 
     // Drop the span guard before await
@@ -404,17 +407,20 @@ pub async fn create_job(
     {
         use crate::db::{Job, JobStatus};
 
-        let db = state.db.as_ref().ok_or_else(|| {
-            RuntimeError::Config("Database not available".to_string())
-        })?;
+        let db = state
+            .db
+            .as_ref()
+            .ok_or_else(|| RuntimeError::Config("Database not available".to_string()))?;
 
         // Create job record
         let mut job = Job::new(&request.user_id);
         job.seeds = request.seeds;
 
-        let job_id = db.jobs.create(&job).await.map_err(|e| {
-            RuntimeError::Config(format!("Failed to create job: {e}"))
-        })?;
+        let job_id = db
+            .jobs
+            .create(&job)
+            .await
+            .map_err(|e| RuntimeError::Config(format!("Failed to create job: {e}")))?;
 
         info!(job_id = %job_id, "Job created in Firestore");
 
@@ -464,13 +470,16 @@ pub async fn get_job(
 
     #[cfg(feature = "gcp")]
     {
-        let db = state.db.as_ref().ok_or_else(|| {
-            RuntimeError::Config("Database not available".to_string())
-        })?;
+        let db = state
+            .db
+            .as_ref()
+            .ok_or_else(|| RuntimeError::Config("Database not available".to_string()))?;
 
-        let job = db.jobs.get(&job_id).await.map_err(|e| {
-            RuntimeError::Config(format!("Failed to get job: {e}"))
-        })?;
+        let job = db
+            .jobs
+            .get(&job_id)
+            .await
+            .map_err(|e| RuntimeError::Config(format!("Failed to get job: {e}")))?;
 
         let job = job.ok_or_else(|| RuntimeError::NotFound(format!("Job {job_id} not found")))?;
 
@@ -543,14 +552,18 @@ pub async fn run_job(
     {
         use crate::db::JobStatus;
 
-        let db = state.db.as_ref().ok_or_else(|| {
-            RuntimeError::Config("Database not available".to_string())
-        })?;
+        let db = state
+            .db
+            .as_ref()
+            .ok_or_else(|| RuntimeError::Config("Database not available".to_string()))?;
 
         // Get the job
-        let mut job = db.jobs.get(&job_id).await.map_err(|e| {
-            RuntimeError::Config(format!("Failed to get job: {e}"))
-        })?.ok_or_else(|| RuntimeError::NotFound(format!("Job {job_id} not found")))?;
+        let mut job = db
+            .jobs
+            .get(&job_id)
+            .await
+            .map_err(|e| RuntimeError::Config(format!("Failed to get job: {e}")))?
+            .ok_or_else(|| RuntimeError::NotFound(format!("Job {job_id} not found")))?;
 
         // Check job is pending
         if job.status != JobStatus::Pending {
@@ -562,9 +575,10 @@ pub async fn run_job(
 
         // Mark as running
         job.start();
-        db.jobs.update(&job_id, &job).await.map_err(|e| {
-            RuntimeError::Config(format!("Failed to update job: {e}"))
-        })?;
+        db.jobs
+            .update(&job_id, &job)
+            .await
+            .map_err(|e| RuntimeError::Config(format!("Failed to update job: {e}")))?;
 
         info!(job_id = %job_id, "Job started");
 
@@ -605,10 +619,14 @@ pub async fn run_job(
                     })
                     .collect();
 
-                job.complete(serde_json::to_value(&context_summary).unwrap_or_default(), run_result.cycles);
-                db.jobs.update(&job_id, &job).await.map_err(|e| {
-                    RuntimeError::Config(format!("Failed to update job: {e}"))
-                })?;
+                job.complete(
+                    serde_json::to_value(&context_summary).unwrap_or_default(),
+                    run_result.cycles,
+                );
+                db.jobs
+                    .update(&job_id, &job)
+                    .await
+                    .map_err(|e| RuntimeError::Config(format!("Failed to update job: {e}")))?;
 
                 info!(job_id = %job_id, cycles = run_result.cycles, "Job converged");
 
@@ -624,9 +642,10 @@ pub async fn run_job(
             Err(e) => {
                 let error_msg = format!("{e}");
                 job.fail(&error_msg);
-                db.jobs.update(&job_id, &job).await.map_err(|e| {
-                    RuntimeError::Config(format!("Failed to update job: {e}"))
-                })?;
+                db.jobs
+                    .update(&job_id, &job)
+                    .await
+                    .map_err(|e| RuntimeError::Config(format!("Failed to update job: {e}")))?;
 
                 warn!(job_id = %job_id, error = %error_msg, "Job failed");
 
@@ -692,14 +711,18 @@ pub async fn cancel_job(
     {
         use crate::db::JobStatus;
 
-        let db = state.db.as_ref().ok_or_else(|| {
-            RuntimeError::Config("Database not available".to_string())
-        })?;
+        let db = state
+            .db
+            .as_ref()
+            .ok_or_else(|| RuntimeError::Config("Database not available".to_string()))?;
 
         // Get the job
-        let mut job = db.jobs.get(&job_id).await.map_err(|e| {
-            RuntimeError::Config(format!("Failed to get job: {e}"))
-        })?.ok_or_else(|| RuntimeError::NotFound(format!("Job {job_id} not found")))?;
+        let mut job = db
+            .jobs
+            .get(&job_id)
+            .await
+            .map_err(|e| RuntimeError::Config(format!("Failed to get job: {e}")))?
+            .ok_or_else(|| RuntimeError::NotFound(format!("Job {job_id} not found")))?;
 
         // Check job can be cancelled (pending or running)
         match job.status {
@@ -714,9 +737,10 @@ pub async fn cancel_job(
 
         // Cancel the job
         job.cancel();
-        db.jobs.update(&job_id, &job).await.map_err(|e| {
-            RuntimeError::Config(format!("Failed to update job: {e}"))
-        })?;
+        db.jobs
+            .update(&job_id, &job)
+            .await
+            .map_err(|e| RuntimeError::Config(format!("Failed to update job: {e}")))?;
 
         info!(job_id = %job_id, "Job cancelled");
 
@@ -763,23 +787,27 @@ pub async fn delete_job(
 
     #[cfg(feature = "gcp")]
     {
-        let db = state.db.as_ref().ok_or_else(|| {
-            RuntimeError::Config("Database not available".to_string())
-        })?;
+        let db = state
+            .db
+            .as_ref()
+            .ok_or_else(|| RuntimeError::Config("Database not available".to_string()))?;
 
         // Check job exists
-        let job = db.jobs.get(&job_id).await.map_err(|e| {
-            RuntimeError::Config(format!("Failed to get job: {e}"))
-        })?;
+        let job = db
+            .jobs
+            .get(&job_id)
+            .await
+            .map_err(|e| RuntimeError::Config(format!("Failed to get job: {e}")))?;
 
         if job.is_none() {
             return Err(RuntimeError::NotFound(format!("Job {job_id} not found")));
         }
 
         // Delete the job
-        db.jobs.delete(&job_id).await.map_err(|e| {
-            RuntimeError::Config(format!("Failed to delete job: {e}"))
-        })?;
+        db.jobs
+            .delete(&job_id)
+            .await
+            .map_err(|e| RuntimeError::Config(format!("Failed to delete job: {e}")))?;
 
         info!(job_id = %job_id, "Job deleted");
 
@@ -821,13 +849,16 @@ pub async fn list_user_jobs(
 
     #[cfg(feature = "gcp")]
     {
-        let db = state.db.as_ref().ok_or_else(|| {
-            RuntimeError::Config("Database not available".to_string())
-        })?;
+        let db = state
+            .db
+            .as_ref()
+            .ok_or_else(|| RuntimeError::Config("Database not available".to_string()))?;
 
-        let jobs = db.jobs.list_by_user(&user_id, 50).await.map_err(|e| {
-            RuntimeError::Config(format!("Failed to list jobs: {e}"))
-        })?;
+        let jobs = db
+            .jobs
+            .list_by_user(&user_id, 50)
+            .await
+            .map_err(|e| RuntimeError::Config(format!("Failed to list jobs: {e}")))?;
 
         let response: Vec<GetJobResponse> = jobs
             .into_iter()
@@ -866,7 +897,10 @@ pub fn router(state: AppState) -> Router<()> {
         .route("/api/v1/validate-rules", post(validate_rules))
         // Firestore-backed endpoints
         .route("/api/v1/store/jobs", post(create_job))
-        .route("/api/v1/store/jobs/:job_id", get(get_job).delete(delete_job))
+        .route(
+            "/api/v1/store/jobs/:job_id",
+            get(get_job).delete(delete_job),
+        )
         .route("/api/v1/store/jobs/:job_id/run", post(run_job))
         .route("/api/v1/store/jobs/:job_id/cancel", post(cancel_job))
         .route("/api/v1/store/users/:user_id/jobs", get(list_user_jobs))

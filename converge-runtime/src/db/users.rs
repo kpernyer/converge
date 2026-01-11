@@ -165,7 +165,8 @@ impl UserRepository {
 
     /// Get a user by ID
     pub async fn get(&self, id: &str) -> Result<Option<User>, FirestoreError> {
-        Ok(self.db
+        Ok(self
+            .db
             .fluent()
             .select()
             .by_id_in(&self.collection)
@@ -176,7 +177,8 @@ impl UserRepository {
 
     /// Get a user by email
     pub async fn get_by_email(&self, email: &str) -> Result<Option<User>, FirestoreError> {
-        let users: Vec<User> = self.db
+        let users: Vec<User> = self
+            .db
             .fluent()
             .select()
             .from(self.collection.as_str())
@@ -193,7 +195,8 @@ impl UserRepository {
         let mut updated = user.clone();
         updated.updated_at = Utc::now();
 
-        let _: User = self.db
+        let _: User = self
+            .db
             .fluent()
             .update()
             .in_col(&self.collection)
@@ -249,7 +252,8 @@ impl UserRepository {
 
     /// List all active users
     pub async fn list_active(&self, limit: u32) -> Result<Vec<User>, FirestoreError> {
-        Ok(self.db
+        Ok(self
+            .db
             .fluent()
             .select()
             .from(self.collection.as_str())
