@@ -5,8 +5,6 @@
 
 //! Application state for Converge Runtime.
 
-use std::sync::Arc;
-
 #[cfg(feature = "gcp")]
 use crate::db::Database;
 

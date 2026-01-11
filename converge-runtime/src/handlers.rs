@@ -8,7 +8,7 @@
 use axum::{
     Router,
     extract::{Json, Path, State},
-    routing::{delete, get, post},
+    routing::{get, post},
 };
 use converge_core::{Context, ContextKey, Engine};
 use converge_provider::AnthropicProvider;
