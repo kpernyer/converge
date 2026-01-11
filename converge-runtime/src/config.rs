@@ -84,7 +84,7 @@ impl Config {
         let http_bind = if let Ok(bind) = std::env::var("HTTP_BIND") {
             bind.parse()?
         } else if let Ok(port) = std::env::var("HTTP_PORT").or_else(|_| std::env::var("PORT")) {
-            format!("0.0.0.0:{}", port).parse()?
+            format!("0.0.0.0:{port}").parse()?
         } else {
             "0.0.0.0:8080".parse()?
         };
