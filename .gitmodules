@@ -1,3 +1,6 @@
 [submodule "converge-core"]
 	path = converge-core
 	url = https://github.com/kpernyer/converge-core.git
+[submodule "converge-provider"]
+	path = converge-provider
+	url = https://github.com/kpernyer/converge-provider.git
