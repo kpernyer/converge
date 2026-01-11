@@ -79,12 +79,12 @@ impl Agent for EvalExecutionAgent {
         }
 
         // Idempotency: check if we've already run evals
-        // Look for eval results with our agent name prefix
-        let my_prefix = format!("eval:{}:", self.name);
+        // Look for eval results with our agent name suffix (ID format: "eval:<eval_name>:<agent_name>")
+        let my_suffix = format!(":{}", self.name);
         let has_existing = ctx
             .get(ContextKey::Evaluations)
             .iter()
-            .any(|f| f.id.starts_with(&my_prefix));
+            .any(|f| f.id.ends_with(&my_suffix));
 
         !has_existing
     }
@@ -127,7 +127,7 @@ impl Agent for EvalExecutionAgent {
 mod tests {
     use super::*;
     use converge_core::eval::{Eval, EvalOutcome, EvalResult};
-    use converge_domain::evals::StrategyDiversityEval;
+    use crate::evals::StrategyDiversityEval;
 
     #[test]
     fn eval_agent_executes_registered_evals() {
