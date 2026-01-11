@@ -18,9 +18,9 @@ license = "MIT"
 # Internal crates
 # Both path (local dev) and version (crates.io) specified
 # Cargo uses path when in workspace, version when published
-converge-core = { path = "converge-core", version = "0.6" }
-converge-provider = { path = "converge-provider", version = "0.2.2" }
-converge-domain = { path = "converge-domain", version = "0.2.2" }
+converge-core = { path = "converge-core", version = "0.6.1" }
+converge-provider = { path = "converge-provider", version = "0.2.3" }
+converge-domain = { path = "converge-domain", version = "0.2.3" }
 converge-tool = { path = "converge-tool", version = "0.2" }
 
 # Shared dependencies

@@ -258,6 +258,110 @@ let has_validated = ctx.get(self.target_key)
 - Derive traits intentionally (don't cargo-cult `Clone`, `Debug`)
 - Use `#[non_exhaustive]` for public enums expected to grow
 
+### Configuration and YAML/JSON Parsing (Critical)
+
+**The Canonical Stack:**
+
+Type-safe YAML/JSON parsing in Rust uses **Serde-based schema-validated deserialization**:
+
+1. **serde** — Serialization framework (foundation)
+   ```toml
+   serde = { version = "1.0", features = ["derive"] }
+   ```
+
+2. **serde_yaml** — YAML → Rust types
+   ```toml
+   serde_yaml = "0.9"
+   ```
+
+3. **schemars** — JSON Schema generation for validation & contracts
+   ```toml
+   schemars = "0.8"
+   ```
+
+**Usage Pattern:**
+```rust
+use schemars::JsonSchema;
+use serde::Deserialize;
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]  // CRITICAL: Non-negotiable
+struct Config {
+    timeout_ms: u64,
+    mode: Mode,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+enum Mode {
+    Development,
+    Production,
+}
+
+let cfg: Config = serde_yaml::from_str(yaml_str)?;
+cfg.validate()?;  // Separate validation from parsing
+```
+
+**The Six Rules (Non-Negotiable):**
+
+1. **YAML is a transport, never a logic layer**
+   - No conditionals, expressions, or polymorphic structures
+   - YAML describes data, Rust defines meaning
+
+2. **Every YAML file maps to one Rust root type**
+   - If it can't deserialize into a root type → reject it
+   - No ad-hoc structures
+
+3. **Deny unknown fields everywhere** (CRITICAL)
+   ```rust
+   #[serde(deny_unknown_fields)]
+   ```
+   - Without this: YAML silently accepts extra fields, config drift goes unnoticed
+   - With this: Unknown fields → hard failure, config stays honest
+   - **Rule: If you don't deny unknown fields, you do not have a reliable system**
+
+4. **Use enums for all categorical values**
+   - Never accept `strategy: "fast"` (magic strings)
+   - Always use `enum Strategy { Fast, Safe, Balanced }`
+   - Enforces semantic correctness at parse time
+
+5. **Separate parsing from validation**
+   - **Parsing**: structure, types (Serde handles this)
+   - **Validation**: cross-field rules, invariants, business constraints (explicit `validate()` method)
+   - This mirrors Converge's ProposedFact → Fact model exactly
+
+6. **Fail fast, never auto-correct**
+   - No defaults that hide errors
+   - No silent coercion
+   - No "best effort"
+   - If YAML is wrong → system refuses to start
+
+**Why This Matters:**
+
+With this approach:
+- Config is auditable
+- Changes are explicit
+- Drift is impossible to hide
+- Runtime behavior is predictable
+- Upgrades are safe
+
+**Alignment with Converge:**
+
+This model fits Converge perfectly:
+- YAML = intent declaration
+- Rust types = semantic authority
+- Validation = invariants
+- No runtime surprises
+- No jelly
+
+**One-Sentence Summary:**
+
+In Converge, YAML is parsed via Serde into strongly typed Rust structures with unknown-field denial and schema validation, making configuration a reliable, versioned contract rather than a suggestion.
+
+**Claim:**
+
+"In Converge, configuration errors are compile-time or startup-time failures — never runtime surprises."
+
 ### Async & Concurrency
 
 - Never hold locks across `.await`

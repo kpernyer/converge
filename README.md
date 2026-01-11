@@ -62,9 +62,9 @@ git submodule update --init --recursive
 
 | Crate | Version | Description |
 |-------|---------|-------------|
-| [converge-core](https://crates.io/crates/converge-core) | 0.6.0 | Runtime engine, agent traits, capability abstractions |
-| [converge-provider](https://crates.io/crates/converge-provider) | 0.2.2 | 14+ LLM providers, model selection, vector stores |
-| [converge-domain](https://crates.io/crates/converge-domain) | 0.2.2 | 12 business use cases with deterministic + LLM variants |
+| [converge-core](https://crates.io/crates/converge-core) | 0.6.1 | Runtime engine, agent traits, capability abstractions |
+| [converge-provider](https://crates.io/crates/converge-provider) | 0.2.3 | 14+ LLM providers, model selection, vector stores |
+| [converge-domain](https://crates.io/crates/converge-domain) | 0.2.3 | 12 business use cases with deterministic + LLM variants |
 
 ---
 

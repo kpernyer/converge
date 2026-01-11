@@ -8,7 +8,7 @@
 use axum::{
     Router,
     extract::{Json, Path, State},
-    routing::{get, post},
+    routing::{delete, get, post},
 };
 use converge_core::{Context, ContextKey, Engine};
 use converge_provider::AnthropicProvider;
@@ -737,6 +737,65 @@ pub async fn cancel_job(
     }
 }
 
+/// Delete a job.
+///
+/// Permanently deletes a job from Firestore.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/store/jobs/{job_id}",
+    tag = "store",
+    params(
+        ("job_id" = String, Path, description = "Job ID to delete")
+    ),
+    responses(
+        (status = 204, description = "Job deleted"),
+        (status = 404, description = "Job not found", body = RuntimeError),
+        (status = 503, description = "Database not available", body = RuntimeError),
+        (status = 500, description = "Internal server error", body = RuntimeError)
+    )
+)]
+#[axum::debug_handler]
+pub async fn delete_job(
+    State(state): State<AppState>,
+    Path(job_id): Path<String>,
+) -> Result<axum::http::StatusCode, RuntimeError> {
+    info!(job_id = %job_id, "Deleting job");
+
+    #[cfg(feature = "gcp")]
+    {
+        let db = state.db.as_ref().ok_or_else(|| {
+            RuntimeError::Config("Database not available".to_string())
+        })?;
+
+        // Check job exists
+        let job = db.jobs.get(&job_id).await.map_err(|e| {
+            RuntimeError::Config(format!("Failed to get job: {e}"))
+        })?;
+
+        if job.is_none() {
+            return Err(RuntimeError::NotFound(format!("Job {job_id} not found")));
+        }
+
+        // Delete the job
+        db.jobs.delete(&job_id).await.map_err(|e| {
+            RuntimeError::Config(format!("Failed to delete job: {e}"))
+        })?;
+
+        info!(job_id = %job_id, "Job deleted");
+
+        Ok(axum::http::StatusCode::NO_CONTENT)
+    }
+
+    #[cfg(not(feature = "gcp"))]
+    {
+        let _ = state;
+        let _ = job_id;
+        Err(RuntimeError::Config(
+            "Firestore not available (compile with --features gcp)".to_string(),
+        ))
+    }
+}
+
 /// List jobs for a user.
 ///
 /// Lists recent jobs for a user from Firestore.
@@ -807,7 +866,7 @@ pub fn router(state: AppState) -> Router<()> {
         .route("/api/v1/validate-rules", post(validate_rules))
         // Firestore-backed endpoints
         .route("/api/v1/store/jobs", post(create_job))
-        .route("/api/v1/store/jobs/:job_id", get(get_job))
+        .route("/api/v1/store/jobs/:job_id", get(get_job).delete(delete_job))
         .route("/api/v1/store/jobs/:job_id/run", post(run_job))
         .route("/api/v1/store/jobs/:job_id/cancel", post(cancel_job))
         .route("/api/v1/store/users/:user_id/jobs", get(list_user_jobs))

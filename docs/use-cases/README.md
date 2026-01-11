@@ -144,6 +144,13 @@ Compliance Monitoring Runtime — regulatory compliance with evidence collection
 **Complexity:** Medium (evidence collection, violation detection)
 **Key agents:** Regulation parsing, Policy rules, Evidence collection, Violation detection, Remediation planning
 
+### [CONVERGE_SDR_SALES_USECASE.md](./CONVERGE_SDR_SALES_USECASE.md)
+SDR Sales Runtime — qualification and outreach with evidence accumulation.
+
+**Domain:** Sales development, lead qualification, outreach
+**Complexity:** High (converging funnel, cost-aware decisions, learning loops, human-in-the-loop)
+**Key agents:** Market scanning, Signal extraction, Qualification evidence, Message strategy, Channel decisions, Human approval gates
+
 ## Context Schemas
 
 ### [CONTEXT_SCHEMA_GROWTH.md](./CONTEXT_SCHEMA_GROWTH.md)
