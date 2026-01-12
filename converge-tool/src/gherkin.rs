@@ -24,14 +24,18 @@
 //!
 //! The preprocessor automatically converts `Truth:` to `Feature:` before parsing.
 //!
+//! # File Extensions
+//!
+//! Converge supports both `.truth` (preferred) and `.feature` file extensions.
+//!
 //! # Architecture
 //!
 //! ```text
-//! .feature file → Preprocessor → Parser → Scenarios → LLM Validator → Report
-//!                 (Truth→Feature)              │
-//!                                              ├── Business sense check
-//!                                              ├── Compilability check
-//!                                              └── Convention check
+//! .truth file → Preprocessor → Parser → Scenarios → LLM Validator → Report
+//!               (Truth→Feature)              │
+//!                                            ├── Business sense check
+//!                                            ├── Compilability check
+//!                                            └── Convention check
 //! ```
 
 use converge_core::llm::{LlmProvider, LlmRequest};
@@ -684,10 +688,10 @@ Truth: Get paid for delivered work
 
         let validator = GherkinValidator::new(mock_valid_provider(), ValidationConfig::default());
 
-        let result = validator.validate(content, "money.feature").unwrap();
+        let result = validator.validate(content, "money.truth").unwrap();
 
         assert_eq!(result.scenario_count, 1);
-        // Should parse successfully with Truth: syntax
+        // Should parse successfully with Truth: syntax and .truth extension
     }
 
     #[test]

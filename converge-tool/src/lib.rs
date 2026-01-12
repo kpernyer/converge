@@ -7,15 +7,16 @@
 //!
 //! This crate provides tooling for developing Converge applications:
 //!
-//! - [`gherkin`]: Gherkin spec validation (business sense, compilability, conventions)
+//! - [`gherkin`]: Converge Truths validation (business sense, compilability, conventions)
 //!
-//! # Gherkin Validation
+//! # Converge Truths Validation
 //!
-//! The Gherkin validator uses LLMs to check specs for:
+//! Converge uses `.truth` files (or `.feature`) containing business specifications.
+//! The validator uses LLMs to check specs for:
 //!
 //! 1. **Business Sense**: Does the spec describe a meaningful invariant?
 //! 2. **Compilability**: Can this be translated to a Rust invariant?
-//! 3. **Conventions**: Does it follow Converge's Gherkin patterns?
+//! 3. **Conventions**: Does it follow Converge's patterns?
 //!
 //! # Example
 //!
@@ -27,7 +28,7 @@
 //! let provider = Arc::new(MockProvider::constant("Valid spec", 0.9));
 //! let validator = GherkinValidator::new(provider, ValidationConfig::default());
 //!
-//! let result = validator.validate_file("specs/growth_strategy.feature")?;
+//! let result = validator.validate_file("specs/money.truth")?;
 //! println!("Valid: {}", result.is_valid);
 //! ```
 
