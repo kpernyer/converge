@@ -22,6 +22,9 @@ tokio = { workspace = true }
 # Gherkin parsing
 gherkin = "0.14"
 
+# Truth: preprocessing
+regex = "1"
+
 # Environment file loading for tests
 [dev-dependencies]
 dotenv = "0.15"

@@ -12,19 +12,53 @@
 //! 2. Can be compiled to Rust invariants (technical feasibility)
 //! 3. Follow Converge conventions (style compliance)
 //!
+//! # Converge Truths
+//!
+//! Converge uses "Truth" as a branded alias for "Feature" in Gherkin specs.
+//! Both keywords are valid:
+//!
+//! ```gherkin
+//! Truth: Get paid for delivered work    # Converge branded syntax
+//! Feature: Get paid for delivered work  # Standard Gherkin syntax
+//! ```
+//!
+//! The preprocessor automatically converts `Truth:` to `Feature:` before parsing.
+//!
 //! # Architecture
 //!
 //! ```text
-//! .feature file → Parser → Scenarios → LLM Validator → Report
-//!                                            │
-//!                                            ├── Business sense check
-//!                                            ├── Compilability check
-//!                                            └── Convention check
+//! .feature file → Preprocessor → Parser → Scenarios → LLM Validator → Report
+//!                 (Truth→Feature)              │
+//!                                              ├── Business sense check
+//!                                              ├── Compilability check
+//!                                              └── Convention check
 //! ```
 
 use converge_core::llm::{LlmProvider, LlmRequest};
+use regex::Regex;
 use std::path::Path;
 use std::sync::Arc;
+
+/// Preprocesses Converge Truth syntax to standard Gherkin.
+///
+/// Converts `Truth:` keyword to `Feature:` for parser compatibility.
+/// This allows Converge specs to use the branded "Truth" terminology
+/// while maintaining compatibility with standard Gherkin parsers.
+///
+/// # Examples
+///
+/// ```
+/// use converge_tool::gherkin::preprocess_truths;
+///
+/// let input = "Truth: Get paid for delivered work\n  Scenario: Invoice";
+/// let output = preprocess_truths(input);
+/// assert!(output.starts_with("Feature:"));
+/// ```
+pub fn preprocess_truths(content: &str) -> String {
+    // Match "Truth:" at the start of a line (with optional leading whitespace)
+    let re = Regex::new(r"(?m)^(\s*)Truth:").unwrap();
+    re.replace_all(content, "${1}Feature:").to_string()
+}
 
 /// Configuration for Gherkin validation.
 #[derive(Debug, Clone)]
@@ -162,6 +196,8 @@ impl GherkinValidator {
 
     /// Validates a Gherkin specification from a string.
     ///
+    /// Supports both standard Gherkin (`Feature:`) and Converge Truth (`Truth:`) syntax.
+    ///
     /// # Errors
     ///
     /// Returns error if the specification cannot be parsed or validated.
@@ -172,9 +208,12 @@ impl GherkinValidator {
         content: &str,
         file_name: &str,
     ) -> Result<SpecValidation, ValidationError> {
+        // Preprocess: convert Truth: to Feature: for parser compatibility
+        let processed = preprocess_truths(content);
+
         // Parse the Gherkin content
         // Syntax errors are Gherkin validation issues
-        let feature = gherkin::Feature::parse(content, gherkin::GherkinEnv::default())
+        let feature = gherkin::Feature::parse(&processed, gherkin::GherkinEnv::default())
             .map_err(|e| ValidationError::ParseError(format!("{e}")))?;
 
         let mut issues = Vec::new();
@@ -616,6 +655,39 @@ mod tests {
             MockResponse::success("VALID", 0.9),
             MockResponse::success("COMPILABLE: Acceptance - check strategy count", 0.9),
         ]))
+    }
+
+    #[test]
+    fn preprocess_converts_truth_to_feature() {
+        let input = "Truth: Get paid for delivered work\n  Scenario: Invoice";
+        let output = preprocess_truths(input);
+        assert!(output.starts_with("Feature:"));
+        assert!(output.contains("Scenario: Invoice"));
+    }
+
+    #[test]
+    fn preprocess_preserves_feature_keyword() {
+        let input = "Feature: Standard Gherkin\n  Scenario: Test";
+        let output = preprocess_truths(input);
+        assert_eq!(input, output);
+    }
+
+    #[test]
+    fn validates_truth_syntax() {
+        let content = r"
+Truth: Get paid for delivered work
+  Scenario: Invoice and collect
+    Given work is marked as delivered
+    When the system converges
+    Then invoice is issued
+";
+
+        let validator = GherkinValidator::new(mock_valid_provider(), ValidationConfig::default());
+
+        let result = validator.validate(content, "money.feature").unwrap();
+
+        assert_eq!(result.scenario_count, 1);
+        // Should parse successfully with Truth: syntax
     }
 
     #[test]
