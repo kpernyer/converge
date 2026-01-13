@@ -19,7 +19,6 @@ license = "MIT"
 converge-core = { path = "converge-core", version = "0.6.2" }
 converge-provider = { path = "converge-provider", version = "0.2.4" }
 converge-domain = { path = "converge-domain", version = "0.2.4" }
-converge-tool = { git = "https://github.com/kpernyer/converge-tool.git", version = "0.2.1" }
 
 # Shared dependencies
 thiserror = "2"
