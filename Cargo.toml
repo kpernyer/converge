@@ -4,8 +4,7 @@ members = [
     "converge-core",
     "converge-provider",
     "converge-domain",
-    "converge-tool",
-    "converge-runtime",
+    "converge-app",
 ]
 
 [workspace.package]
@@ -18,10 +17,10 @@ license = "MIT"
 # Internal crates
 # Both path (local dev) and version (crates.io) specified
 # Cargo uses path when in workspace, version when published
-converge-core = { path = "converge-core", version = "0.6.1" }
-converge-provider = { path = "converge-provider", version = "0.2.3" }
-converge-domain = { path = "converge-domain", version = "0.2.3" }
-converge-tool = { path = "converge-tool", version = "0.2" }
+converge-core = { path = "converge-core", version = "0.6.2" }
+converge-provider = { path = "converge-provider", version = "0.2.4" }
+converge-domain = { path = "converge-domain", version = "0.2.4" }
+converge-tool = { git = "https://github.com/kpernyer/converge-tool.git", version = "0.2.1" }
 
 # Shared dependencies
 thiserror = "2"
@@ -57,3 +56,8 @@ cast_precision_loss = "allow"        # f64 precision loss acceptable for metrics
 manual_let_else = "allow"            # if-let is sometimes clearer
 if_not_else = "allow"                # Negation is sometimes clearer
 map_unwrap_or = "allow"              # map().unwrap_or_else() is clearer
+
+[patch.crates-io]
+converge-core = { path = "converge-core" }
+converge-provider = { path = "converge-provider" }
+converge-domain = { path = "converge-domain" }
