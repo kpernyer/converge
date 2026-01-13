@@ -4,7 +4,6 @@ members = [
     "converge-core",
     "converge-provider",
     "converge-domain",
-    "converge-app",
 ]
 
 [workspace.package]
