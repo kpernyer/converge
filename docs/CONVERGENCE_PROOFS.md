@@ -10,6 +10,7 @@ The distinction between "integration test" and "axiom proof" is important:
 - **Axiom proofs** demonstrate invariants under execution
 
 The proof tests in this suite are structured as:
+
 1. **Formal statement** — the axiom being proven
 2. **Concrete execution** — agents running against real context
 3. **Observed evidence** — trace output showing what happened
@@ -19,6 +20,7 @@ The proof tests in this suite are structured as:
 This structure follows how operating system and database correctness papers are written.
 
 **These tests serve as:**
+
 - A **living specification** of engine semantics
 - A **non-negotiable regression barrier**
 - A **design contract** — if someone asks "why does the engine work this way?", point here
@@ -35,6 +37,7 @@ This structure follows how operating system and database correctness papers are 
 | `property_tests.rs` | Random input invariants | `cargo test --test property_tests` |
 | `convergence.rs` | Sequential agent execution | `cargo test --test convergence` |
 | `proposal_promotion.rs` | LLM output validation | `cargo test --test proposal_promotion` |
+| `root_intent_anchor.rs` | Semantic compliance/RootIntent | `cargo test --test root_intent_anchor` |
 
 ---
 
@@ -121,6 +124,7 @@ The engine is built on nine non-negotiable axioms. All proof tests verify these:
 **Purpose**: Visual, educational proof of all five axioms with detailed trace output. This is the **keystone test** — it proves the engine's semantic guarantees are real.
 
 **Run**:
+
 ```bash
 cargo test -p converge-core --test engine_convergence_axioms -- --nocapture
 ```
@@ -307,6 +311,7 @@ test verbose_axiom_proof ... ok
 </details>
 
 **Agents**:
+
 - `SeedProvider` — Bootstrap (no deps)
 - `AlphaAgent` — Seeds → Hypotheses
 - `BetaAgent` — Hypotheses → Signals
@@ -315,6 +320,7 @@ test verbose_axiom_proof ... ok
 - `BrokenAgent` — Undeclared dep on Evaluations (STARVED)
 
 **Phases**:
+
 1. Agent registration with dependency graph
 2. Convergence loop with step-by-step trace
 3. Axiom verification with assertions
@@ -327,11 +333,13 @@ test verbose_axiom_proof ... ok
 **Purpose**: Proves that HITL workflows follow the same convergence guarantees as fully automated workflows. Human decisions are just facts.
 
 **Run**:
+
 ```bash
 cargo test -p converge-core --test hitl_pause_resume_axioms -- --nocapture
 ```
 
 **What it proves**:
+
 1. Context can be serialized mid-execution (pause)
 2. Deserialized context produces identical behavior (resume)
 3. Human decisions added during pause influence execution correctly
@@ -339,6 +347,7 @@ cargo test -p converge-core --test hitl_pause_resume_axioms -- --nocapture
 5. The final result is deterministic regardless of when pause occurred
 
 **The Pause/Resume Pattern**:
+
 ```text
 Phase 1: Agents run → one emits approval_request
 Phase 2: Engine converges (gated agents blocked)
@@ -354,6 +363,7 @@ Phase 5: Final state matches straight-through execution
 ```
 
 **Agents**:
+
 - `AnalysisAgent` — Seeds → Signals (analysis:summary)
 - `ApprovalRequestAgent` — Signals → Signals (approval:request)
 - `ApprovalGatedAgent` — Signals + Constraints → Strategies (BLOCKED until approval)
@@ -368,11 +378,13 @@ Phase 5: Final state matches straight-through execution
 **Purpose**: Proves that context snapshots enable crash recovery and cross-instance execution. The engine is stateless — only context matters.
 
 **Run**:
+
 ```bash
 cargo test -p converge-core --test snapshot_resume_axioms -- --nocapture
 ```
 
 **What it proves**:
+
 1. Context snapshots are complete (no missing state)
 2. Snapshots can be persisted to any storage (JSON, database, file)
 3. Resuming on a fresh engine produces identical results
@@ -380,6 +392,7 @@ cargo test -p converge-core --test snapshot_resume_axioms -- --nocapture
 5. Crash recovery is safe (just reload last snapshot)
 
 **The Snapshot Pattern**:
+
 ```text
 Engine A: Run cycles 1-3, take snapshot S1
 Engine B: Load S1, run cycles 4-6, take snapshot S2
@@ -391,6 +404,7 @@ VERIFY: Engine C final state == Engine D final state
 ```
 
 **Tests**:
+
 - `snapshot_resume_axiom_proof` — Multi-engine snapshot/resume workflow
 - `snapshot_preserves_version` — Context version survives serialization
 - `snapshot_dirty_keys_on_resume` — Dirty key handling on resume
@@ -405,17 +419,20 @@ VERIFY: Engine C final state == Engine D final state
 **Purpose**: Minimal correctness contract that defines the engine's behavior.
 
 **Run**:
+
 ```bash
 cargo test -p converge-core --test engine_convergence_bones -- --nocapture
 ```
 
 **What it proves**:
+
 1. Multi-precondition agents wait correctly for ALL dependencies
 2. Out-of-order dirty keys don't cause starvation
 3. Context-derived idempotency prevents duplicate execution
 4. Broken agents (undeclared dependencies) ARE starved
 
 **Expected execution trace**:
+
 ```
 Cycle 1: AlphaAgent → Seeds:alpha
 Cycle 2: BetaAgent → Hypotheses:beta
@@ -432,11 +449,13 @@ Cycle 6: CONVERGENCE (no eligible agents)
 **Purpose**: Regression test that proves agents cannot be starved by the dependency-indexed eligibility model.
 
 **Run**:
+
 ```bash
 cargo test -p converge-core --test no_starvation
 ```
 
 **The starvation scenario (now impossible)**:
+
 1. Agent is eligible (dependency dirty)
 2. `accepts()` returns false (precondition not met)
 3. Precondition becomes true later
@@ -445,6 +464,7 @@ cargo test -p converge-core --test no_starvation
 **The fix**: Agents must declare ALL keys read in `accepts()` as dependencies.
 
 **Tests**:
+
 - `multi_precondition_agent_is_not_starved` — Agent needing both Seeds AND Hypotheses runs correctly
 - `idempotency_prevents_duplicate_execution` — Same agent doesn't run twice
 - `agent_with_undeclared_dependency_would_be_starved` — Negative control
@@ -456,11 +476,13 @@ cargo test -p converge-core --test no_starvation
 **Purpose**: Property-based testing using proptest to verify invariants hold across random inputs.
 
 **Run**:
+
 ```bash
 cargo test -p converge-core --test property_tests
 ```
 
 **Properties tested**:
+
 - Context preserves fact content
 - Context tracks dirty keys correctly
 - Fact IDs must be unique per key
@@ -477,11 +499,13 @@ cargo test -p converge-core --test property_tests
 **Purpose**: Basic integration test for agent chain execution.
 
 **Run**:
+
 ```bash
 cargo test -p converge-core --test convergence
 ```
 
 **Tests**:
+
 - `converges_through_sequential_agents` — Seeds → Strategy → Constraint chain completes
 - Verifies cycle count matches expected (at least 3)
 
@@ -492,11 +516,13 @@ cargo test -p converge-core --test convergence
 **Purpose**: Tests the LLM containment model where untrusted outputs cannot corrupt trusted context without validation.
 
 **Run**:
+
 ```bash
 cargo test -p converge-core --test proposal_promotion
 ```
 
 **Tests**:
+
 - `engine_promotes_proposals_in_merge_phase` — Valid proposals become facts
 - `engine_rejects_invalid_proposals` — Empty content proposals are rejected
 
@@ -507,11 +533,13 @@ cargo test -p converge-core --test proposal_promotion
 **Purpose**: Tests that the engine handles partial failures gracefully.
 
 **Run**:
+
 ```bash
 cargo test -p converge-core --test transparent_determinism
 ```
 
 **Tests**:
+
 - `engine_handles_partial_failures_gracefully` — One valid + one invalid proposal: only valid is promoted
 
 ---
@@ -521,11 +549,13 @@ cargo test -p converge-core --test transparent_determinism
 **Purpose**: Comprehensive test of the ValidationAgent that gates LLM outputs.
 
 **Run**:
+
 ```bash
 cargo test -p converge-core --test validation_verbose -- --nocapture
 ```
 
 **What it proves**:
+
 - ValidationAgent correctly accepts/rejects proposals based on:
   - Confidence threshold
   - Content validation (non-empty, max length)

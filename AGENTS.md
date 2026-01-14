@@ -1,5 +1,7 @@
 # AGENTS.md — Converge AI Assistant Guide
 
+> Converge is a vision for **semantic governance**. We move from fragmented intent to unified, converged states through a deterministic alignment engine. Our mission is to provide a stable foundation for complex decision-making where human authority and AI agency coexist in a transparent, explainable ecosystem.
+
 **For AI coding assistants (Claude, Gemini, Codex, Cursor, etc.)**
 
 This document provides comprehensive guidance for AI assistants working on the Converge codebase. It consolidates architecture, coding standards, and development patterns into a single reference.
@@ -25,6 +27,7 @@ This document provides comprehensive guidance for AI assistants working on the C
 **Converge** is a correctness-first, context-driven multi-agent runtime system written in Rust. It enables building systems where agents collaborate through shared context to reach provable convergence.
 
 **Key Characteristics:**
+
 - **Not a workflow engine** — No predefined steps or control flow
 - **Not an actor system** — No message passing or mailboxes
 - **Not event-driven** — No implicit control flow
@@ -33,6 +36,7 @@ This document provides comprehensive guidance for AI assistants working on the C
 - **Explainable** — Every outcome is traceable
 
 **Workspace Structure:**
+
 ```
 converge-core/      # Core engine (private library)
 converge-provider/  # LLM provider implementations
@@ -92,6 +96,7 @@ pub trait Agent: Send + Sync {
 ```
 
 **Critical Rules:**
+
 - `accepts()` must be **pure** — no side effects, no mutations
 - `execute()` is **read-only** — cannot mutate context directly
 - Agents **never call other agents** — only read context and emit effects
@@ -116,6 +121,7 @@ The shared context uses typed keys:
 ### Type Boundary: ProposedFact vs Fact
 
 **Critical separation:**
+
 - `ProposedFact` — Suggestions from non-authoritative sources (e.g., LLMs)
 - `Fact` — Validated, authoritative assertions
 - LLMs can only emit `ProposedFact`
@@ -145,6 +151,7 @@ LLM agents follow this pattern:
 6. **Validation** — `ValidationAgent` promotes proposals to facts
 
 **Example:**
+
 ```rust
 use converge_domain::llm_utils::{create_llm_agent, requirements};
 
@@ -195,6 +202,7 @@ fn accepts(&self, ctx: &Context) -> bool {
 ```
 
 **Why both checks are needed:**
+
 - Agent emits to `Proposals` (encoded as `proposal:{target_key}:{agent_name}-{uuid}`)
 - ValidationAgent promotes to `target_key` (with ID `{agent_name}-{uuid}`)
 - Agent must check both to avoid duplicate execution
@@ -224,23 +232,27 @@ fn accepts(&self, ctx: &Context) -> bool {
 ### Code Quality
 
 Always enable clippy & fmt:
+
 ```bash
 cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --all -- --check
 ```
 
 **Immutability:**
+
 - Default to `let`, not `let mut`, unless required
 - Prefer iterator transforms over mutating loops
 - Avoid unnecessary `clone()` — justify at ownership boundaries
 
 **Data Modeling:**
+
 - Use newtypes for IDs: `struct IntentId(String);` not `String`
 - Prefer enums over boolean flags or magic strings
 - Keep structs focused — avoid "god structs"
 - Derive traits intentionally (don't cargo-cult `Clone`, `Debug`)
 
 **Async & Concurrency:**
+
 - Never hold locks across `.await`
 - Use `tokio::sync` primitives in async code
 - Spawn tasks only when concurrency is required
@@ -249,26 +261,31 @@ cargo fmt --all -- --check
 ### Technology Stack (Mandatory)
 
 **Core Framework:**
+
 - **Axum** — Default API framework (internal & external)
 - **Tokio** — Only async runtime allowed (no mixed runtimes)
 - **Tonic** — gRPC for internal service-to-service communication
 
 **Data Layer:**
+
 - **SurrealDB** — Primary system-of-record
 - **Qdrant** — Production vector search
 - **LanceDB** — Local/embedded vector workflows
 - **Apache Arrow + DataFusion** — Analytics workloads
 
 **Messaging & Workflows:**
+
 - **NATS** — Default message bus (with JetStream for durability)
 - **Temporal** — Long-running workflows, retries, distributed coordination
 
 **Secrets & Config:**
+
 - **config crate** — Layered config (base.yaml → env-specific → env vars → secrets)
 - **Google Secret Manager** (GCP) or **Vault** (self-host) — No plain `.env` in production
 - **OpenRouter** — Default LLM API aggregator
 
 **Observability (Mandatory):**
+
 - **OpenTelemetry** — Traces
 - **Prometheus** — Metrics
 - **tracing** — Structured logging
@@ -417,6 +434,7 @@ let agent = create_llm_agent(
 ```
 
 **Important Notes:**
+
 - LLM agents automatically select appropriate models based on requirements
 - Agents emit proposals to `ContextKey::Proposals` (not directly to target key)
 - Requires `ValidationAgent` to promote proposals to facts
@@ -461,6 +479,7 @@ impl Invariant for RequireValidStrategy {
 ### Rejected Patterns (Violate Semantics)
 
 **DO NOT:**
+
 - ❌ Use message buses (Kafka, NATS, Pub/Sub) for agent communication
 - ❌ Use workflow engines (Temporal, Cadence) for orchestration
 - ❌ Implement actor systems or message passing
@@ -479,6 +498,7 @@ These violate semantic guarantees by introducing implicit control flow or hidden
 ### Known Issues
 
 **LlmAgent Idempotency Check Bug** (converge-core):
+
 - Current implementation only checks `target_key` for idempotency
 - Should check both `ContextKey::Proposals` (pending) and `target_key` (validated)
 - Impact: Causes cascading failures in multi-step LLM pipelines
@@ -487,12 +507,14 @@ These violate semantic guarantees by introducing implicit control flow or hidden
 ### converge-core is PRIVATE
 
 The `converge-core` library is **maintained privately**:
+
 - Source code is not publicly available
 - Contributions to `converge-core` are not accepted
 - Open API issues for discussion
 - Use the public API documented in `docs/public/`
 
 **Open for contribution:**
+
 - `converge-domain` — Domain-specific agents
 - `converge-provider` — LLM provider integrations
 - `converge-runtime` — Runtime services and APIs
@@ -503,6 +525,7 @@ The `converge-core` library is **maintained privately**:
 ## Quick Reference
 
 ### Context Keys
+
 - `Seeds` — Initial inputs
 - `Hypotheses` — Proposed ideas
 - `Strategies` — Action plans
@@ -514,6 +537,7 @@ The `converge-core` library is **maintained privately**:
 - `Diagnostic` — Errors and debugging
 
 ### Agent Requirements Presets
+
 - `fast_extraction()` — Fast, high-volume agents
 - `analysis()` — Analysis agents
 - `deep_research()` — Deep research agents
@@ -522,6 +546,7 @@ The `converge-core` library is **maintained privately**:
 - `categorization()` — Categorization agents
 
 ### Invariant Classes
+
 - `Structural` — Checked on every merge (immediate failure)
 - `Semantic` — Checked at end of cycle (blocks convergence)
 - `Acceptance` — Checked when convergence claimed (rejects results)
@@ -529,6 +554,8 @@ The `converge-core` library is **maintained privately**:
 ---
 
 ## Additional Resources
+
+### Project-Specific
 
 - **Architecture**: `docs/architecture/ARCHITECTURE.md`
 - **Agent Lifecycle**: `docs/agents/AGENT_LIFECYCLE.md`
@@ -538,7 +565,16 @@ The `converge-core` library is **maintained privately**:
 - **Rust Best Practices**: `docs/assistant-guides/Rust-Best-Practices-v2.md`
 - **Contributor Guide**: `CONTRIBUTING.md`
 
+### Consolidated Documentation (converge-business)
+
+- **Knowledgebase**: [converge-business/knowledgebase/](../converge-business/knowledgebase/)
+- **System Architecture**: [converge-business/knowledgebase/platform-ARCHITECTURE.md](../converge-business/knowledgebase/platform-ARCHITECTURE.md)
+- **Business Strategy**: [converge-business/knowledgebase/business-PLAN.md](../converge-business/knowledgebase/business-PLAN.md)
+
+### Public Documentation
+
+- **Website**: [converge.zone](https://converge.zone)
+
 ---
 
 **Remember**: If a feature introduces implicit authority or hidden control flow, it does not belong in Converge.
-
