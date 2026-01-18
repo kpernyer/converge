@@ -108,3 +108,42 @@ We welcome contributors who value:
 - restraint
 
 See `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`.
+
+## Development Tools
+
+This project is built with the help of modern AI-assisted development tools:
+
+### AI Assistants
+
+- **[Claude Code](https://claude.ai/claude-code)** - Primary programming tool for development, refactoring, and architecture
+- **[Cursor](https://cursor.com)** - AI-powered IDE for detailed code work
+- **[Antigravity](https://antigravity.dev)** - AI pair programming for complex implementations
+- **Claude Opus 4.5** & **Gemini 3** - Frontier models for staying on top of complex decisions
+
+### Version Control & Issue Tracking
+
+- **[Jujutsu (jj)](https://github.com/martinvonz/jj)** - Git-compatible VCS with first-class conflicts and undo
+- **[Beads (bd)](https://github.com/kpernyer/beads)** - Lightweight issue tracker with dependency support
+
+```bash
+# Quick workflow
+jj status                 # See changes
+jj commit -m "message"    # Commit
+bd ready                  # Find unblocked work
+bd create "Task" --type task  # Create issue
+```
+
+### Key Rust Crates
+
+| Crate | Purpose |
+|-------|---------|
+| `tokio` | Async runtime |
+| `axum` | HTTP framework |
+| `serde` / `serde_json` | Serialization |
+| `thiserror` | Error handling |
+| `tracing` | Structured logging |
+| `rayon` | Parallel computation |
+| `proptest` | Property-based testing |
+| `burn` | ML/deep learning (converge-llm) |
+| `tonic` / `prost` | gRPC support |
+
