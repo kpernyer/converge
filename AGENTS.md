@@ -567,9 +567,9 @@ The `converge-core` library is **maintained privately**:
 
 ### Consolidated Documentation (converge-business)
 
-- **Knowledgebase**: [converge-business/knowledgebase/](../converge-business/knowledgebase/)
-- **System Architecture**: [converge-business/knowledgebase/platform-ARCHITECTURE.md](../converge-business/knowledgebase/platform-ARCHITECTURE.md)
-- **Business Strategy**: [converge-business/knowledgebase/business-PLAN.md](../converge-business/knowledgebase/business-PLAN.md)
+- **Knowledgebase**: [converge-business/knowledgebase/](../converge-business/knowledgebase/consolidated/00_index.md)
+- **System Architecture**: [converge-business/knowledgebase/platform-ARCHITECTURE.md](../converge-business/knowledgebase/archive/platform-ARCHITECTURE.md)
+- **Business Strategy**: [converge-business/knowledgebase/business-PLAN.md](../converge-business/knowledgebase/archive/business-PLAN.md)
 
 ### Public Documentation
 
@@ -578,3 +578,19 @@ The `converge-core` library is **maintained privately**:
 ---
 
 **Remember**: If a feature introduces implicit authority or hidden control flow, it does not belong in Converge.
+
+## Version Control
+
+Use **Jujutsu (jj)** instead of git for version control operations:
+
+- `jj status` instead of `git status`
+- `jj log` instead of `git log`  
+- `jj diff` instead of `git diff`
+- `jj commit -m "message"` instead of `git add . && git commit -m "message"`
+- `jj git push` instead of `git push`
+- `jj git fetch` instead of `git fetch`
+- `jj undo` to undo the last operation
+
+All repos have jj initialized in colocated mode (works alongside git).
+
+
